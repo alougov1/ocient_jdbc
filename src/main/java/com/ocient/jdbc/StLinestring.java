@@ -11,6 +11,10 @@ public class StLinestring
 		this.points = points;
 	}
 
+    public List<StPoint> getPoints(){
+        return points; 
+    }
+    
 	@Override
 	public String toString()
 	{
@@ -31,4 +35,43 @@ public class StLinestring
         str.append(")");
         return str.toString();
 	}
-}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false; 
+        }
+
+        StLinestring other = (StLinestring) o;
+
+        // Exact same points 
+        if (other.points.equals(this.points)) {
+            return true; 
+        }
+
+        // Same points, but in reverse order 
+        if (other.points.size() == this.points.size()) {
+            int numPoints = this.points.size(); 
+            for (int i = 0; i < numPoints; ++i) {
+                StPoint mPoint = this.points.get(i); 
+                StPoint oPoint = other.points.get(numPoints - 1 - i); 
+                if (!mPoint.equals(oPoint)) {
+                    return false; 
+                }
+            }
+            return true; 
+        }
+        return false;
+    }
+
+	@Override
+	public int hashCode(){
+        int hash = 0;
+        for (StPoint p : points) {
+            hash += p.hashCode(); 
+        }
+        return hash; 
+	}}
