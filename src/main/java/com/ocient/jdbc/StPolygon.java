@@ -2,6 +2,10 @@ package com.ocient.jdbc;
 
 import java.util.List;
 
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 public class StPolygon
 {
     private final List<StPoint> exterior;
@@ -53,5 +57,52 @@ public class StPolygon
         str.append(")");
 
         return str.toString();
+	}
+
+    public void writeXML(Document doc, Element docElement, String name)
+	{
+        Element placemark = doc.createElement("Placemark");
+		docElement.appendChild(placemark);
+
+		Element polyName = doc.createElement("name");
+		polyName.appendChild(doc.createTextNode(name));
+		placemark.appendChild(polyName);        
+
+		Element poly = doc.createElement("Polygon");
+		placemark.appendChild(poly);
+
+		Attr polyID = doc.createAttribute("id");
+		polyID.setValue(name);
+		poly.setAttributeNode(polyID);
+
+		Element outer = doc.createElement("outerBoundaryIs");
+        poly.appendChild(outer);
+        Element linRing = doc.createElement("LinearRing");
+        outer.appendChild(linRing);
+
+		Element coords = doc.createElement("coordinates");
+        String coordinates = "";
+        for(StPoint point : exterior) {
+            coordinates += point.getX() + "," + point.getY() + " ";
+        }
+        coords.appendChild(doc.createTextNode(coordinates));
+        linRing.appendChild(coords);
+
+        if(holes.size() > 0) {
+            Element inner = doc.createElement("innerBoundaryIs");
+            poly.appendChild(inner);
+            for(List<StPoint> ring : holes) {
+                Element linRingInner = doc.createElement("LinearRing");
+                inner.appendChild(linRingInner);
+                Element innerCoords = doc.createElement("coordinates");
+                String innerCoordinates = "";
+                for(StPoint point : ring) {
+                    innerCoordinates += point.getX() + "," + point.getY() + " ";
+                }
+                innerCoords.appendChild(doc.createTextNode(innerCoordinates));
+                linRingInner.appendChild(innerCoords);
+            }
+        }
+
 	}
 }

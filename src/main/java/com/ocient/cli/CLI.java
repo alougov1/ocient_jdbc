@@ -40,6 +40,24 @@ import com.ocient.jdbc.XGDatabaseMetaData;
 import com.ocient.jdbc.XGStatement;
 import com.ocient.jdbc.proto.ClientWireProtocol.SysQueriesRow;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.XMLConstants;
+
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import com.ocient.jdbc.StPolygon;
+import com.ocient.jdbc.StPoint;
+import com.ocient.jdbc.StLinestring;
+
 public class CLI
 {
 	private static Connection conn;
@@ -1469,6 +1487,7 @@ public class CLI
 
 	private static void outputResultSet(final ResultSet rs, final ResultSetMetaData meta) throws Exception
 	{
+		outputGeospatial(rs, meta);
 		final FileWriter fw = new FileWriter(outputCSVFile);
 		final BufferedWriter out = new BufferedWriter(fw);
 		try
@@ -1547,6 +1566,77 @@ public class CLI
 			out.close();
 			System.out.println("Error: " + e.getMessage());
 		}
+	}
+
+	private static void outputGeospatial(final ResultSet rs, final ResultSetMetaData meta) throws Exception {
+		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+
+		Document doc = docBuilder.newDocument();
+		//create kmlElement
+		Element kmlElement = doc.createElement("kml");
+		doc.appendChild(kmlElement);
+
+		Attr kmlAttrXMLNS = doc.createAttribute("xmlns");
+		kmlAttrXMLNS.setValue("http://www.opengis.net/kml/2.2");
+		kmlElement.setAttributeNode(kmlAttrXMLNS);
+
+		Attr kmlAttrGX = doc.createAttribute("xmlns:gx");
+		kmlAttrGX.setValue("http://www.google.com/kml/ext/2.2");
+		kmlElement.setAttributeNode(kmlAttrGX);
+
+		Attr kmlAttrKML = doc.createAttribute("xmlns:kml");
+		kmlAttrKML.setValue("http://www.opengis.net/kml/2.2");
+		kmlElement.setAttributeNode(kmlAttrKML);
+
+		Attr kmlAttrAtom = doc.createAttribute("xmlns:atom");
+		kmlAttrAtom.setValue("http://www.w3.org/2005/Atom");
+		kmlElement.setAttributeNode(kmlAttrAtom);
+
+		//create doc element
+		Element documentElement = doc.createElement("Document");
+		kmlElement.appendChild(documentElement);
+		
+		Attr docID = doc.createAttribute("id");
+		docID.setValue("1SYf0ab5Z9uWomNsdRt1GbNfojQtUNfC6");
+		documentElement.setAttributeNode(docID);
+
+		Element name = doc.createElement("name");
+		documentElement.appendChild(name);
+		// name.appendChild(doc.createTextNode("GIS"));
+
+		int count = 0; //counts how many objects we've visited to get row/column count
+		name.appendChild(doc.createTextNode("GIS"));
+		while (rs.next())
+		{
+			for (int i = 1; i <= meta.getColumnCount(); i++)
+			{
+				final Object o = rs.getObject(i);
+				if (!rs.wasNull()) //must be a non-null geospatial object
+				{
+					if(meta.getColumnTypeName(i).equals("ST_POINT")) {
+						((StPoint)(o)).writeXML(doc, documentElement, "col" + (i) + "row" + (int)(count));
+					} else if(meta.getColumnTypeName(i).equals("ST_LINESTRING")) {
+						((StLinestring)(o)).writeXML(doc, documentElement, "col" + (i) + "row" + (int)(count));
+					} else if(meta.getColumnTypeName(i).equals("ST_POLYGON")) {
+						((StPolygon)(o)).writeXML(doc, documentElement, "col" + (i) + "row" + (int)(count));
+					}
+				}
+			}
+			count++;
+		}
+		
+		//write the content into xml file
+		TransformerFactory transformerFactory =  TransformerFactory.newInstance();
+		transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+		transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+		Transformer transformer = transformerFactory.newTransformer();
+		DOMSource source = new DOMSource(doc);
+
+		StreamResult result =  new StreamResult(new File("testing.kml"));
+		transformer.transform(source, result);
+
+		System.out.println("Done");
 	}
 
 	private static void printAllQueries(final ArrayList<SysQueriesRow> queries)

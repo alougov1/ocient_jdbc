@@ -1,5 +1,9 @@
 package com.ocient.jdbc;
 
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 public class StPoint
 {
 	private final double lon;
@@ -38,5 +42,22 @@ public class StPoint
 			return "POINT EMPTY";
 		}
 		return "(" + lat + ", " + lon + ")";
+	}
+
+	public void writeXML(Document doc, Element docElement, String name)
+	{
+		Element placemark = doc.createElement("Placemark");
+		docElement.appendChild(placemark);
+
+		Element pointName = doc.createElement("name");
+		pointName.appendChild(doc.createTextNode(name));
+		placemark.appendChild(pointName);
+		
+		Element point = doc.createElement("Point");
+		placemark.appendChild(point);
+
+		Element coords = doc.createElement("coordinates");
+		coords.appendChild(doc.createTextNode(lon + "," + lat));
+		point.appendChild(coords);
 	}
 }
