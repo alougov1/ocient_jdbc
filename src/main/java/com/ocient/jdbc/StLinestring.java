@@ -45,6 +45,10 @@ public class StLinestring
 		lineName.appendChild(doc.createTextNode(name));
 		placemark.appendChild(lineName);        
 
+        Element lineStyle = doc.createElement("styleUrl");
+		lineStyle.appendChild(doc.createTextNode("__managed_style_02DBC6391B1971D9081A"));
+		placemark.appendChild(lineStyle);
+
 		Element line = doc.createElement("LineString");
 		placemark.appendChild(line);
 

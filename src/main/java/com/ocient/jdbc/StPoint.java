@@ -52,6 +52,10 @@ public class StPoint
 		Element pointName = doc.createElement("name");
 		pointName.appendChild(doc.createTextNode(name));
 		placemark.appendChild(pointName);
+
+		Element pointStyle = doc.createElement("styleUrl");
+		pointStyle.appendChild(doc.createTextNode("__managed_style_02DBC6391B1971D9081A"));
+		placemark.appendChild(pointStyle);
 		
 		Element point = doc.createElement("Point");
 		placemark.appendChild(point);

@@ -1603,10 +1603,101 @@ public class CLI
 
 		Element name = doc.createElement("name");
 		documentElement.appendChild(name);
-		// name.appendChild(doc.createTextNode("GIS"));
-
 		int count = 0; //counts how many objects we've visited to get row/column count
 		name.appendChild(doc.createTextNode("GIS"));
+
+		//generate 1st
+		Element gx1 = doc.createElement("gx:CascadingStyle");
+		documentElement.appendChild(gx1);
+		Attr gx1ID = doc.createAttribute("kml:id");
+		gx1ID.setValue("__managed_style_1D3A7EA0A81971D9081A");
+		gx1.setAttributeNode(gx1ID);
+		Element gx1Style = doc.createElement("Style");
+		gx1.appendChild(gx1Style);
+		
+		Element gx1IconStyle = doc.createElement("IconStyle");
+		gx1Style.appendChild(gx1IconStyle);
+		Element gx1Icon = doc.createElement("Icon");
+		gx1IconStyle.appendChild(gx1Icon);
+		Element gx1Href = doc.createElement("href");
+		gx1Icon.appendChild(gx1Href);
+		gx1Href.appendChild(doc.createTextNode("https://earth.google.com/earth/rpc/cc/icon?color=1976d2&amp;id=2000&amp;scale=4"));
+		
+		Element gx1LineStyle = doc.createElement("LineStyle");
+		gx1Style.appendChild(gx1LineStyle);
+		Element gx1LineColor = doc.createElement("color");
+		gx1LineStyle.appendChild(gx1LineColor);
+		gx1LineColor.appendChild(doc.createTextNode("ff2dc0fb"));
+		Element gx1LineWidth = doc.createElement("width");
+		gx1LineStyle.appendChild(gx1LineWidth);
+		gx1LineWidth.appendChild(doc.createTextNode("2"));
+		
+		Element gx1PolyStyle= doc.createElement("PolyStyle");
+		gx1Style.appendChild(gx1PolyStyle);
+		Element gx1PolyColor = doc.createElement("color");
+		gx1PolyStyle.appendChild(gx1PolyColor);
+		gx1PolyColor.appendChild(doc.createTextNode("40ffffff"));
+
+		//generate 2nd gx cascading style
+		Element gx2 = doc.createElement("gx:CascadingStyle");
+		documentElement.appendChild(gx2);
+		Attr gx2ID = doc.createAttribute("kml:id");
+		gx2ID.setValue("__managed_style_2C97020CD31971D9081A");
+		gx2.setAttributeNode(gx2ID);
+		Element gx2Style = doc.createElement("Style");
+		gx2.appendChild(gx2Style);
+		
+		Element gx2IconStyle = doc.createElement("IconStyle");
+		gx2Style.appendChild(gx2IconStyle);
+		Element gx2Scale = doc.createElement("scale");
+		gx2IconStyle.appendChild(gx2Scale);
+		gx2Scale.appendChild(doc.createTextNode("1.2"));
+		Element gx2Icon = doc.createElement("Icon");
+		gx2IconStyle.appendChild(gx2Icon);
+		Element gx2Href = doc.createElement("href");
+		gx2Icon.appendChild(gx2Href);
+		gx2Href.appendChild(doc.createTextNode("https://earth.google.com/earth/rpc/cc/icon?color=1976d2&amp;id=2000&amp;scale=4"));
+		
+		Element gx2LineStyle = doc.createElement("LineStyle");
+		gx2Style.appendChild(gx2LineStyle);
+		Element gx2LineColor = doc.createElement("color");
+		gx2LineStyle.appendChild(gx2LineColor);
+		gx2LineColor.appendChild(doc.createTextNode("ff2dc0fb"));
+		Element gx2LineWidth = doc.createElement("width");
+		gx2LineStyle.appendChild(gx2LineWidth);
+		gx2LineWidth.appendChild(doc.createTextNode("3"));
+		
+		Element gx2PolyStyle= doc.createElement("PolyStyle");
+		gx2Style.appendChild(gx2PolyStyle);
+		Element gx2PolyColor = doc.createElement("color");
+		gx2PolyStyle.appendChild(gx2PolyColor);
+		gx2PolyColor.appendChild(doc.createTextNode("40ffffff"));
+
+		//generate stylemap
+		Element stylemap = doc.createElement("StyleMap");
+		documentElement.appendChild(stylemap);
+		Attr stylemapID = doc.createAttribute("id");
+		stylemapID.setValue("__managed_style_02DBC6391B1971D9081A");
+		stylemap.setAttributeNode(stylemapID);
+
+		Element stylemapNormal = doc.createElement("Pair");
+		stylemap.appendChild(stylemapNormal);
+		Element normalKey = doc.createElement("key");
+		stylemapNormal.appendChild(normalKey);
+		normalKey.appendChild(doc.createTextNode("normal"));
+		Element normalURL = doc.createElement("styleUrl");
+		stylemapNormal.appendChild(normalURL);
+		normalURL.appendChild(doc.createTextNode("#__managed_style_1D3A7EA0A81971D9081A"));
+
+		Element stylemapHighlight = doc.createElement("Pair");
+		stylemap.appendChild(stylemapHighlight);
+		Element highlightKey = doc.createElement("key");
+		stylemapHighlight.appendChild(highlightKey);
+		highlightKey.appendChild(doc.createTextNode("highlight"));
+		Element highlightURL = doc.createElement("styleUrl");
+		stylemapHighlight.appendChild(highlightURL);
+		highlightURL.appendChild(doc.createTextNode("#__managed_style_2C97020CD31971D9081A"));
+
 		while (rs.next())
 		{
 			for (int i = 1; i <= meta.getColumnCount(); i++)
@@ -1615,11 +1706,11 @@ public class CLI
 				if (!rs.wasNull()) //must be a non-null geospatial object
 				{
 					if(meta.getColumnTypeName(i).equals("ST_POINT")) {
-						((StPoint)(o)).writeXML(doc, documentElement, "col" + (i) + "row" + (int)(count));
+						((StPoint)(o)).writeXML(doc, documentElement, "col" + (i - 1) + "row" + (count));
 					} else if(meta.getColumnTypeName(i).equals("ST_LINESTRING")) {
-						((StLinestring)(o)).writeXML(doc, documentElement, "col" + (i) + "row" + (int)(count));
+						((StLinestring)(o)).writeXML(doc, documentElement, "col" + (i - 1) + "row" + (count));
 					} else if(meta.getColumnTypeName(i).equals("ST_POLYGON")) {
-						((StPolygon)(o)).writeXML(doc, documentElement, "col" + (i) + "row" + (int)(count));
+						((StPolygon)(o)).writeXML(doc, documentElement, "col" + (i - 1) + "row" + (count));
 					}
 				}
 			}

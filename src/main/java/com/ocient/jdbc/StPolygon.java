@@ -68,6 +68,10 @@ public class StPolygon
 		polyName.appendChild(doc.createTextNode(name));
 		placemark.appendChild(polyName);        
 
+        Element polyStyle = doc.createElement("styleUrl");
+		polyStyle.appendChild(doc.createTextNode("__managed_style_02DBC6391B1971D9081A"));
+		placemark.appendChild(polyStyle);
+
 		Element poly = doc.createElement("Polygon");
 		placemark.appendChild(poly);
 
