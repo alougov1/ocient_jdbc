@@ -1621,7 +1621,7 @@ public class CLI
 		gx1IconStyle.appendChild(gx1Icon);
 		Element gx1Href = doc.createElement("href");
 		gx1Icon.appendChild(gx1Href);
-		gx1Href.appendChild(doc.createTextNode("https://earth.google.com/earth/rpc/cc/icon?color=1976d2&amp;id=2000&amp;scale=4"));
+		gx1Href.appendChild(doc.createTextNode("https://earth.google.com/earth/rpc/cc/icon?color=1976d2&id=2000&scale=4"));
 		
 		Element gx1LineStyle = doc.createElement("LineStyle");
 		gx1Style.appendChild(gx1LineStyle);
@@ -1656,7 +1656,7 @@ public class CLI
 		gx2IconStyle.appendChild(gx2Icon);
 		Element gx2Href = doc.createElement("href");
 		gx2Icon.appendChild(gx2Href);
-		gx2Href.appendChild(doc.createTextNode("https://earth.google.com/earth/rpc/cc/icon?color=1976d2&amp;id=2000&amp;scale=4"));
+		gx2Href.appendChild(doc.createTextNode("https://earth.google.com/earth/rpc/cc/icon?color=1976d2&id=2000&scale=4"));
 		
 		Element gx2LineStyle = doc.createElement("LineStyle");
 		gx2Style.appendChild(gx2LineStyle);
