@@ -1577,6 +1577,7 @@ public class CLI
 		Element kmlElement = doc.createElement("kml");
 		doc.appendChild(kmlElement);
 
+		//kml Attributes, should never need to change
 		Attr kmlAttrXMLNS = doc.createAttribute("xmlns");
 		kmlAttrXMLNS.setValue("http://www.opengis.net/kml/2.2");
 		kmlElement.setAttributeNode(kmlAttrXMLNS);
@@ -1603,10 +1604,11 @@ public class CLI
 
 		Element name = doc.createElement("name");
 		documentElement.appendChild(name);
+		
 		int count = 0; //counts how many objects we've visited to get row/column count
-		name.appendChild(doc.createTextNode("GIS"));
+		name.appendChild(doc.createTextNode("GIS")); //name of the GIS project
 
-		//generate 1st
+		//generate 1st gx cascading style, used when object is not being hovered over
 		Element gx1 = doc.createElement("gx:CascadingStyle");
 		documentElement.appendChild(gx1);
 		Attr gx1ID = doc.createAttribute("kml:id");
@@ -1615,30 +1617,30 @@ public class CLI
 		Element gx1Style = doc.createElement("Style");
 		gx1.appendChild(gx1Style);
 		
-		Element gx1IconStyle = doc.createElement("IconStyle");
+		Element gx1IconStyle = doc.createElement("IconStyle"); //style of st_points
 		gx1Style.appendChild(gx1IconStyle);
 		Element gx1Icon = doc.createElement("Icon");
 		gx1IconStyle.appendChild(gx1Icon);
 		Element gx1Href = doc.createElement("href");
 		gx1Icon.appendChild(gx1Href);
-		gx1Href.appendChild(doc.createTextNode("https://earth.google.com/earth/rpc/cc/icon?color=1976d2&id=2000&scale=4"));
+		gx1Href.appendChild(doc.createTextNode("https://earth.google.com/earth/rpc/cc/icon?color=1976d2&id=2000&scale=4")); // link to image of map
 		
-		Element gx1LineStyle = doc.createElement("LineStyle");
+		Element gx1LineStyle = doc.createElement("LineStyle"); // style of st_linestring
 		gx1Style.appendChild(gx1LineStyle);
-		Element gx1LineColor = doc.createElement("color");
+		Element gx1LineColor = doc.createElement("color"); 
 		gx1LineStyle.appendChild(gx1LineColor);
-		gx1LineColor.appendChild(doc.createTextNode("ff2dc0fb"));
+		gx1LineColor.appendChild(doc.createTextNode("ff2dc0fb")); // lines are yellow
 		Element gx1LineWidth = doc.createElement("width");
 		gx1LineStyle.appendChild(gx1LineWidth);
 		gx1LineWidth.appendChild(doc.createTextNode("2"));
 		
-		Element gx1PolyStyle= doc.createElement("PolyStyle");
+		Element gx1PolyStyle= doc.createElement("PolyStyle"); //style of st_polygon
 		gx1Style.appendChild(gx1PolyStyle);
 		Element gx1PolyColor = doc.createElement("color");
 		gx1PolyStyle.appendChild(gx1PolyColor);
 		gx1PolyColor.appendChild(doc.createTextNode("40ffffff"));
 
-		//generate 2nd gx cascading style
+		//generate 2nd gx cascading style used when object is highlighted/hovered over
 		Element gx2 = doc.createElement("gx:CascadingStyle");
 		documentElement.appendChild(gx2);
 		Attr gx2ID = doc.createAttribute("kml:id");
@@ -1647,7 +1649,7 @@ public class CLI
 		Element gx2Style = doc.createElement("Style");
 		gx2.appendChild(gx2Style);
 		
-		Element gx2IconStyle = doc.createElement("IconStyle");
+		Element gx2IconStyle = doc.createElement("IconStyle"); //style of st_point
 		gx2Style.appendChild(gx2IconStyle);
 		Element gx2Scale = doc.createElement("scale");
 		gx2IconStyle.appendChild(gx2Scale);
@@ -1656,9 +1658,9 @@ public class CLI
 		gx2IconStyle.appendChild(gx2Icon);
 		Element gx2Href = doc.createElement("href");
 		gx2Icon.appendChild(gx2Href);
-		gx2Href.appendChild(doc.createTextNode("https://earth.google.com/earth/rpc/cc/icon?color=1976d2&id=2000&scale=4"));
+		gx2Href.appendChild(doc.createTextNode("https://earth.google.com/earth/rpc/cc/icon?color=1976d2&id=2000&scale=4")); // link to image for pointer to st_point
 		
-		Element gx2LineStyle = doc.createElement("LineStyle");
+		Element gx2LineStyle = doc.createElement("LineStyle"); //style of st_linestring
 		gx2Style.appendChild(gx2LineStyle);
 		Element gx2LineColor = doc.createElement("color");
 		gx2LineStyle.appendChild(gx2LineColor);
@@ -1667,14 +1669,14 @@ public class CLI
 		gx2LineStyle.appendChild(gx2LineWidth);
 		gx2LineWidth.appendChild(doc.createTextNode("3"));
 		
-		Element gx2PolyStyle= doc.createElement("PolyStyle");
+		Element gx2PolyStyle= doc.createElement("PolyStyle"); //style of st_polygon
 		gx2Style.appendChild(gx2PolyStyle);
 		Element gx2PolyColor = doc.createElement("color");
 		gx2PolyStyle.appendChild(gx2PolyColor);
 		gx2PolyColor.appendChild(doc.createTextNode("40ffffff"));
 
 		//generate stylemap
-		Element stylemap = doc.createElement("StyleMap");
+		Element stylemap = doc.createElement("StyleMap"); //stylemap, switches between the normal and highlighted styles
 		documentElement.appendChild(stylemap);
 		Attr stylemapID = doc.createAttribute("id");
 		stylemapID.setValue("__managed_style_02DBC6391B1971D9081A");
@@ -1724,10 +1726,10 @@ public class CLI
 		Transformer transformer = transformerFactory.newTransformer();
 		DOMSource source = new DOMSource(doc);
 
-		StreamResult result =  new StreamResult(new File("/ocient/db/testing.kml"));
+		StreamResult result =  new StreamResult(new File("/ocient/db/testing.kml")); //prints result to target file
 		transformer.transform(source, result);
 
-		System.out.println("Done");
+		System.out.println("Outputed GIS results to /ocient/db/testing.kml");
 	}
 
 	private static void printAllQueries(final ArrayList<SysQueriesRow> queries)
