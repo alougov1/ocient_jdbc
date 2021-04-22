@@ -5,6 +5,14 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[]
+== 2.01 (2021-4-20)
+
+New Features:: 
+
+ * Better build integration with xgsrc
+ * Upgraded protobuf to version 3.14
+
+//tag::compact[]
 == 2.00 (2021-4-17)
 
 New Features:: 

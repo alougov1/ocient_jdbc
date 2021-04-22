@@ -7,3 +7,9 @@ tmp/
 scripts/*.test
 scripts/*/*.test
 target/
+
+# Bazel stuff
+bazel-bin
+bazel-ocient_jdbc
+bazel-out
+bazel-testlogs

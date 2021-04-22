@@ -1,0 +1,1 @@
+bazel run @com_google_protobuf//:protoc -- "$@"

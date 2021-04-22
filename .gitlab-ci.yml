@@ -27,21 +27,9 @@ build-deps:
     - test -f ${DEPLOY_SETTINGS_XML}
 
     #set versions
-    - PROTOC_VERSION=3.5.1
     - JDK_VERSION=13.0.1
     - MVN_VERSION=3.3.9
 
-    # build protobuf
-    - wget -nv http://i01-fil-001/xgsrc/ext/protobuf-$PROTOC_VERSION.tar.gz
-    - tar xzf protobuf-${PROTOC_VERSION}.tar.gz
-    - rm protobuf-${PROTOC_VERSION}.tar.gz
-    - cd protobuf-${PROTOC_VERSION}
-    - ./autogen.sh
-    - ./configure
-    - make -j20
-    - make check -j20
-    - export PATH=$PATH:"$(pwd)/src"
-    - cd ..
     # download a jdk
     - wget -nv http://i01-fil-001/xgsrc/toolchain/jdk-${JDK_VERSION}_linux-x64_bin.tar.gz
     - tar xzf jdk-${JDK_VERSION}_linux-x64_bin.tar.gz
@@ -54,7 +42,6 @@ build-deps:
     - rm apache-maven-${MVN_VERSION}-bin.tar.gz
     - export PATH=$PATH:"$(pwd)/apache-maven-${MVN_VERSION}/bin"
 
-    - protoc --version
     - javac -version
     - mvn --version
 
@@ -81,7 +68,6 @@ build-deps:
 
     - rm -rf $JAR_DIR
     - rm -rf target
-    - rm -rf protobuf-${PROTOC_VERSION}
     - rm -rf jdk-${JDK_VERSION}
     - rm -rf apache-maven-${MVN_VERSION}
     - rm -rf .m2
