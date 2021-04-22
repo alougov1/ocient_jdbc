@@ -81,24 +81,7 @@ public class XGStatement implements Statement
 		@Override
 		public void run()
 		{
-			// Reset statement
-			reset();
-
-			// Cache this
-			synchronized (cache)
-			{
-				HashSet<XGStatement> list = cache.get(conn);
-				if (list == null)
-				{
-					list = new HashSet<>();
-					list.add(stmt);
-					cache.put(conn, list);
-				}
-				else
-				{
-					list.add(stmt);
-				}
-			}
+			stmt.returnStatementToCache();
 
 			try {
 				JDBCDriver driver = (JDBCDriver)DriverManager.getDriver(conn.getURL());
@@ -158,6 +141,27 @@ public class XGStatement implements Statement
 			return m.group(name).toLowerCase();
 		}
 		return m.group(name);
+	}
+
+	public void returnStatementToCache(){
+		// Reset statement
+		reset();
+
+		// Cache this
+		synchronized (cache)
+		{
+			HashSet<XGStatement> list = cache.get(conn);
+			if (list == null)
+			{
+				list = new HashSet<>();
+				list.add(this);
+				cache.put(conn, list);
+			}
+			else
+			{
+				list.add(this);
+			}
+		}
 	}
 
 	private static byte[] intToBytes(final int val)
@@ -412,7 +416,7 @@ public class XGStatement implements Statement
 
 	protected boolean closed = false;
 
-	protected final XGConnection conn;
+	protected XGConnection conn;
 	protected XGResultSet result;
 
 	private int updateCount = -1;

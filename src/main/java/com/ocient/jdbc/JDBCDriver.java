@@ -460,5 +460,6 @@ public class JDBCDriver implements Driver
 		for(Timer timer: cacheTimerTasks.keySet()){
 			timer.cancel();
 		}
+		XGResultSet.cancelAsyncFetchThreads();
 	}
 }

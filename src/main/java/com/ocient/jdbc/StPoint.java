@@ -38,10 +38,11 @@ public class StPoint
 	@Override
 	public String toString()
 	{
-		if(Double.isInfinite(lat) && Double.isInfinite(lon)) {
+		if (Double.isInfinite(lat) || Double.isInfinite(lon))
+		{
 			return "POINT EMPTY";
 		}
-		return "(" + lat + ", " + lon + ")";
+		return "POINT(" + lon + " " + lat + ")";
 	}
 
 	public void writeXML(Document doc, Element docElement, String name)

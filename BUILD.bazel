@@ -1,0 +1,17 @@
+genrule(
+    name = "mvn_package",
+    srcs = glob(["src/**"]) + [
+        "spotbugs-exclude.xml",
+        "pom.xml",
+    ],
+    outs = [
+        "ocient-jdbc4-jar-with-dependencies.jar",
+    ],
+    cmd = """
+mvn -f $(rootpath pom.xml) package -Dprotoc=$(execpath @com_google_protobuf//:protoc) &&
+cp -r $$(dirname $(rootpath pom.xml))/target/ocient-jdbc4-*-jar-with-dependencies.jar $(RULEDIR)/ocient-jdbc4-jar-with-dependencies.jar
+""",
+    tags = ["no-remote"],
+    tools = ["@com_google_protobuf//:protoc"],
+    visibility = ["//visibility:public"],
+)
