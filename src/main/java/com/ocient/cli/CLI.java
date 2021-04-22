@@ -65,6 +65,7 @@ public class CLI
 	private static boolean trace = false;
 	private static boolean performance = false;
 	private static String outputCSVFile = "";
+	private static String outputKMLFile = "";
 	private static String db;
 	private static String user;
 	private static String pwd;
@@ -1485,9 +1486,24 @@ public class CLI
 		}
 	}
 
+	private static void outputGISQuery(final String cmd)
+	{
+		try
+		{
+			outputKMLFile = cmd.substring("OUTPUT GIS KML ".length()).trim();
+			if (outputKMLFile.isEmpty())
+			{
+				System.out.println("Provide a filename to output the query to");
+			}
+		}
+		catch (final Exception e)
+		{
+			System.out.println("CLI Error: " + e.getMessage());
+		}
+	}
+
 	private static void outputResultSet(final ResultSet rs, final ResultSetMetaData meta) throws Exception
 	{
-		outputGeospatial(rs, meta);
 		final FileWriter fw = new FileWriter(outputCSVFile);
 		final BufferedWriter out = new BufferedWriter(fw);
 		try
@@ -1726,10 +1742,10 @@ public class CLI
 		Transformer transformer = transformerFactory.newTransformer();
 		DOMSource source = new DOMSource(doc);
 
-		StreamResult result =  new StreamResult(new File("/ocient/db/testing.kml")); //prints result to target file
+		StreamResult result =  new StreamResult(new File(outputKMLFile)); //prints result to target file
 		transformer.transform(source, result);
 
-		System.out.println("Outputed GIS results to /ocient/db/testing.kml");
+		System.out.println("Outputed GIS results to " + outputKMLFile);
 	}
 
 	private static void printAllQueries(final ArrayList<SysQueriesRow> queries)
@@ -1998,6 +2014,10 @@ public class CLI
 		{
 			outputNextQuery(cmd);
 		}
+		else if (startsWithIgnoreCase(cmd, "OUTPUT GIS KML"))
+		{
+			outputGISQuery(cmd);
+		}
 		else if (startsWithIgnoreCase(cmd, "FORCE EXTERNAL"))
 		{
 			forceExternal(cmd);
@@ -2088,15 +2108,20 @@ public class CLI
 			rs = stmt.executeQuery(cmd);
 			printWarnings(stmt);
 			final ResultSetMetaData meta = rs.getMetaData();
-
-			if (outputCSVFile.isEmpty())
-			{
-				printResultSet(rs, meta);
-			}
-			else
-			{
-				outputResultSet(rs, meta);
-				outputCSVFile = "";
+			
+			if(outputKMLFile.isEmpty()) {
+				if (outputCSVFile.isEmpty())
+				{
+					printResultSet(rs, meta);
+				}
+				else
+				{
+					outputResultSet(rs, meta);
+					outputCSVFile = "";
+				}
+			} else {
+				outputGeospatial(rs, meta);
+				outputKMLFile = "";
 			}
 			printWarnings(rs);
 			end = System.currentTimeMillis();
