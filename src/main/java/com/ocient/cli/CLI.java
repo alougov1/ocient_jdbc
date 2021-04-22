@@ -1724,7 +1724,7 @@ public class CLI
 		Transformer transformer = transformerFactory.newTransformer();
 		DOMSource source = new DOMSource(doc);
 
-		StreamResult result =  new StreamResult(new File("testing.kml"));
+		StreamResult result =  new StreamResult(new File("/ocient/db/testing.kml"));
 		transformer.transform(source, result);
 
 		System.out.println("Done");
