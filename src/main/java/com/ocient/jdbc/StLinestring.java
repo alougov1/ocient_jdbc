@@ -19,33 +19,33 @@ public class StLinestring
 	public String toString()
 	{
 		if (points == null || points.size() == 0) {
-            return "LINESTRING EMPTY";
-        }
-        final StringBuilder str = new StringBuilder();
-        str.append("LINESTRING(");
-        for (int i = 0; i < points.size(); i++) {
-            StPoint point = points.get(i);
-            str.append(point.getX());
-            str.append(" ");
-            str.append(point.getY());
-            if(i < points.size() - 1) {
-                str.append(", ");
-            }
-        }
-        str.append(")");
-        return str.toString();
+			return "LINESTRING EMPTY";
+		}
+		final StringBuilder str = new StringBuilder();
+		str.append("LINESTRING(");
+		for (int i = 0; i < points.size(); i++) {
+			StPoint point = points.get(i);
+			str.append(point.getX());
+			str.append(" ");
+			str.append(point.getY());
+			if(i < points.size() - 1) {
+				str.append(", ");
+			}
+		}
+		str.append(")");
+		return str.toString();
 	}
 
-    public void writeXML(Document doc, Element docElement, String name)
+	public void writeXML(Document doc, Element docElement, String name)
 	{
-        Element placemark = doc.createElement("Placemark");
+		Element placemark = doc.createElement("Placemark");
 		docElement.appendChild(placemark);
 
 		Element lineName = doc.createElement("name");
 		lineName.appendChild(doc.createTextNode(name));
 		placemark.appendChild(lineName);        
 
-        Element lineStyle = doc.createElement("styleUrl");
+		Element lineStyle = doc.createElement("styleUrl");
 		lineStyle.appendChild(doc.createTextNode("__managed_style_02DBC6391B1971D9081A"));
 		placemark.appendChild(lineStyle);
 
@@ -57,11 +57,11 @@ public class StLinestring
 		line.setAttributeNode(lineID);
 
 		Element coords = doc.createElement("coordinates");
-        String coordinates = "";
-        for(StPoint point : points) {
-            coordinates += point.getX() + "," + point.getY() + " ";
-        }
-        coords.appendChild(doc.createTextNode(coordinates));
-        line.appendChild(coords);
+		String coordinates = "";
+		for(StPoint point : points) {
+			coordinates += point.getX() + "," + point.getY() + " ";
+		}
+		coords.appendChild(doc.createTextNode(coordinates));
+		line.appendChild(coords);
 	}
 }
