@@ -15,6 +15,10 @@ public class StLinestring
 		this.points = points;
 	}
 
+    public List<StPoint> getPoints(){
+        return points; 
+    }
+    
 	@Override
 	public String toString()
 	{

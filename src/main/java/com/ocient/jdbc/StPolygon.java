@@ -17,6 +17,14 @@ public class StPolygon
 		this.holes = holes;
 	}
 
+    public List<StPoint> getExterior(){
+        return exterior; 
+    }
+    
+    public List<List<StPoint>> getHoles(){
+        return holes; 
+    }
+
 	@Override
 	public String toString()
 	{
