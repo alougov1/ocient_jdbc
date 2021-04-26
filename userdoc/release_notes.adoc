@@ -4,6 +4,20 @@
 All our jdbc drivers are located {drivers_repo}[here]. 
 Below is the release notes for every driver version that has customer implication.
 
+//tag::compact[] 
+== 2.04 (2021-4-22)
+
+New Features:: 
+
+ * Added getters to GIS types
+ 
+//tag::compact[]
+== 2.03 (2021-4-22)
+
+New Features:: 
+
+ * Output next query also prints all gis types into a kml file
+
 //tag::compact[]
 == 2.01 (2021-4-20)
 
