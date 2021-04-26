@@ -68,7 +68,12 @@ public class XGPreparedStatement extends XGStatement implements PreparedStatemen
 				synchronized(driver.cacheTimerTasks){
 					driver.cacheTimerTasks.remove(timer);
 				}
-			} catch(final Exception e){
+			} 
+			catch(final RuntimeException e)
+			{
+				LOGGER.log(Level.WARNING, "Failed to fetch jdbc driver.");
+			}
+			catch(final Exception e){
 				LOGGER.log(Level.WARNING, "Failed to fetch jdbc driver.");
 			}
 
@@ -325,7 +330,12 @@ public class XGPreparedStatement extends XGStatement implements PreparedStatemen
 					synchronized(driver.cacheTimerTasks){
 						driver.cacheTimerTasks.put(timer, timer);
 					}
-				} catch(final Exception e){
+				}
+				catch(RuntimeException e)
+				{
+					LOGGER.log(Level.WARNING, "Failed to fetch jdbc driver.");
+				} 
+				catch(final Exception e){
 					LOGGER.log(Level.WARNING, "Failed to fetch jdbc driver.");
 				}
 			}

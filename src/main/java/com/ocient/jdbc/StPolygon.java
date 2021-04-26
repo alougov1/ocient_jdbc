@@ -93,10 +93,14 @@ public class StPolygon
 		outer.appendChild(linRing);
 
 		Element coords = doc.createElement("coordinates");
-		String coordinates = "";
+		StringBuffer coordinatesBuilder = new StringBuffer();
 		for(StPoint point : exterior) {
-			coordinates += point.getX() + "," + point.getY() + " ";
+			coordinatesBuilder.append(point.getX());
+			coordinatesBuilder.append(",");
+			coordinatesBuilder.append(point.getY());
+			coordinatesBuilder.append(" ");
 		}
+		String coordinates = coordinatesBuilder.toString();
 		coords.appendChild(doc.createTextNode(coordinates));
 		linRing.appendChild(coords);
 
@@ -107,10 +111,14 @@ public class StPolygon
 				Element linRingInner = doc.createElement("LinearRing");
 				inner.appendChild(linRingInner);
 				Element innerCoords = doc.createElement("coordinates");
-				String innerCoordinates = "";
+				StringBuffer innerCoordinatesBuilder = new StringBuffer();
 				for(StPoint point : ring) {
-					innerCoordinates += point.getX() + "," + point.getY() + " ";
+					innerCoordinatesBuilder.append(point.getX());
+					innerCoordinatesBuilder.append(",");
+					innerCoordinatesBuilder.append(point.getY());
+					innerCoordinatesBuilder.append(" ");
 				}
+				String innerCoordinates = innerCoordinatesBuilder.toString();
 				innerCoords.appendChild(doc.createTextNode(innerCoordinates));
 				linRingInner.appendChild(innerCoords);
 			}
