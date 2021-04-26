@@ -89,7 +89,12 @@ public class XGStatement implements Statement
 				synchronized(driver.cacheTimerTasks){
 					driver.cacheTimerTasks.remove(timer);
 				}
-			} catch(final Exception e){
+			}
+			catch(RuntimeException e)
+			{
+				LOGGER.log(Level.WARNING, "Failed to fetch jdbc driver.");
+			} 
+			catch(final Exception e){
 				LOGGER.log(Level.WARNING, "Failed to fetch jdbc driver.");
 			}
 
@@ -653,7 +658,12 @@ public class XGStatement implements Statement
 					synchronized(driver.cacheTimerTasks){
 						driver.cacheTimerTasks.put(timer, timer);
 					}
-				} catch(final Exception e){
+				}
+				catch(RuntimeException e)
+				{
+					LOGGER.log(Level.WARNING, "Failed to fetch jdbc driver.");
+				}
+				catch(final Exception e){
 					LOGGER.log(Level.WARNING, "Failed to fetch jdbc driver.");
 				}
 			}

@@ -61,10 +61,14 @@ public class StLinestring
 		line.setAttributeNode(lineID);
 
 		Element coords = doc.createElement("coordinates");
-		String coordinates = "";
+		StringBuffer coordinatesBuilder = new StringBuffer();
 		for(StPoint point : points) {
-			coordinates += point.getX() + "," + point.getY() + " ";
+			coordinatesBuilder.append(point.getX());
+			coordinatesBuilder.append(",");
+			coordinatesBuilder.append(point.getY());
+			coordinatesBuilder.append(" ");
 		}
+		String coordinates = coordinatesBuilder.toString();
 		coords.appendChild(doc.createTextNode(coordinates));
 		line.appendChild(coords);
 	}

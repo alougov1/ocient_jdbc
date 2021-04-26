@@ -5,9 +5,12 @@ import java.io.BufferedWriter;
 import java.io.Console;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -1504,8 +1507,8 @@ public class CLI
 
 	private static void outputResultSet(final ResultSet rs, final ResultSetMetaData meta) throws Exception
 	{
-		final FileWriter fw = new FileWriter(outputCSVFile);
-		final BufferedWriter out = new BufferedWriter(fw);
+		Writer osw = new OutputStreamWriter(new FileOutputStream(outputCSVFile), Charset.defaultCharset());
+		final BufferedWriter out = new BufferedWriter(osw);
 		try
 		{
 			for (int i = 1; i <= meta.getColumnCount(); i++)

@@ -160,7 +160,12 @@ public final class XGResultSet implements ResultSet
 					// Set the stmt connection and return it to the cache. Don't need the timer task.
 					cachedOrNewStatement.conn = oldConn;
 					cachedOrNewStatement.returnStatementToCache();
-				} catch(final Exception e)
+				}
+				catch(RuntimeException e)
+				{
+					LOGGER.log(Level.WARNING, "Unable to create new statement in order to finish fetching result set due to cache time limit hit");
+				}
+				catch(final Exception e)
 				{
 					LOGGER.log(Level.WARNING, "Unable to create new statement in order to finish fetching result set due to cache time limit hit");
 				}
