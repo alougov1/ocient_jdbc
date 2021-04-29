@@ -44,6 +44,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.UUID;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
@@ -309,6 +310,7 @@ public class XGConnection implements Connection
 	// The timer is initially null, created when the first query timeout is set and
 	// destroyed on close()
 	private final AtomicReference<Timer> timer = new AtomicReference<>();
+	private static final String sessionID = UUID.randomUUID().toString();
 
 	protected String pwd;
 	private int retryCounter;
@@ -439,6 +441,7 @@ public class XGConnection implements Connection
 			int minorClientVersion = Integer.parseInt(majorMinorVersion[1]);
 			builder.setMajorClientVersion(majorClientVersion);
 			builder.setMinorClientVersion(minorClientVersion);
+			builder.setSessionID(sessionID);
 			final ClientConnectionGCM msg = builder.build();
 			ClientWireProtocol.Request.Builder b2 = ClientWireProtocol.Request.newBuilder();
 			b2.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION_GCM);
@@ -705,6 +708,7 @@ public class XGConnection implements Connection
 			int minorClientVersion = Integer.parseInt(majorMinorVersion[1]);
 			builder.setMajorClientVersion(majorClientVersion);
 			builder.setMinorClientVersion(minorClientVersion);
+			builder.setSessionID(sessionID);
 			final ClientConnection msg = builder.build();
 			ClientWireProtocol.Request.Builder b2 = ClientWireProtocol.Request.newBuilder();
 			b2.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION);
@@ -2001,6 +2005,7 @@ public class XGConnection implements Connection
 		}
 		catch (final IOException e)
 		{
+			LOGGER.log(Level.WARNING, "Reconnect failed to close a previous socket.");
 		}
 
 		if (force)

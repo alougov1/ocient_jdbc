@@ -5,6 +5,14 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[] 
+== 2.05 (2021-4-29)
+
+New Features:: 
+
+ * Add a log for if reconnect() fails to close a socket.
+ * Driver sends over unique session ID to server.
+
+//tag::compact[] 
 == 2.05 (2021-4-28)
 
 New Features:: 
