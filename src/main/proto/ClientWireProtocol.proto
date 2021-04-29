@@ -13,6 +13,7 @@ message ClientConnection
 	string version = 4;
 	int32 majorClientVersion = 5;
 	int32 minorClientVersion = 6;
+	string sessionID = 7;
 }
 
 message ClientConnectionGCM
@@ -23,6 +24,7 @@ message ClientConnectionGCM
 	string version = 4;
 	int32 majorClientVersion = 5;
 	int32 minorClientVersion = 6;
+	string sessionID = 7;
 }
 
 message ClientConnectionResponse 
