@@ -11,6 +11,7 @@ New Features::
 
  * Add a log for if reconnect() fails to close a socket.
  * Driver sends over unique session ID to server.
+ * Fix a misleading log in client handshake.
 
 //tag::compact[] 
 == 2.05 (2021-4-28)

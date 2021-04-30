@@ -654,7 +654,7 @@ public class XGConnection implements Connection
 				// return here.
 				if (!getVersion().equals(""))
 				{
-					LOGGER.log(Level.WARNING, String.format("Returning in redirect because we were redirected with address: %s", serverVersion));
+					LOGGER.log(Level.INFO, "Returning in handshake redirect. Already have protocol version.");
 					return;
 				}
 			}
@@ -920,7 +920,7 @@ public class XGConnection implements Connection
 				// return here.
 				if (!getVersion().equals(""))
 				{
-					LOGGER.log(Level.WARNING, String.format("Returning in redirect because we were redirected with address: %s", serverVersion));
+					LOGGER.log(Level.INFO, "Returning in handshake redirect. Already have protocol version.");
 					return;
 				}
 			}
