@@ -2492,10 +2492,10 @@ public class XGStatement implements Statement
 		{
 			if (e instanceof SQLException)
 			{
-				LOGGER.log(Level.WARNING, "sendAndReceive() throw SQLException e.");
+				LOGGER.log(Level.WARNING, "sendAndReceive() failed.");
 				throw (SQLException) e;
 			}
-			LOGGER.log(Level.WARNING, "sendAndReceive() throw new generic exception e");
+			LOGGER.log(Level.WARNING, "sendAndReceive() failed.");
 			throw SQLStates.newGenericException(e);
 		}
 	}
