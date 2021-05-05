@@ -250,6 +250,9 @@ public final class SQLStates implements Cloneable
 	private static int CLUSTER_NOT_FOUND_CODE = -1111;
 	private static int CLUSTER_ALREADY_EXISTS_CODE = -1112;
 
+	private static int OBJECT_NOT_FOUND_WARN_CODE = 1113; // warning
+	private static int OBJECT_ALREADY_EXISTS_WARN_CODE = 1114; // warning
+
 	public static final SQLStates INVALID_RESPONSE_TYPE = new SQLStates("Received a response from the server that was not ok, warning, or error", SYSTEM_ERROR, INVALID_RESPONSE_CODE);
 	public static final SQLStates INVALID_COLUMN_TYPE = new SQLStates("Corruption of serialized result set", SYSTEM_ERROR, INVALID_COLUMN_CODE);
 	public static final SQLStates MALFORMED_URL = new SQLStates("Malformed connection URL", UNABLE_TO_CONNECT, MALFORMED_URL_CODE);
@@ -412,6 +415,8 @@ public final class SQLStates implements Cloneable
 	public static final SQLStates TASK_ALREADY_IN_PROGRESS = new SQLStates("Task already in progress", DUPLICATE_OBJECT, TASK_ALREADY_IN_PROGRESS_ERROR_CODE);
 	public static final SQLStates ID_NOT_FOUND = new SQLStates("The provided object was not found", OBJECT_NOT_FOUND_STATE, ID_NOT_FOUND_CODE);
 	public static final SQLStates ROLE_NOT_FOUND = new SQLStates("The referenced role does not exist", OBJECT_NOT_FOUND_STATE, ROLE_NOT_FOUND_CODE);
+	public static final SQLStates OBJECT_NOT_FOUND_WARN = new SQLStates("The referenced object does not exist", OBJECT_NOT_FOUND_STATE, OBJECT_NOT_FOUND_WARN_CODE);
+	public static final SQLStates OBJECT_ALREADY_EXISTS_WARN = new SQLStates("An object with that name exists", DUPLICATE_OBJECT, OBJECT_ALREADY_EXISTS_WARN_CODE);
 
 	public static final SQLException newGenericException(final Exception e)
 	{
