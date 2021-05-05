@@ -11,6 +11,7 @@ New Features::
 
  * Add OBJECT_NOT_FOUND_WARN warning.
  * Add OBJECT_ALREADY_EXISTS_WARN warning.
+ * Fix some misleading log messages.
 
 //tag::compact[] 
 == 2.06 (2021-4-29)
