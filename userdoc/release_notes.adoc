@@ -5,6 +5,14 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[] 
+== 2.07 (2021-5-05)
+
+New Features:: 
+
+ * Add OBJECT_NOT_FOUND_WARN warning.
+ * Add OBJECT_ALREADY_EXISTS_WARN warning.
+
+//tag::compact[] 
 == 2.06 (2021-4-29)
 
 New Features:: 
