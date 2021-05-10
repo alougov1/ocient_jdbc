@@ -5,6 +5,14 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[] 
+== 2.08 (2021-5-10)
+
+New Features:: 
+
+ * Add versions packaging to pom.xml.
+ * Updated dependencies to latest version using versions plugin.
+
+//tag::compact[] 
 == 2.07 (2021-5-05)
 
 New Features:: 
