@@ -11,6 +11,7 @@ New Features::
 
  * Add versions packaging to pom.xml.
  * Updated dependencies to latest version using versions plugin.
+ * Change TLS to unverified by default.
 
 //tag::compact[] 
 == 2.07 (2021-5-05)

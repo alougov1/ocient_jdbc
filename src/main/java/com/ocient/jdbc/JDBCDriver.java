@@ -247,7 +247,7 @@ public class JDBCDriver implements Driver
 		final String user = properties.getProperty("user");
 		final String pwd = properties.getProperty("password");
 		final String force = properties.getProperty("force");
-		final String tlsStr = properties.getProperty("tls", "OFF").toUpperCase();
+		final String tlsStr = properties.getProperty("tls", "UNVERIFIED").toUpperCase();
 		final XGConnection.Tls tls = XGConnection.Tls.valueOf(tlsStr);
 		XGConnection conn = null;
 
