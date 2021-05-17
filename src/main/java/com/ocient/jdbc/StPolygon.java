@@ -67,7 +67,7 @@ public class StPolygon
 		return str.toString();
 	}
 
-	public void writeXML(Document doc, Element docElement, String name)
+	public void writeXML(Document doc, Element docElement, String name, String description, int id)
 	{
 		Element placemark = doc.createElement("Placemark");
 		docElement.appendChild(placemark);
@@ -76,8 +76,12 @@ public class StPolygon
 		polyName.appendChild(doc.createTextNode(name));
 		placemark.appendChild(polyName);        
 
+		Element lineDescription = doc.createElement("description");
+		lineDescription.appendChild(doc.createTextNode(description));
+		placemark.appendChild(lineDescription);
+
 		Element polyStyle = doc.createElement("styleUrl");
-		polyStyle.appendChild(doc.createTextNode("__managed_style_02DBC6391B1971D9081A"));
+		polyStyle.appendChild(doc.createTextNode("#" + Integer.toString(id % 10)));
 		placemark.appendChild(polyStyle);
 
 		Element poly = doc.createElement("Polygon");

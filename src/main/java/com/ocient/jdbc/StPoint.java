@@ -45,7 +45,7 @@ public class StPoint
 		return "POINT(" + lon + " " + lat + ")";
 	}
 
-	public void writeXML(Document doc, Element docElement, String name)
+	public void writeXML(Document doc, Element docElement, String name, String description, int id)
 	{
 		Element placemark = doc.createElement("Placemark");
 		docElement.appendChild(placemark);
@@ -54,8 +54,12 @@ public class StPoint
 		pointName.appendChild(doc.createTextNode(name));
 		placemark.appendChild(pointName);
 
+		Element pointDescription = doc.createElement("description");
+		pointDescription.appendChild(doc.createTextNode(description));
+		placemark.appendChild(pointDescription);
+
 		Element pointStyle = doc.createElement("styleUrl");
-		pointStyle.appendChild(doc.createTextNode("__managed_style_02DBC6391B1971D9081A"));
+		pointStyle.appendChild(doc.createTextNode("#" + Integer.toString(id % 10)));
 		placemark.appendChild(pointStyle);
 		
 		Element point = doc.createElement("Point");
