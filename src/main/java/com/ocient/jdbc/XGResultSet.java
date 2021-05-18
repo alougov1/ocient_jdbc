@@ -139,7 +139,7 @@ public final class XGResultSet implements ResultSet
 					XGConnection oldConn = conn;
 					// Give the userstatement the new connection.
 					stmt.conn = cachedOrNewStatement.conn;
-					// The cachedOrNewStatement will just be thrown out. Incorrect comment
+
 					cachedOrNewStatement.conn = null;
 					cachedOrNewStatement.result = null;
 
