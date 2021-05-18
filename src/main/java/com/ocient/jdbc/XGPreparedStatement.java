@@ -8,8 +8,6 @@ import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
-import java.sql.Driver;
-import java.sql.DriverManager;
 import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
@@ -61,20 +59,6 @@ public class XGPreparedStatement extends XGStatement implements PreparedStatemen
 				{
 					list.add(stmt);
 				}
-			}
-			try {
-				JDBCDriver driver = (JDBCDriver)DriverManager.getDriver(conn.getURL());
-				// Remove this timer task from the set of inflight cache timer tasks.
-				synchronized(driver.cacheTimerTasks){
-					driver.cacheTimerTasks.remove(timer);
-				}
-			} 
-			catch(final RuntimeException e)
-			{
-				LOGGER.log(Level.WARNING, "Failed to fetch jdbc driver.");
-			}
-			catch(final Exception e){
-				LOGGER.log(Level.WARNING, "Failed to fetch jdbc driver.");
 			}
 
 			timer.cancel(); // Terminate the timer thread
@@ -306,7 +290,8 @@ public class XGPreparedStatement extends XGStatement implements PreparedStatemen
 
 			if (poolable)
 			{
-				timer = new Timer();
+				// This sets the timer task as a daemon
+				timer = new Timer(true);
 				/*!
 				 * When the first connection is created, that connection will not have a server 
 				 * version and empty setSchema and default schema. It will copy that connection and 
@@ -324,20 +309,6 @@ public class XGPreparedStatement extends XGStatement implements PreparedStatemen
 					LOGGER.log(Level.INFO,String.format("After correcting incorrect default schema. defaultSchema: %s", conn.defaultSchema));
 				}
 				timer.schedule(new ReturnToCacheTask(this), 30 * 1000);
-				try {
-					JDBCDriver driver = (JDBCDriver)DriverManager.getDriver(conn.getURL());
-					// Emplace this timer into the set of inflight cache timer tasks.
-					synchronized(driver.cacheTimerTasks){
-						driver.cacheTimerTasks.put(timer, timer);
-					}
-				}
-				catch(RuntimeException e)
-				{
-					LOGGER.log(Level.WARNING, "Failed to fetch jdbc driver.");
-				} 
-				catch(final Exception e){
-					LOGGER.log(Level.WARNING, "Failed to fetch jdbc driver.");
-				}
 			}
 			else
 			{
