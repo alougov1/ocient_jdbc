@@ -14,7 +14,6 @@ import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.Timer;
 
 public class JDBCDriver implements Driver
 {
@@ -38,7 +37,6 @@ public class JDBCDriver implements Driver
 	}
 
 	private static HashMap<XGConnection,XGConnection> seenConnections = new HashMap<XGConnection,XGConnection>();
-	public HashMap<Timer,Timer> cacheTimerTasks = new HashMap<Timer,Timer>();
 
 	@Override
 	public boolean acceptsURL(final String arg0) throws SQLException
@@ -450,16 +448,5 @@ public class JDBCDriver implements Driver
 	public boolean jdbcCompliant()
 	{
 		return false;
-	}
-
-	/*!
-	 * Cancels all background threads that are returning statement objects to the statement cache pool.
-	 */
-	public void cancelCacheThreads(){
-		LOGGER.log(Level.INFO, String.format("Canceling %d cache timer tasks", cacheTimerTasks.size()));
-		for(Timer timer: cacheTimerTasks.keySet()){
-			timer.cancel();
-		}
-		XGResultSet.cancelAsyncFetchThreads();
 	}
 }
