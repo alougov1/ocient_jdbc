@@ -198,7 +198,7 @@ public class KML {
 					}
 				}
 			}
-			description.append("</div>");
+			description.append("</div>]]>");
 
 			for (int i = 1; i <= meta.getColumnCount(); i++)
 			{
