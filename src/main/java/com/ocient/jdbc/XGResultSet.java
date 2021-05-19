@@ -139,7 +139,7 @@ public final class XGResultSet implements ResultSet
 					XGConnection oldConn = conn;
 					// Give the userstatement the new connection.
 					stmt.conn = cachedOrNewStatement.conn;
-					// The cachedOrNewStatement will just be thrown out.
+
 					cachedOrNewStatement.conn = null;
 					cachedOrNewStatement.result = null;
 
@@ -149,17 +149,11 @@ public final class XGResultSet implements ResultSet
 					final ArrayList<Object> alo = new ArrayList<>();
 					alo.add(cacheLimitException);
 					rsQueue.put(alo);
-					// Add this to the list of background fetching threads.
-					synchronized(asyncFetchThreads){
-						asyncFetchThreads.put(Thread.currentThread(), Thread.currentThread());
-					}
-					asyncFinishFetch(oldConn);
-					synchronized(asyncFetchThreads){
-						asyncFetchThreads.remove(Thread.currentThread());
-					}
-					// Set the stmt connection and return it to the cache. Don't need the timer task.
-					cachedOrNewStatement.conn = oldConn;
-					cachedOrNewStatement.returnStatementToCache();
+
+					// The daemon thread will finish the fetch and return the statement to the cache.
+					Thread daemonThread = new Thread(new daemonFinishFetchThread(cachedOrNewStatement, oldConn));
+					daemonThread.setDaemon(true);
+					daemonThread.start();
 				}
 				catch(RuntimeException e)
 				{
@@ -222,7 +216,6 @@ public final class XGResultSet implements ResultSet
 	// Whether we hit the first cache break and need to do an asynchronous fetch until resultSet is finished.
 	private final AtomicBoolean cacheLimitBreak = new AtomicBoolean(false);
 	private SQLException cacheLimitException;
-	private static HashMap<Thread, Thread> asyncFetchThreads = new HashMap<Thread,Thread>();
 
 	public XGResultSet(final XGConnection conn, final ArrayList<Object> rs, final XGStatement stmt)
 	{
@@ -296,21 +289,6 @@ public final class XGResultSet implements ResultSet
 	{
 		LOGGER.log(Level.WARNING, "afterLast() was called, which is not supported");
 		throw new SQLFeatureNotSupportedException();
-	}
-
-	public static void cancelAsyncFetchThreads(){
-		LOGGER.log(Level.INFO, "Canceling asynchronous fetch threads.");
-		for(Thread thread: asyncFetchThreads.keySet()){
-			thread.interrupt();
-			try
-			{
-				thread.join();
-			}
-			catch (final Exception e)
-			{
-				LOGGER.log(Level.WARNING, "ERROR failed to cancel asynchronous fetch thread.");
-			}
-		}
 	}
 
 	/*
@@ -3937,5 +3915,26 @@ public final class XGResultSet implements ResultSet
 		}
 		LOGGER.log(Level.INFO, "searchDEM did not find DEM");
 		return false;
+	}
+
+	/*!
+	 * A daemon thread will fetch the rest the result thread after a cacheLimit break. We want 
+	 * this to be done on a daemon thread because we want the program to be able to exit
+	 * despite this thread still running.
+	 */
+	private class daemonFinishFetchThread implements Runnable{
+
+		public daemonFinishFetchThread(XGStatement stmtToCache, XGConnection connToFinish){
+			m_stmtToCache = stmtToCache;
+			m_connToFinish = connToFinish;
+		}
+
+		public void run(){
+			asyncFinishFetch(m_connToFinish);
+			m_stmtToCache.conn = m_connToFinish;
+			m_stmtToCache.returnStatementToCache();
+		}
+		private XGStatement m_stmtToCache;
+		private XGConnection m_connToFinish;
 	}
 }
