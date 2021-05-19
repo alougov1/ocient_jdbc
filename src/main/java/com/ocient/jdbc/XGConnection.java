@@ -1422,6 +1422,10 @@ public class XGConnection implements Connection
 		return database;
 	}
 
+	public Properties getProperties(){
+		return properties;
+	}
+
 	@Override
 	public int getHoldability() throws SQLException
 	{
