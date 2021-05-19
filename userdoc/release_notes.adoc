@@ -5,6 +5,15 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[] 
+== 2.10 (2021-5-19)
+
+New Features:: 
+
+ * Added 10 different colors for GIS types in KML
+ * Added non-GIS types to description of each GIS object in KML
+ * Moved KML feature from CLI to driver
+
+//tag::compact[] 
 == 2.09 (2021-5-18)
 
 New Features:: 
