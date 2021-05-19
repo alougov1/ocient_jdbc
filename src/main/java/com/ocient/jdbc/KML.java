@@ -127,8 +127,9 @@ public class KML {
 		highlightURL.appendChild(doc.createTextNode(styleNum + "B"));
 	}
 
-	public static void outputGeospatial(final ResultSet rs, final ResultSetMetaData meta) throws Exception {
-		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+	public static void outputGeospatial(final ResultSet rs) throws Exception {
+		final ResultSetMetaData meta = rs.getMetaData();
+        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 
 		Document doc = docBuilder.newDocument();

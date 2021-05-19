@@ -107,12 +107,12 @@ public class XGStatement implements Statement
 			KML.setKML(cmd.substring("OUTPUT GIS KML ".length()).trim());
 			if (KML.KMLIsEmpty())
 			{
-				System.out.println("Provide a filename to output the query to");
+				LOGGER.log(Level.INFO, "Provide a filename to output the query to");
 			}
 		}
 		catch (final Exception e)
 		{
-			System.out.println("CLI Error: " + e.getMessage());
+			LOGGER.log(Level.WARNING, "CLI Error: " + e.getMessage());
 		}
 	}
 
@@ -985,7 +985,7 @@ public class XGStatement implements Statement
 			result = conn.rs = new XGResultSet(conn, fetchSize, this, numClientThreads);
 
 			if(!KML.KMLIsEmpty()) {
-				KML.outputGeospatial(result, result.getMetaData());
+				KML.outputGeospatial(result);
 				KML.setKML("");
 			}
 		}
