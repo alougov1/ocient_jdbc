@@ -40,17 +40,21 @@ public class StLinestring
 		return str.toString();
 	}
 
-	public void writeXML(Document doc, Element docElement, String name)
+	public void writeXML(Document doc, Element docElement, String name, String description, int id)
 	{
 		Element placemark = doc.createElement("Placemark");
 		docElement.appendChild(placemark);
 
 		Element lineName = doc.createElement("name");
 		lineName.appendChild(doc.createTextNode(name));
-		placemark.appendChild(lineName);        
+		placemark.appendChild(lineName); 
+
+		Element lineDescription = doc.createElement("description");
+		lineDescription.appendChild(doc.createTextNode(description));
+		placemark.appendChild(lineDescription);       
 
 		Element lineStyle = doc.createElement("styleUrl");
-		lineStyle.appendChild(doc.createTextNode("__managed_style_02DBC6391B1971D9081A"));
+		lineStyle.appendChild(doc.createTextNode("#" + Integer.toString(id % 10)));
 		placemark.appendChild(lineStyle);
 
 		Element line = doc.createElement("LineString");

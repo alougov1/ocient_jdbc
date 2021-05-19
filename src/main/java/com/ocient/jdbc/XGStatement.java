@@ -59,6 +59,8 @@ import com.ocient.jdbc.proto.ClientWireProtocol.SysQueriesRow;
 import com.ocient.jdbc.proto.ClientWireProtocol.SystemWideCompletedQueries;
 import com.ocient.jdbc.proto.ClientWireProtocol.SystemWideQueries;
 
+import com.ocient.jdbc.KML;
+
 public class XGStatement implements Statement
 {
 	/** Same as {@link Runnable} but can throw an exception */
@@ -98,6 +100,21 @@ public class XGStatement implements Statement
 	private static Pattern listIndexesSyntax = Pattern.compile("list\\s+ind(ic|ex)es\\s+((" + tk("schema") + ")\\.)?(" + tk("table") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
 	private static Pattern describeTableSyntax = Pattern.compile("describe(\\s+table\\s+)?((" + tk("schema") + ")\\.)?(" + tk("table") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
 	private static Pattern describeViewSyntax = Pattern.compile("describe(\\s+view\\s+)?((" + tk("schema") + ")\\.)?(" + tk("view") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
+	
+	public static void setKMLFile(final String cmd) {
+		try
+		{
+			KML.setKML(cmd.substring("OUTPUT GIS KML ".length()).trim());
+			if (KML.KMLIsEmpty())
+			{
+				LOGGER.log(Level.INFO, "Provide a filename to output the query to");
+			}
+		}
+		catch (final Exception e)
+		{
+			LOGGER.log(Level.WARNING, "CLI Error: " + e.getMessage());
+		}
+	}
 
 	private static String bytesToHex(final byte[] in)
 	{
@@ -966,6 +983,11 @@ public class XGStatement implements Statement
 
 			LOGGER.log(Level.INFO, "Creating result set for query with " + numClientThreads + " result set threads");
 			result = conn.rs = new XGResultSet(conn, fetchSize, this, numClientThreads);
+
+			if(!KML.KMLIsEmpty()) {
+				KML.outputGeospatial(result);
+				KML.setKML("");
+			}
 		}
 		catch (final Exception e)
 		{

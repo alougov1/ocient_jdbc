@@ -39,25 +39,8 @@ import org.jline.terminal.TerminalBuilder;
 import com.ocient.jdbc.XGConnection;
 import com.ocient.jdbc.XGDatabaseMetaData;
 import com.ocient.jdbc.XGStatement;
+import com.ocient.jdbc.KML;
 import com.ocient.jdbc.proto.ClientWireProtocol.SysQueriesRow;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.XMLConstants;
-
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
-import com.ocient.jdbc.StPolygon;
-import com.ocient.jdbc.StPoint;
-import com.ocient.jdbc.StLinestring;
 
 public class CLI
 {
@@ -66,7 +49,6 @@ public class CLI
 	private static boolean trace = false;
 	private static boolean performance = false;
 	private static String outputCSVFile = "";
-	private static String outputKMLFile = "";
 	private static String db;
 	private static String user;
 	private static String pwd;
@@ -1484,22 +1466,6 @@ public class CLI
 		}
 	}
 
-	private static void outputGISQuery(final String cmd)
-	{
-		try
-		{
-			outputKMLFile = cmd.substring("OUTPUT GIS KML ".length()).trim();
-			if (outputKMLFile.isEmpty())
-			{
-				System.out.println("Provide a filename to output the query to");
-			}
-		}
-		catch (final Exception e)
-		{
-			System.out.println("CLI Error: " + e.getMessage());
-		}
-	}
-
 	private static void outputResultSet(final ResultSet rs, final ResultSetMetaData meta) throws Exception
 	{
 		Writer osw = new OutputStreamWriter(new FileOutputStream(outputCSVFile), Charset.defaultCharset());
@@ -1580,170 +1546,6 @@ public class CLI
 			out.close();
 			System.out.println("Error: " + e.getMessage());
 		}
-	}
-
-	private static void outputGeospatial(final ResultSet rs, final ResultSetMetaData meta) throws Exception {
-		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-
-		Document doc = docBuilder.newDocument();
-		//create kmlElement
-		Element kmlElement = doc.createElement("kml");
-		doc.appendChild(kmlElement);
-
-		//kml Attributes, should never need to change
-		Attr kmlAttrXMLNS = doc.createAttribute("xmlns");
-		kmlAttrXMLNS.setValue("http://www.opengis.net/kml/2.2");
-		kmlElement.setAttributeNode(kmlAttrXMLNS);
-
-		Attr kmlAttrGX = doc.createAttribute("xmlns:gx");
-		kmlAttrGX.setValue("http://www.google.com/kml/ext/2.2");
-		kmlElement.setAttributeNode(kmlAttrGX);
-
-		Attr kmlAttrKML = doc.createAttribute("xmlns:kml");
-		kmlAttrKML.setValue("http://www.opengis.net/kml/2.2");
-		kmlElement.setAttributeNode(kmlAttrKML);
-
-		Attr kmlAttrAtom = doc.createAttribute("xmlns:atom");
-		kmlAttrAtom.setValue("http://www.w3.org/2005/Atom");
-		kmlElement.setAttributeNode(kmlAttrAtom);
-
-		//create doc element
-		Element documentElement = doc.createElement("Document");
-		kmlElement.appendChild(documentElement);
-		
-		Attr docID = doc.createAttribute("id");
-		docID.setValue("1SYf0ab5Z9uWomNsdRt1GbNfojQtUNfC6");
-		documentElement.setAttributeNode(docID);
-
-		Element name = doc.createElement("name");
-		documentElement.appendChild(name);
-		
-		int count = 0; //counts how many objects we've visited to get row/column count
-		name.appendChild(doc.createTextNode("GIS")); //name of the GIS project
-
-		//generate 1st gx cascading style, used when object is not being hovered over
-		Element gx1 = doc.createElement("gx:CascadingStyle");
-		documentElement.appendChild(gx1);
-		Attr gx1ID = doc.createAttribute("kml:id");
-		gx1ID.setValue("__managed_style_1D3A7EA0A81971D9081A");
-		gx1.setAttributeNode(gx1ID);
-		Element gx1Style = doc.createElement("Style");
-		gx1.appendChild(gx1Style);
-		
-		Element gx1IconStyle = doc.createElement("IconStyle"); //style of st_points
-		gx1Style.appendChild(gx1IconStyle);
-		Element gx1Icon = doc.createElement("Icon");
-		gx1IconStyle.appendChild(gx1Icon);
-		Element gx1Href = doc.createElement("href");
-		gx1Icon.appendChild(gx1Href);
-		gx1Href.appendChild(doc.createTextNode("https://earth.google.com/earth/rpc/cc/icon?color=1976d2&id=2000&scale=4")); // link to image of map
-		
-		Element gx1LineStyle = doc.createElement("LineStyle"); // style of st_linestring
-		gx1Style.appendChild(gx1LineStyle);
-		Element gx1LineColor = doc.createElement("color"); 
-		gx1LineStyle.appendChild(gx1LineColor);
-		gx1LineColor.appendChild(doc.createTextNode("ff2dc0fb")); // lines are yellow
-		Element gx1LineWidth = doc.createElement("width");
-		gx1LineStyle.appendChild(gx1LineWidth);
-		gx1LineWidth.appendChild(doc.createTextNode("2"));
-		
-		Element gx1PolyStyle= doc.createElement("PolyStyle"); //style of st_polygon
-		gx1Style.appendChild(gx1PolyStyle);
-		Element gx1PolyColor = doc.createElement("color");
-		gx1PolyStyle.appendChild(gx1PolyColor);
-		gx1PolyColor.appendChild(doc.createTextNode("40ffffff"));
-
-		//generate 2nd gx cascading style used when object is highlighted/hovered over
-		Element gx2 = doc.createElement("gx:CascadingStyle");
-		documentElement.appendChild(gx2);
-		Attr gx2ID = doc.createAttribute("kml:id");
-		gx2ID.setValue("__managed_style_2C97020CD31971D9081A");
-		gx2.setAttributeNode(gx2ID);
-		Element gx2Style = doc.createElement("Style");
-		gx2.appendChild(gx2Style);
-		
-		Element gx2IconStyle = doc.createElement("IconStyle"); //style of st_point
-		gx2Style.appendChild(gx2IconStyle);
-		Element gx2Scale = doc.createElement("scale");
-		gx2IconStyle.appendChild(gx2Scale);
-		gx2Scale.appendChild(doc.createTextNode("1.2"));
-		Element gx2Icon = doc.createElement("Icon");
-		gx2IconStyle.appendChild(gx2Icon);
-		Element gx2Href = doc.createElement("href");
-		gx2Icon.appendChild(gx2Href);
-		gx2Href.appendChild(doc.createTextNode("https://earth.google.com/earth/rpc/cc/icon?color=1976d2&id=2000&scale=4")); // link to image for pointer to st_point
-		
-		Element gx2LineStyle = doc.createElement("LineStyle"); //style of st_linestring
-		gx2Style.appendChild(gx2LineStyle);
-		Element gx2LineColor = doc.createElement("color");
-		gx2LineStyle.appendChild(gx2LineColor);
-		gx2LineColor.appendChild(doc.createTextNode("ff2dc0fb"));
-		Element gx2LineWidth = doc.createElement("width");
-		gx2LineStyle.appendChild(gx2LineWidth);
-		gx2LineWidth.appendChild(doc.createTextNode("3"));
-		
-		Element gx2PolyStyle= doc.createElement("PolyStyle"); //style of st_polygon
-		gx2Style.appendChild(gx2PolyStyle);
-		Element gx2PolyColor = doc.createElement("color");
-		gx2PolyStyle.appendChild(gx2PolyColor);
-		gx2PolyColor.appendChild(doc.createTextNode("40ffffff"));
-
-		//generate stylemap
-		Element stylemap = doc.createElement("StyleMap"); //stylemap, switches between the normal and highlighted styles
-		documentElement.appendChild(stylemap);
-		Attr stylemapID = doc.createAttribute("id");
-		stylemapID.setValue("__managed_style_02DBC6391B1971D9081A");
-		stylemap.setAttributeNode(stylemapID);
-
-		Element stylemapNormal = doc.createElement("Pair");
-		stylemap.appendChild(stylemapNormal);
-		Element normalKey = doc.createElement("key");
-		stylemapNormal.appendChild(normalKey);
-		normalKey.appendChild(doc.createTextNode("normal"));
-		Element normalURL = doc.createElement("styleUrl");
-		stylemapNormal.appendChild(normalURL);
-		normalURL.appendChild(doc.createTextNode("#__managed_style_1D3A7EA0A81971D9081A"));
-
-		Element stylemapHighlight = doc.createElement("Pair");
-		stylemap.appendChild(stylemapHighlight);
-		Element highlightKey = doc.createElement("key");
-		stylemapHighlight.appendChild(highlightKey);
-		highlightKey.appendChild(doc.createTextNode("highlight"));
-		Element highlightURL = doc.createElement("styleUrl");
-		stylemapHighlight.appendChild(highlightURL);
-		highlightURL.appendChild(doc.createTextNode("#__managed_style_2C97020CD31971D9081A"));
-
-		while (rs.next())
-		{
-			for (int i = 1; i <= meta.getColumnCount(); i++)
-			{
-				final Object o = rs.getObject(i);
-				if (!rs.wasNull()) //must be a non-null geospatial object
-				{
-					if(meta.getColumnTypeName(i).equals("ST_POINT")) {
-						((StPoint)(o)).writeXML(doc, documentElement, "col" + (i - 1) + "row" + (count));
-					} else if(meta.getColumnTypeName(i).equals("ST_LINESTRING")) {
-						((StLinestring)(o)).writeXML(doc, documentElement, "col" + (i - 1) + "row" + (count));
-					} else if(meta.getColumnTypeName(i).equals("ST_POLYGON")) {
-						((StPolygon)(o)).writeXML(doc, documentElement, "col" + (i - 1) + "row" + (count));
-					}
-				}
-			}
-			count++;
-		}
-		
-		//write the content into xml file
-		TransformerFactory transformerFactory =  TransformerFactory.newInstance();
-		transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-		transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
-		Transformer transformer = transformerFactory.newTransformer();
-		DOMSource source = new DOMSource(doc);
-
-		StreamResult result =  new StreamResult(new File(outputKMLFile)); //prints result to target file
-		transformer.transform(source, result);
-
-		System.out.println("Outputed GIS results to " + outputKMLFile);
 	}
 
 	private static void printAllQueries(final ArrayList<SysQueriesRow> queries)
@@ -2014,7 +1816,7 @@ public class CLI
 		}
 		else if (startsWithIgnoreCase(cmd, "OUTPUT GIS KML"))
 		{
-			outputGISQuery(cmd);
+			XGStatement.setKMLFile(cmd);
 		}
 		else if (startsWithIgnoreCase(cmd, "FORCE EXTERNAL"))
 		{
@@ -2107,20 +1909,16 @@ public class CLI
 			printWarnings(stmt);
 			final ResultSetMetaData meta = rs.getMetaData();
 			
-			if(outputKMLFile.isEmpty()) {
-				if (outputCSVFile.isEmpty())
-				{
-					printResultSet(rs, meta);
-				}
-				else
-				{
-					outputResultSet(rs, meta);
-					outputCSVFile = "";
-				}
-			} else {
-				outputGeospatial(rs, meta);
-				outputKMLFile = "";
+			if (outputCSVFile.isEmpty())
+			{
+				printResultSet(rs, meta);
 			}
+			else
+			{
+				outputResultSet(rs, meta);
+				outputCSVFile = "";
+			}
+			
 			printWarnings(rs);
 			end = System.currentTimeMillis();
 
