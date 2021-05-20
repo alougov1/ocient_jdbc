@@ -10,6 +10,7 @@ Below is the release notes for every driver version that has customer implicatio
 New Features:: 
 
  * Improve cache and statement pooling support for redirection.
+ * Fix timestamp and time with negative nanos.
 
 //tag::compact[] 
 == 2.10 (2021-5-19)

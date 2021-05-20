@@ -2269,7 +2269,7 @@ public class XGStatement implements Statement
 	 * our cache if we don't replace the connection by reconnecting and and returning the statement to its cache. Used
 	 * in XGStatement::redirect. 
 	 */
-	private class reconnectAndCacheThread implements Runnable {
+	private static class reconnectAndCacheThread implements Runnable {
 		public reconnectAndCacheThread(XGStatement stmt){
 			m_stmt = stmt;
 		}
