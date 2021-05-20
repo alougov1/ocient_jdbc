@@ -6,6 +6,8 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.Date;
+import java.sql.Driver;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -21,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Optional;
 import java.util.TimeZone;
 import java.util.Timer;
@@ -2231,9 +2234,56 @@ public class XGStatement implements Statement
 
 	private void redirect(final String host, final int port, final boolean shouldRequestVersion) throws IOException, SQLException
 	{
-		conn.redirect(host, port, shouldRequestVersion);
-		oneShotForce = true;
-		conn.clearOneShotForce();
+		JDBCDriver driver = null;
+		try {
+			driver = (JDBCDriver)DriverManager.getDriver(conn.getURL());
+		}
+		catch(RuntimeException e)
+		{
+			LOGGER.log(Level.WARNING, "Failed to fetch jdbc driver.");
+		} 
+		catch(final Exception e){
+			LOGGER.log(Level.WARNING, "Failed to fetch jdbc driver.");
+		}
+		if(driver == null){
+			// If we fail to redirect, the statement will just use the old connection.
+			return;
+		}
+		XGConnection newConn = 	(XGConnection) driver.createConnection(host, port, conn.getDB(), conn.getProperties());
+		XGStatement cachedOrNewStatement = (XGStatement)newConn.createStatement();
+		// Swap the connection on the two statements.
+		XGConnection newConnForThisStatement = cachedOrNewStatement.conn;
+		cachedOrNewStatement.conn = this.conn;
+		this.conn = newConnForThisStatement;
+
+		// On another thread, reconnect the other statement and return it to the cache.
+		Thread reconnectThread = new Thread(new reconnectAndCacheThread(cachedOrNewStatement));
+		reconnectThread.setDaemon(true);
+		reconnectThread.start();
+	}
+
+	/*!
+	 * When we are redirected, we retrieve a statement with a connection (hopefully from the cache) which matches the destination of
+	 * the redirect. Then we swap the two connections on our statements. There is another problem.
+	 * When the server redirects us, it ends the connection on its end. Thus, it will decrease the size of
+	 * our cache if we don't replace the connection by reconnecting and and returning the statement to its cache. Used
+	 * in XGStatement::redirect. 
+	 */
+	private static class reconnectAndCacheThread implements Runnable {
+		public reconnectAndCacheThread(XGStatement stmt){
+			m_stmt = stmt;
+		}
+		public void run(){
+			try{
+				m_stmt.conn.reconnect();
+			} catch (SQLException | IOException e){
+				// If we failed, then we will just not return this to the cache. Do nothing and exit.
+				LOGGER.log(Level.WARNING, "reconnect failed for returning a statement to cache");
+				return;
+			}
+			m_stmt.returnStatementToCache();
+		}
+		XGStatement m_stmt;
 	}
 
 	protected void reset()

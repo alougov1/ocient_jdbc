@@ -7,6 +7,12 @@
     <Match>
         <Class name="com.ocient.jdbc.XGDatabaseMetaData" />
         <Bug pattern="OBL_UNSATISFIED_OBLIGATION" />
+    </Match>    
+    <!--False positive. I am returning this statement to the cache.-->
+    <Match>
+        <Class name="com.ocient.jdbc.XGStatement" />
+        <Method name="redirect" />
+        <Bug pattern="OBL_UNSATISFIED_OBLIGATION" />
     </Match>
     <!--False positive, we do mean to call run()-->
     <Match>

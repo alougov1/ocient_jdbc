@@ -2769,18 +2769,28 @@ public final class XGResultSet implements ResultSet
 		else if (type == 20) // Timestamp w/ nanos
 		{
 			final long nanos = bb.getLong(offset);
-			final long seconds = nanos / 1000000000;
+			long seconds = nanos / 1000000000;
+			long nanosPortion = nanos - seconds * 1000000000;
+			if(nanosPortion < 0){
+				seconds = seconds - 1;
+				nanosPortion = 1000000000 + nanosPortion;
+			}
 			final XGTimestamp ts = new XGTimestamp(seconds * 1000);
-			ts.setNanos((int) (nanos - seconds * 1000000000));
+			ts.setNanos((int) (nanosPortion));
 			retval = ts;
 			offset += 8;
 		}
 		else if (type == 21) // Time w/ nanos
 		{
 			final long nanos = bb.getLong(offset);
-			final long seconds = nanos / 1000000000;
+			long seconds = nanos / 1000000000;
+			long nanosPortion = nanos - seconds * 1000000000;
+			if(nanosPortion < 0){
+				seconds = seconds - 1;
+				nanosPortion = 1000000000 + nanosPortion;
+			}
 			final XGTime time = new XGTime(seconds * 1000);
-			time.setNanos((int) (nanos - seconds * 1000000000));
+			time.setNanos((int) nanosPortion);
 			retval = time;
 			offset += 8;
 		}

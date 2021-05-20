@@ -239,7 +239,7 @@ public class JDBCDriver implements Driver
 		throw SQLStates.MALFORMED_URL.clone();
 	}
 
-	private Connection createConnection(final String hostname, final int portNum, final String database, final Properties properties) throws SQLException
+	public Connection createConnection(final String hostname, final int portNum, final String database, final Properties properties) throws SQLException
 	{
 		final Socket sock = null;
 		final String user = properties.getProperty("user");
