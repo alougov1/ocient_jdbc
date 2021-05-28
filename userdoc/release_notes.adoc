@@ -12,6 +12,7 @@ New Features::
  * Added command to SET PSO SEED for the random number generator used in PSO 
  * Remove chatty number of rows log.
  * Add remoteIp and service class to list all queries.
+ * Add sleep_in_optimizer command for testing.
 
 //tag::compact[] 
 == 2.12 (2021-5-26)
