@@ -5,6 +5,13 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[] 
+== 2.13 (2021-6-04)
+
+New Features:: 
+
+ * Added command to SET PSO SEED for the random number generator used in PSO 
+
+//tag::compact[] 
 == 2.12 (2021-5-26)
 
 New Features:: 
