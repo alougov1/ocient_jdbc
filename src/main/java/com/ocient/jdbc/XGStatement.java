@@ -1028,7 +1028,33 @@ public class XGStatement implements Statement
 		{
 			String ending = sql.toUpperCase().substring("SET PSO ".length());
 			ending = ending.trim();
-			if (ending.equals("ON") || ending.equals("OFF"))
+			if (ending.startsWith("SEED ")) 
+			{ 
+				String seedStr = ending.substring("SEED ".length());
+				seedStr = seedStr.trim();
+				try 
+				{
+					final long seed = Long.parseLong(seedStr);
+					try 
+					{
+						conn.setPSOSeed(seed); 
+					} 
+					catch (final Exception e)
+					{
+						if (e instanceof SQLException)
+						{
+							throw (SQLException) e;
+						}
+
+						throw SQLStates.newGenericException(e);
+					}
+				} 
+				catch (final NumberFormatException e)
+				{
+					throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("SET PSO SEED command requires integer argument, got: " + ending);
+				}
+			}
+			else if (ending.equals("ON") || ending.equals("OFF"))
 			{
 				try
 				{

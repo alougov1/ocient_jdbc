@@ -2856,6 +2856,40 @@ public class XGConnection implements Connection
 		return sendParameterMessage(builder.build());
 	}
 
+	// sets the pso RNG seed. If this is never called, by default PSO uses current time to generate seed 
+	public void setPSOSeed(final long seed) throws Exception 
+	{
+		LOGGER.log(Level.INFO, "Sending request to set pso seed to the server"); 
+		if (closed)
+		{
+			LOGGER.log(Level.WARNING, "Set pso seed request is throwing CALL_ON_CLOSED_OBJECT");
+			throw SQLStates.CALL_ON_CLOSED_OBJECT.clone();
+		}
+
+		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
+		final ClientWireProtocol.SetParameter.PSOSeed.Builder innerBuilder = ClientWireProtocol.SetParameter.PSOSeed.newBuilder();
+		innerBuilder.setSeed(seed);
+		builder.setPsoSeed(innerBuilder.build());
+		builder.setReset(false);
+		final SetParameter msg = builder.build();
+		final ClientWireProtocol.Request.Builder b2 = ClientWireProtocol.Request.newBuilder();
+		b2.setType(ClientWireProtocol.Request.RequestType.SET_PARAMETER);
+		b2.setSetParameter(msg);
+		final Request wrapper = b2.build();
+
+		try
+		{
+			out.write(intToBytes(wrapper.getSerializedSize()));
+			wrapper.writeTo(out);
+			out.flush();
+			getStandardResponse();
+		}
+		catch (final IOException e)
+		{
+			// Doesn't matter...
+			LOGGER.log(Level.WARNING, String.format("Failed sending set pso seed request to the server with exception %s with message ", e.toString(), e.getMessage()));
+		}
+	}
 	// sets the pso threshold on this connection to be -1(meaning pso is turned off)
 	// or back to the default
 	public void setPSO(final boolean on) throws Exception
