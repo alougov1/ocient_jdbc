@@ -617,7 +617,9 @@ message SetParameter
 	message Concurrency {
 		int64 concurrency = 1;
 	}
-
+	message PSOSeed {
+		uint64 seed = 1;
+	}
 	bool reset = 1; //whether we should reset back to the default, overrides whatever threshold is
 	oneof Parameter {
 		PSO pso_threshold= 2;
@@ -626,5 +628,6 @@ message SetParameter
 		MaxTempDiskLimit temp_disk_limit = 5;
 		Priority priority = 6;
 		Concurrency concurrency = 7;
+		PSOSeed pso_seed = 8;
 	}
 }
