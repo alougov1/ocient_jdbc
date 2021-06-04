@@ -2923,7 +2923,6 @@ public final class XGResultSet implements ResultSet
 			}
 		}
 
-		LOGGER.log(Level.INFO, String.format("Received %d rows.", newRs.size()));
 		if (!newRs.isEmpty())
 		{
 			rsQueue.put(newRs);
