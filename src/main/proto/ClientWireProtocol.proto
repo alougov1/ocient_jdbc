@@ -308,6 +308,8 @@ message SysQueriesRow
 	string status = 7;
 	string query_server = 8;
 	string database = 9;
+	string remoteIP = 10;
+	string service_class = 11;
 }
 
 message SystemWideCompletedQueries
