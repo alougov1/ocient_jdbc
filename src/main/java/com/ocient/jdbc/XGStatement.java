@@ -1034,7 +1034,7 @@ public class XGStatement implements Statement
 				seedStr = seedStr.trim();
 				long seed = 0;
 				boolean reset;
-				if(ending.equals("AUTO"))
+				if(seedStr.equals("AUTO"))
 				{
 					reset = true;
 				}
@@ -1047,13 +1047,13 @@ public class XGStatement implements Statement
 					} 
 					catch (final NumberFormatException e)
 					{
-						throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("SET PSO SEED command requires integer argument, got: " + ending);
+						throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("SET PSO SEED command requires integer argument, got: " + seedStr);
 					}
 				}
 				
 				try 
 				{
-					conn.setPSOSeed(seed, true); 
+					conn.setPSOSeed(seed, reset); 
 				} 
 				catch (final Exception e)
 				{
