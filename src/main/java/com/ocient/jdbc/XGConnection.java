@@ -2857,7 +2857,7 @@ public class XGConnection implements Connection
 	}
 
 	// sets the pso RNG seed. If this is never called, by default PSO uses current time to generate seed 
-	public void setPSOSeed(final long seed) throws Exception 
+	public void setPSOSeed(final long seed, boolean reset) throws Exception 
 	{
 		LOGGER.log(Level.INFO, "Sending request to set pso seed to the server"); 
 		if (closed)
@@ -2870,7 +2870,7 @@ public class XGConnection implements Connection
 		final ClientWireProtocol.SetParameter.PSOSeed.Builder innerBuilder = ClientWireProtocol.SetParameter.PSOSeed.newBuilder();
 		innerBuilder.setSeed(seed);
 		builder.setPsoSeed(innerBuilder.build());
-		builder.setReset(false);
+		builder.setReset(reset);
 		final SetParameter msg = builder.build();
 		final ClientWireProtocol.Request.Builder b2 = ClientWireProtocol.Request.newBuilder();
 		b2.setType(ClientWireProtocol.Request.RequestType.SET_PARAMETER);
