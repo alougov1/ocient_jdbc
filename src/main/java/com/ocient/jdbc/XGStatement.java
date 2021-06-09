@@ -1047,7 +1047,7 @@ public class XGStatement implements Statement
 					} 
 					catch (final NumberFormatException e)
 					{
-						throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("SET PSO SEED command requires integer argument, got: " + seedStr);
+						throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("SET PSO SEED command requires positive integer argument, got: " + seedStr);
 					}
 				}
 				
