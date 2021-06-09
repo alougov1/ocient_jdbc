@@ -2064,6 +2064,8 @@ public class XGStatement implements Statement
 			newRow.add(row.getQueryServer());
 			newRow.add(row.getDatabase());
 			newRow.add(row.getSqlText());
+			newRow.add(row.getRemoteIP());
+			newRow.add(row.getServiceClass());
 			rs.add(newRow);
 		}
 		result = conn.rs = new XGResultSet(conn, rs, this);
@@ -2080,6 +2082,8 @@ public class XGStatement implements Statement
 		cols2Pos.put("server", 6);
 		cols2Pos.put("database", 7);
 		cols2Pos.put("sql", 8);
+		cols2Pos.put("remote_ip", 9);
+		cols2Pos.put("service_class", 10);		
 
 		pos2Cols.put(0, "query_id");
 		pos2Cols.put(1, "user");
@@ -2090,6 +2094,8 @@ public class XGStatement implements Statement
 		pos2Cols.put(6, "server");
 		pos2Cols.put(7, "database");
 		pos2Cols.put(8, "sql");
+		pos2Cols.put(9, "remote_ip");
+		pos2Cols.put(10, "service_class");		
 
 		cols2Types.put("query_id", "CHAR");
 		cols2Types.put("user", "CHAR");
@@ -2100,6 +2106,8 @@ public class XGStatement implements Statement
 		cols2Types.put("server", "CHAR");
 		cols2Types.put("database", "CHAR");
 		cols2Types.put("sql", "CHAR");
+		cols2Types.put("remote_ip", "CHAR");
+		cols2Types.put("service_class", "CHAR");		
 
 		result.setCols2Pos(cols2Pos);
 		result.setPos2Cols(pos2Cols);
