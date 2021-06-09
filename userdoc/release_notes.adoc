@@ -5,14 +5,7 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[] 
-== 2.14 (2021-6-09)
-
-New Features:: 
-
- * Added SET PSO SEED AUTO command that will unset the server's PSO SEED  
-
-//tag::compact[] 
-== 2.13 (2021-6-04)
+== 2.13 (2021-6-09)
 
 New Features:: 
 
