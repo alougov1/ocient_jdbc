@@ -1032,26 +1032,37 @@ public class XGStatement implements Statement
 			{ 
 				String seedStr = ending.substring("SEED ".length());
 				seedStr = seedStr.trim();
-				try 
+				long seed = 0;
+				boolean reset;
+				if(ending.equals("AUTO"))
 				{
-					final long seed = Long.parseLong(seedStr);
+					reset = true;
+				}
+				else
+				{
+					reset = false;
 					try 
 					{
-						conn.setPSOSeed(seed); 
+						seed = Long.parseUnsignedLong(seedStr);
 					} 
-					catch (final Exception e)
+					catch (final NumberFormatException e)
 					{
-						if (e instanceof SQLException)
-						{
-							throw (SQLException) e;
-						}
-
-						throw SQLStates.newGenericException(e);
+						throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("SET PSO SEED command requires integer argument, got: " + ending);
 					}
-				} 
-				catch (final NumberFormatException e)
+				}
+				
+				try 
 				{
-					throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("SET PSO SEED command requires integer argument, got: " + ending);
+					conn.setPSOSeed(seed, true); 
+				} 
+				catch (final Exception e)
+				{
+					if (e instanceof SQLException)
+					{
+						throw (SQLException) e;
+					}
+
+					throw SQLStates.newGenericException(e);
 				}
 			}
 			else if (ending.equals("ON") || ending.equals("OFF"))
