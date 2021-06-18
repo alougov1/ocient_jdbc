@@ -462,7 +462,7 @@ public class XGStatement implements Statement
 		this.conn = conn.copy(shouldRequestVersion);
 		force = false;
 		oneShotForce = false;
-		timeoutMillis = conn.getTimeoutMillis(); // inherit the connections timeout
+		timeoutMillis = this.conn.getTimeoutMillis(); // inherit the connections timeout
 	}
 
 	public XGStatement(final XGConnection conn, final boolean force, final boolean oneShotForce) throws SQLException
@@ -470,7 +470,7 @@ public class XGStatement implements Statement
 		this.conn = conn.copy();
 		this.force = force;
 		this.oneShotForce = oneShotForce;
-		timeoutMillis = conn.getTimeoutMillis(); // inherit the connections timeout
+		timeoutMillis = this.conn.getTimeoutMillis(); // inherit the connections timeout
 	}
 
 	public XGStatement(final XGConnection conn, final int type, final int concur, final boolean force, final boolean oneShotForce) throws SQLException
@@ -490,7 +490,7 @@ public class XGStatement implements Statement
 		this.conn = conn.copy();
 		this.force = force;
 		this.oneShotForce = oneShotForce;
-		timeoutMillis = conn.getTimeoutMillis(); // inherit the connections timeout
+		timeoutMillis = this.conn.getTimeoutMillis(); // inherit the connections timeout
 	}
 
 	public XGStatement(final XGConnection conn, final int type, final int concur, final int hold, final boolean force, final boolean oneShotForce) throws SQLException
@@ -517,7 +517,7 @@ public class XGStatement implements Statement
 		this.conn = conn.copy();
 		this.force = force;
 		this.oneShotForce = oneShotForce;
-		timeoutMillis = conn.getTimeoutMillis(); // inherit the connections timeout
+		timeoutMillis = this.conn.getTimeoutMillis(); // inherit the connections timeout
 	}
 
 	@Override
@@ -708,7 +708,6 @@ public class XGStatement implements Statement
 	public boolean execute(String sql) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Called execute()");
-		clearWarnings();
 		setRunningQueryThread(Thread.currentThread());
 		sql = sql.trim();
 
@@ -883,6 +882,7 @@ public class XGStatement implements Statement
 	public ResultSet executeQuery(String sql) throws SQLException
 	{
 		LOGGER.log(Level.INFO, String.format("Called executeQuery() with sql : %s", sql));
+		clearWarnings();
 		if (sql.charAt(0) == ' ' || sql.charAt(sql.length() - 1) == ' ')
 		{
 			sql = sql.trim();
@@ -1020,6 +1020,7 @@ public class XGStatement implements Statement
 	public int executeUpdate(String sql) throws SQLException
 	{
 		LOGGER.log(Level.INFO, String.format("Called executeUpdate() with sql: %s", sql));
+		clearWarnings();
 		// if this is a set command we just use a separately crafted proto message to
 		// make things simpler
 		passUpCancel(true);
@@ -2754,7 +2755,6 @@ public class XGStatement implements Statement
 						{
 							final Object parm = parms.get(x);
 
-							// System.out.println("parm type: " + parm.getClass());
 
 							if (parm == null)
 							{
@@ -2776,7 +2776,6 @@ public class XGStatement implements Statement
 							}
 							else if (parm instanceof Boolean)
 							{
-								// System.out.println("inside BOOLEAN set param");
 								out.append("BOOLEAN('").append(parm).append("')");
 							}
 							else if (parm instanceof byte[])

@@ -322,6 +322,8 @@ public class XGConnection implements Connection
 	public XGConnection(final String user, final String pwd, final int portNum, final String url, final String database, final String protocolVersion, String clientVersion, final boolean force, final Tls tls,
 		final Properties properties)
 	{
+		this.properties = properties;
+		resetLocalVars();
 		this.force = force;
 		this.url = url;
 		this.user = user;
@@ -336,12 +338,13 @@ public class XGConnection implements Connection
 		typeMap = new HashMap<>();
 		in = null;
 		out = null;
-		this.properties = properties;
 	}
 
 	public XGConnection(final String user, final String pwd, final String ip, final int portNum, final String url, final String database, final String protocolVersion, String clientVersion, final String force, final Tls tls,
 		final Properties properties) throws Exception
 	{
+		this.properties = properties;
+		resetLocalVars();
 		originalIp = ip;
 		originalPort = portNum;
 
@@ -363,7 +366,6 @@ public class XGConnection implements Connection
 		retryCounter = 0;
 		this.tls = tls;
 		typeMap = new HashMap<>();
-		this.properties = properties;
 	}
 
 	@Override
@@ -1621,7 +1623,7 @@ public class XGConnection implements Connection
 	 */
 	private Timer getTimer()
 	{
-		return timer.updateAndGet(existing -> existing != null ? existing : new Timer());
+		return timer.updateAndGet(existing -> existing != null ? existing : new Timer(true));
 	}
 
 	@Override
