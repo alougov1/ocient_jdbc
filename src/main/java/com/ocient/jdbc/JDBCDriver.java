@@ -242,7 +242,8 @@ public class JDBCDriver implements Driver
 	public Connection createConnection(final String hostname, final int portNum, final String database, final Properties properties) throws SQLException
 	{
 		final Socket sock = null;
-		final String user = properties.getProperty("user");
+		// User will default to empty.
+		final String user = properties.getProperty("user","");
 		final String pwd = properties.getProperty("password");
 		final String force = properties.getProperty("force");
 		final String tlsStr = properties.getProperty("tls", "UNVERIFIED").toUpperCase();
@@ -356,7 +357,7 @@ public class JDBCDriver implements Driver
 		final DriverPropertyInfo[] retval = new DriverPropertyInfo[15];
 		final DriverPropertyInfo user = new DriverPropertyInfo("user", null);
 		user.description = "The userid to use for the connection";
-		user.required = true;
+		user.required = false;
 		retval[0] = user;
 
 		final DriverPropertyInfo pwd = new DriverPropertyInfo("password", null);
