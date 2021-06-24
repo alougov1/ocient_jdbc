@@ -1499,45 +1499,44 @@ public final class XGResultSet implements ResultSet
 			b2.setFetchData(msg);
 			final Request wrapper = b2.build();
 
-			while (true)
+			stmt.startTask(() ->
 			{
-				if (demReceived.get())
-				{
-					return;
-				} else if(cacheLimitBreak.get()){
-					LOGGER.log(Level.WARNING, "Thread saw cacheLimitBreak. Exiting getMoreData");
-					return;
-				}
-				newConn.out.write(intToBytes(wrapper.getSerializedSize()));
-				wrapper.writeTo(newConn.out);
-				newConn.out.flush();
-
-				// Kind of ugly, but doesn't violate JMM (startTask() is synchronous)
-				final ClientWireProtocol.FetchDataResponse.Builder fdr = ClientWireProtocol.FetchDataResponse.newBuilder();
-
-				stmt.startTask(() ->
-				{
+				while(true){
+					if (demReceived.get())
+					{
+						return;
+					} else if(cacheLimitBreak.get()){
+						LOGGER.log(Level.WARNING, "Thread saw cacheLimitBreak. Exiting getMoreData");
+						return;
+					}
+					newConn.out.write(intToBytes(wrapper.getSerializedSize()));
+					wrapper.writeTo(newConn.out);
+					newConn.out.flush();
+	
+					// Kind of ugly, but doesn't violate JMM (startTask() is synchronous)
+					final ClientWireProtocol.FetchDataResponse.Builder fdr = ClientWireProtocol.FetchDataResponse.newBuilder();
+	
 					// get confirmation and data (fetchSize rows or zero size result set or
 					// terminated early with a DataEndMarker)
 					final int length = getLength(newConn);
 					final byte[] data = new byte[length];
 					readBytes(data, newConn);
 					fdr.mergeFrom(data);
-				}, queryId, getTimeoutMillis());
-
-				final ConfirmationResponse response = fdr.getResponse();
-				final ResponseType rType = response.getType();
-				if(processResponseType(rType, response)){
-					LOGGER.log(Level.INFO, "Got special cache limit warning.");
-					// Flip the necessary flags to exit.
-					cacheLimitBreak.compareAndSet(false,true);
-					return;
-				} 
-				if (!mergeData(fdr.getResultSet()))
-				{
-					return;
+	
+					final ConfirmationResponse response = fdr.getResponse();
+					final ResponseType rType = response.getType();
+					if(processResponseType(rType, response)){
+						LOGGER.log(Level.INFO, "Got special cache limit warning.");
+						// Flip the necessary flags to exit.
+						cacheLimitBreak.compareAndSet(false,true);
+						return;
+					} 
+					if (!mergeData(fdr.getResultSet()))
+					{
+						return;
+					}
 				}
-			}
+			}, queryId, getTimeoutMillis());
 		}
 		catch (final Exception e)
 		{

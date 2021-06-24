@@ -1697,16 +1697,6 @@ public class XGConnection implements Connection
 	@Override
 	public boolean isClosed() throws SQLException
 	{
-		LOGGER.log(Level.INFO, "Called isClosed()");
-		if (closed)
-		{
-			LOGGER.log(Level.INFO, "Returning true from isClosed()");
-		}
-		else
-		{
-			LOGGER.log(Level.INFO, "Returning false from isClosed()");
-		}
-
 		return closed;
 	}
 

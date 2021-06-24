@@ -5,6 +5,13 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[] 
+== 2.16 (2021-6-23)
+
+New Features:: 
+
+ * Fix another issue with timeoutMillis. The timeout will now work correctly with zero ping buffers.
+
+//tag::compact[] 
 == 2.15 (2021-6-21)
 
 New Features:: 
