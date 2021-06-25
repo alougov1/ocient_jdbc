@@ -1691,7 +1691,7 @@ public class XGConnection implements Connection
 	@Override
 	public int hashCode()
 	{
-		return originalIp.hashCode() + originalPort + user.hashCode() + pwd.hashCode() + database.hashCode() + tls.hashCode() + properties.hashCode();
+		return originalIp.hashCode() + originalPort + user.hashCode() + pwd.hashCode() + database.hashCode() + tls.hashCode() + properties.hashCode() + setSchema.hashCode();
 	}
 
 	@Override
