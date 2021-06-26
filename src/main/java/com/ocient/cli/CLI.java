@@ -2167,14 +2167,13 @@ public class CLI
 
 					if (!comment && quote == '\0' && cmd.trim().endsWith(";"))
 					{
-						// System.out.println("Finished scrubbing command: '" + cmd + "'");
 						cmd = cmd.trim();
 						cmd = cmd.substring(0, cmd.length() - 1).trim();
 						if (trace && !endsWithIgnoreCase(cmd, " trace"))
 						{
 							cmd = cmd + " trace";
 						}
-						// System.out.println("Finished trimming scrubbed: '" + cmd + "'");
+
 						break;
 					}
 					else
