@@ -14,6 +14,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -1340,6 +1341,7 @@ public class CLI
 				if (!Files.exists(historyFilePath))
 				{
 					Files.createFile(historyFilePath);
+					Files.setPosixFilePermissions(historyFilePath, PosixFilePermissions.fromString("rw-------"));
 				}
 
 				reader.setOpt(LineReader.Option.HISTORY_IGNORE_DUPS);
