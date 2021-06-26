@@ -6,12 +6,14 @@ import java.io.Console;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -39,7 +41,6 @@ import org.jline.terminal.TerminalBuilder;
 import com.ocient.jdbc.XGConnection;
 import com.ocient.jdbc.XGDatabaseMetaData;
 import com.ocient.jdbc.XGStatement;
-import com.ocient.jdbc.KML;
 import com.ocient.jdbc.proto.ClientWireProtocol.SysQueriesRow;
 
 public class CLI
@@ -111,6 +112,52 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("CLI Error: " + e.getMessage());
+		}
+	}
+
+	private static void checkData(final String cmd)
+	{
+		long start = 0;
+		long end = 0;
+		if (!isConnected())
+		{
+			System.out.println("No database connection exists");
+			return;
+		}
+		ResultSet rs = null;
+		try
+		{
+			start = System.currentTimeMillis();
+			stmt.execute(cmd);
+			rs = stmt.getResultSet();
+			final ResultSetMetaData meta = rs.getMetaData();
+			if (outputCSVFile.isEmpty())
+			{
+				printResultSet(rs, meta);
+			}
+			else
+			{
+				outputResultSet(rs, meta);
+				outputCSVFile = "";
+			}
+			printWarnings(stmt);
+			end = System.currentTimeMillis();
+			rs.close();
+			printTime(start, end);
+		}
+		catch (final Exception e)
+		{
+			try
+			{
+				if (rs != null)
+				{
+					rs.close();
+				}
+			}
+			catch (final Exception f)
+			{
+			}
+			System.out.println("Error: " + e.getMessage());
 		}
 	}
 
@@ -683,41 +730,6 @@ public class CLI
 			}
 			catch (final Exception f)
 			{
-			}
-			System.out.println("Error: " + e.getMessage());
-		}
-	}
-
-	private static void checkData(final String cmd) {
-		long start = 0;
-		long end = 0;
-		if (!isConnected()) {
-			System.out.println("No database connection exists");
-			return;
-		}
-		ResultSet rs = null;
-		try {
-			start = System.currentTimeMillis();
-			stmt.execute(cmd);
-			rs = stmt.getResultSet();
-			final ResultSetMetaData meta = rs.getMetaData();
-			if (outputCSVFile.isEmpty()) {
-				printResultSet(rs, meta);
-			} else {
-				outputResultSet(rs, meta);
-				outputCSVFile = "";
-			}
-			printWarnings(stmt);
-			end = System.currentTimeMillis();
-			rs.close();
-			printTime(start, end);
-		} catch (final Exception e) {
-			try {
-				if(rs != null)
-				{
-					rs.close();
-				}
-			} catch (final Exception f) {
 			}
 			System.out.println("Error: " + e.getMessage());
 		}
@@ -1321,6 +1333,22 @@ public class CLI
 			parser.setEscapeChars(null);
 			terminal = TerminalBuilder.builder().system(true).build();
 			reader = LineReaderBuilder.builder().parser(parser).terminal(terminal).build();
+
+			try
+			{
+				final Path historyFilePath = Paths.get(System.getProperty("user.home") + "/.ocient-history").toAbsolutePath();
+				if (!Files.exists(historyFilePath))
+				{
+					Files.createFile(historyFilePath);
+				}
+
+				reader.setOpt(LineReader.Option.HISTORY_IGNORE_DUPS);
+				reader.setOpt(LineReader.Option.HISTORY_IGNORE_SPACE);
+				reader.setVariable(LineReader.HISTORY_FILE, historyFilePath);
+			}
+			catch (final Exception ex)
+			{
+			}
 		}
 		catch (final IOException e)
 		{
@@ -1468,7 +1496,7 @@ public class CLI
 
 	private static void outputResultSet(final ResultSet rs, final ResultSetMetaData meta) throws Exception
 	{
-		Writer osw = new OutputStreamWriter(new FileOutputStream(outputCSVFile), Charset.defaultCharset());
+		final Writer osw = new OutputStreamWriter(new FileOutputStream(outputCSVFile), Charset.defaultCharset());
 		final BufferedWriter out = new BufferedWriter(osw);
 		try
 		{
@@ -1908,7 +1936,7 @@ public class CLI
 			rs = stmt.executeQuery(cmd);
 			printWarnings(stmt);
 			final ResultSetMetaData meta = rs.getMetaData();
-			
+
 			if (outputCSVFile.isEmpty())
 			{
 				printResultSet(rs, meta);
@@ -1918,7 +1946,7 @@ public class CLI
 				outputResultSet(rs, meta);
 				outputCSVFile = "";
 			}
-			
+
 			printWarnings(rs);
 			end = System.currentTimeMillis();
 
