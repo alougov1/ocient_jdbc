@@ -1917,6 +1917,8 @@ public class CLI
 
 			i++;
 		}
+
+		out.append(' ');
 		return out.toString();
 	}
 
@@ -2119,6 +2121,7 @@ public class CLI
 			{
 				// jline has ways to handle this, but they're underdocumented and overbuilt to
 				// the point of obscenity
+				cmd = null;
 				if (!quit)
 				{
 					cmd = reader.readLine();
