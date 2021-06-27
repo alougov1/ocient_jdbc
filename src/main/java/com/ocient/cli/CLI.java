@@ -1882,7 +1882,7 @@ public class CLI
 
 	private static String scrubCommand(final String cmd)
 	{
-		final StringBuilder out = new StringBuilder(256);
+		final StringBuilder out = new StringBuilder(cmd.length());
 		int i = 0;
 		final int length = cmd.length();
 		while (i < length)
@@ -1917,6 +1917,8 @@ public class CLI
 
 			i++;
 		}
+
+		out.append(' ');
 		return out.toString();
 	}
 
@@ -2110,23 +2112,44 @@ public class CLI
 	private static boolean sourceCommands(final BufferedReader reader) throws IOException
 	{
 		boolean quit = false;
+		String cmd = "";
+		boolean scrubCmd = true;
 
 		try
 		{
 			while (true)
 			{
-				String line = reader.readLine();
-				if (line == null)
+				// jline has ways to handle this, but they're underdocumented and overbuilt to
+				// the point of obscenity
+				cmd = null;
+				if (!quit)
+				{
+					cmd = reader.readLine();
+				}
+
+				if (cmd == null)
 				{
 					return quit;
 				}
 
-				String cmd = scrubCommand(line + " ");
+				if (startsWithIgnoreCase(cmd, "PLAN EXECUTE INLINE"))
+				{
+					// the scrubing logic looks for comments blocks in the SQL statement. Now, plans
+					// have a
+					// lots of
+					// double/single quotes, and those can be closed or not. scrubing a plans is not
+					// a good
+					// idea. It can cause the CLI to misinterpret quotes.
+					scrubCmd = false;
+				}
+				else
+				{
+					cmd = scrubCommand(cmd);
+				}
 
 				while (true)
 				{
-					quit = cmd.trim().equalsIgnoreCase("QUIT");
-					if (quit)
+					if (quit || cmd.trim().equalsIgnoreCase("QUIT"))
 					{
 						try
 						{
@@ -2138,7 +2161,8 @@ public class CLI
 						catch (final Exception e)
 						{
 						}
-						return quit;
+
+						return true;
 					}
 
 					if (!comment && quote == '\0' && cmd.trim().endsWith(";"))
@@ -2149,32 +2173,41 @@ public class CLI
 						{
 							cmd = cmd + " trace";
 						}
+
 						break;
 					}
 					else
 					{
-						final String cont = reader.readLine();
-						if (cont == null)
+						// System.out.println("Current command text: '" + cmd + "'");
+						final String line = reader.readLine();
+						if (line == null)
 						{
 							return quit;
 						}
-						line = cont;
-						cmd += scrubCommand(line + " ");
+
+						if (scrubCmd)
+						{
+							cmd += scrubCommand(line);
+						}
+						else
+						{
+							cmd += line;
+						}
 					}
 				}
-
-				quit = processCommand(cmd);
-				if (quit)
+				if (startsWithIgnoreCase(cmd, "CLI SET MAX HISTORY"))
 				{
-					return quit;
+				}
+				else
+				{
+					quit = processCommand(cmd);
 				}
 			}
 		}
 		catch (final UserInterruptException | EndOfFileException e)
 		{
+			return quit;
 		}
-
-		return quit;
 	}
 
 	private static boolean startsWithIgnoreCase(final String in, final String cmp)
