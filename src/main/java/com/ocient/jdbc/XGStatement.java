@@ -2142,7 +2142,6 @@ public class XGStatement implements Statement
 		result.setCols2Types(cols2Types);
 
 		updateCount = -1;
-		LOGGER.log(Level.INFO, "List all queries finished");
 		return result;
 	}
 
