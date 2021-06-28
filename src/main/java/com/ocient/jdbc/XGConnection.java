@@ -1698,11 +1698,12 @@ public class XGConnection implements Connection
 	@Override
 	public int hashCode()
 	{
-		return originalIp.hashCode() + originalPort + user.hashCode() + \
-		pwd.hashCode() + database.hashCode() + tls.hashCode() + \
-		properties.hashCode() + setSchema.hashCode() + setPso.hashCode() + \
-		maxRows.hashCode() + maxTime.hashCode() + maxTempDisk.hashCode() + \
-		concurrency.hashCode() + priority.hashCode() + force.hashCode() + timeoutMillis.hashCode();
+		return originalIp.hashCode() + originalPort + user.hashCode()
+		+ pwd.hashCode() + database.hashCode() + tls.hashCode() 
+		+ properties.hashCode() + setSchema.hashCode() + Long.hashCode(setPso) 
+		+ maxRows.hashCode() + maxTime.hashCode() + maxTempDisk.hashCode() 
+		+ concurrency.hashCode() + priority.hashCode() + (force ? 1 : 0)
+		+ Long.hashCode(timeoutMillis);
 	}
 
 	@Override
