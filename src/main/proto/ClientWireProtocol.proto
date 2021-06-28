@@ -310,6 +310,10 @@ message SysQueriesRow
 	string database = 9;
 	string remoteIP = 10;
 	string service_class = 11;
+	int64 estimated_result_rows = 12;
+	int64 estimated_result_size = 13;
+	int64 sent_rows = 14;
+	int64 sent_bytes = 15;	
 }
 
 message SystemWideCompletedQueries

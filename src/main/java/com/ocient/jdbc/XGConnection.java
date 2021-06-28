@@ -289,16 +289,7 @@ public class XGConnection implements Connection
 	protected String protocolVersion;
 	protected String clientVersion;
 	protected String serverVersion = "";
-	protected String setSchema = "";
 	protected String defaultSchema = "";
-	protected long setPso = 0;
-	public Integer maxRows = null;
-	private Integer maxTime = null;
-	private Integer maxTempDisk = null;
-	private Integer concurrency = null;
-	private Double priority = null;
-	protected boolean force = false;
-	private volatile long timeoutMillis = 0L; // 0L means no timeout set
 
 	protected boolean oneShotForce = false;
 	protected ArrayList<String> cmdcomps = new ArrayList<>();
@@ -318,6 +309,19 @@ public class XGConnection implements Connection
 	protected Map<String, Class<?>> typeMap;
 
 	private final Properties properties;
+
+	/*!
+	 * Connection level settings need to be added to the hash code so that connections with different settings get mapped to different hash codes.
+	 */
+	protected String setSchema = "";
+	protected long setPso = 0;
+	public Integer maxRows = null;
+	private Integer maxTime = null;
+	private Integer maxTempDisk = null;
+	private Integer concurrency = null;
+	private Double priority = null;
+	protected boolean force = false;
+	private volatile long timeoutMillis = 0L; // 0L means no timeout set	
 
 	public XGConnection(final String user, final String pwd, final int portNum, final String url, final String database, final String protocolVersion, String clientVersion, final boolean force, final Tls tls,
 		final Properties properties)
@@ -1688,10 +1692,18 @@ public class XGConnection implements Connection
 		return retval;
 	}
 
+	/*!
+	 * Add connection level settings here so that connections with different settings map to different hash codes.
+	 */
 	@Override
 	public int hashCode()
 	{
-		return originalIp.hashCode() + originalPort + user.hashCode() + pwd.hashCode() + database.hashCode() + tls.hashCode() + properties.hashCode() + setSchema.hashCode();
+		return originalIp.hashCode() + originalPort + user.hashCode()
+		+ pwd.hashCode() + database.hashCode() + tls.hashCode() 
+		+ properties.hashCode() + setSchema.hashCode() + Long.hashCode(setPso) 
+		+ maxRows.hashCode() + maxTime.hashCode() + maxTempDisk.hashCode() 
+		+ concurrency.hashCode() + priority.hashCode() + (force ? 1 : 0)
+		+ Long.hashCode(timeoutMillis);
 	}
 
 	@Override
