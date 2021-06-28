@@ -5,6 +5,14 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[]
+== 2.20 (2021-6-28)
+
+New Features::
+
+ * Update list all queries metadata to match that of select * from sys.queries
+ * Add more connection level settings to hashCode.
+
+//tag::compact[]
 == 2.19 (2021-6-26)
 
 New Features::
