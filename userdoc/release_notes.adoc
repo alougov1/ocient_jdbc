@@ -9,7 +9,7 @@ Below is the release notes for every driver version that has customer implicatio
 
 New Features::
 
- * Test version bump
+ * Fix new hashcode for null elements.
 
 
 //tag::compact[]
