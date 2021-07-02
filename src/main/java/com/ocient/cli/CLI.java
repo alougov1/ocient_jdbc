@@ -2191,7 +2191,7 @@ public class CLI
 						}
 						else
 						{
-							cmd += line;
+							cmd += (line + " ");
 						}
 					}
 				}

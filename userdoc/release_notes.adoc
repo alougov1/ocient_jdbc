@@ -5,6 +5,14 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[]
+== 2.22 (2021-7-1)
+
+New Features::
+
+ * Add openJump extensions to jdbc jar.
+ * Fix source command for plan execute inline.
+
+//tag::compact[]
 == 2.21 (2021-6-30)
 
 New Features::
