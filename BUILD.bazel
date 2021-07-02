@@ -1,6 +1,6 @@
 genrule(
     name = "mvn_package",
-    srcs = glob(["src/**"]) + [
+    srcs = glob(["src/**","lib/**"]) + [
         "spotbugs-exclude.xml",
         "pom.xml",
     ],
