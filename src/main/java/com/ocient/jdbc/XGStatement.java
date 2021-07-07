@@ -1125,9 +1125,9 @@ public class XGStatement implements Statement
 		{
 			return setMaxTempDiskSQL(sql);
 		}
-		else if (sql.toUpperCase().startsWith("SET CONCURRENCY "))
+		else if (sql.toUpperCase().startsWith("SET PARALLELISM "))
 		{
-			return setConcurrencySQL(sql);
+			return setParallelismSQL(sql);
 		}
 		else if (sql.toUpperCase().startsWith("SET PRIORITY "))
 		{
@@ -2604,10 +2604,10 @@ public class XGStatement implements Statement
 		}
 	}
 
-	private int setConcurrencySQL(final String cmd) throws SQLException
+	private int setParallelismSQL(final String cmd) throws SQLException
 	{
-		LOGGER.log(Level.INFO, "Entered driver's setConcurrency()");
-		final String ending = cmd.toUpperCase().substring("SET CONCURRENCY ".length()).trim();
+		LOGGER.log(Level.INFO, "Entered driver's setParallelism()");
+		final String ending = cmd.toUpperCase().substring("SET PARALLELISM ".length()).trim();
 		final boolean reset = ending.equals("RESET");
 		int concurrency = 0;
 		try
