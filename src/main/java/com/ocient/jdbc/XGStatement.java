@@ -2609,15 +2609,15 @@ public class XGStatement implements Statement
 		LOGGER.log(Level.INFO, "Entered driver's setParallelism()");
 		final String ending = cmd.toUpperCase().substring("SET PARALLELISM ".length()).trim();
 		final boolean reset = ending.equals("RESET");
-		int concurrency = 0;
+		int parallelism = 0;
 		try
 		{
-			concurrency = Integer.parseInt(ending);
+			parallelism = Integer.parseInt(ending);
 		}
 		catch (final NumberFormatException e)
 		{
 		}
-		return conn.setConcurrency(concurrency, reset);
+		return conn.setParallelism(parallelism, reset);
 	}
 
 	@Override

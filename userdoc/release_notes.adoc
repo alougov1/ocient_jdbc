@@ -10,6 +10,7 @@ Below is the release notes for every driver version that has customer implicatio
 New Features::
 
  * Change SET CONCURRENCY command to SET PARALLELISM 
+ * Change "concurrency" driver property to "parallelism" 
 
 //tag::compact[]
 == 2.22 (2021-7-1)
