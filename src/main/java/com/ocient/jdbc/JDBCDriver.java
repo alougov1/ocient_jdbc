@@ -415,10 +415,10 @@ public class JDBCDriver implements Driver
 		defaultSchema.required = false;
 		retval[10] = defaultSchema;
 
-		final DriverPropertyInfo concurrency = new DriverPropertyInfo("concurrency", null);
-		concurrency.description = "Number of concurrent queries allowed before queueing";
-		concurrency.required = false;
-		retval[11] = concurrency;
+		final DriverPropertyInfo parallelism = new DriverPropertyInfo("parallelism", null);
+		parallelism.description = "Number of concurrent queries allowed before queueing";
+		parallelism.required = false;
+		retval[11] = parallelism;
 
 		final DriverPropertyInfo timeoutMillis = new DriverPropertyInfo("timeoutMillis", "0");
 		timeoutMillis.description = "Number of milliseconds before cancellable operations are timed out and killed by the driver. 0 = no timeout";

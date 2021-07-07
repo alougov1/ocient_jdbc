@@ -318,7 +318,7 @@ public class XGConnection implements Connection
 	public Integer maxRows = null;
 	private Integer maxTime = null;
 	private Integer maxTempDisk = null;
-	private Integer concurrency = null;
+	private Integer parallelism = null;
 	private Double priority = null;
 	protected boolean force = false;
 	private volatile long timeoutMillis = 0L; // 0L means no timeout set	
@@ -1705,7 +1705,7 @@ public class XGConnection implements Connection
 		hash += maxRows == null ? 0 : maxRows.hashCode();
 		hash += maxTime == null ? 0 : maxTime.hashCode();
 		hash += maxTempDisk == null ? 0 : maxTempDisk.hashCode();
-		hash += concurrency == null ? 0 : concurrency.hashCode();
+		hash += parallelism == null ? 0 : parallelism.hashCode();
 		hash += priority == null ? 0 : priority.hashCode();
 
 		return hash;
@@ -2514,9 +2514,9 @@ public class XGConnection implements Connection
 		{
 			setMaxTempDisk(maxTempDisk, false);
 		}
-		if (concurrency != null)
+		if (parallelism != null)
 		{
-			setConcurrency(concurrency, false);
+			setParallelism(parallelism, false);
 		}
 		if (priority != null)
 		{
@@ -2632,13 +2632,13 @@ public class XGConnection implements Connection
 			setSchema = defaultSchema;
 		}
 
-		if (properties.containsKey("concurrency") && properties.get("concurrency") != null)
+		if (properties.containsKey("parallelism") && properties.get("parallelism") != null)
 		{
-			concurrency = Integer.parseInt((String) properties.get("concurrency"));
+			parallelism = Integer.parseInt((String) properties.get("parallelism"));
 		}
 		else
 		{
-			concurrency = null;
+			parallelism = null;
 		}
 
 		if (properties.containsKey("timeoutMillis") && properties.get("timeoutMillis") != null)
@@ -2762,14 +2762,14 @@ public class XGConnection implements Connection
 		LOGGER.log(Level.WARNING, "Called setClientInfo()");
 	}
 
-	public int setConcurrency(final Integer concurrency, final boolean reset)
+	public int setParallelism(final Integer parallelism, final boolean reset)
 	{
-		LOGGER.log(Level.INFO, String.format("Setting concurrency to: %d", concurrency));
-		this.concurrency = concurrency;
+		LOGGER.log(Level.INFO, String.format("Setting parallelism to: %d", parallelism));
+		this.parallelism = parallelism;
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.Concurrency.Builder innerBuilder = ClientWireProtocol.SetParameter.Concurrency.newBuilder();
-		innerBuilder.setConcurrency(concurrency != null ? concurrency : 0);
+		innerBuilder.setConcurrency(parallelism != null ? parallelism : 0);
 		builder.setConcurrency(innerBuilder.build());
 
 		return sendParameterMessage(builder.build());
