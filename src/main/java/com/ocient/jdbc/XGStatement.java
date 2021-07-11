@@ -2999,6 +2999,8 @@ public class XGStatement implements Statement
 			}
 
 			schema = schema.substring(1, schema.length() - 1);
+		} else {
+			schema = schema.toLowerCase();
 		}
 		conn.setSchema(schema);
 		return 0;

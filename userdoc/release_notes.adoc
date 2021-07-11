@@ -5,6 +5,13 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[]
+== 2.24 (2021-7-11)
+
+New Features::
+
+ * Have setSchema handle unquoted caps sql. "SET SCHEMA MADISON" will set schema to "madison".
+
+//tag::compact[]
 == 2.23 (2021-7-6)
 
 New Features::
