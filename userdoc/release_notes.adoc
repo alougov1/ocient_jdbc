@@ -5,7 +5,7 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[]
-== 2.24 (2021-7-11)
+== 2.24 (2021-7-12)
 
 New Features::
 
