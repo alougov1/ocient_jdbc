@@ -287,7 +287,7 @@ public class XGConnection implements Connection
 	protected String client = "jdbc";
 	// protocolVersion does not change since switching to maven. clientVersion is the true driver version.
 	protected String protocolVersion;
-	protected String clientVersion;
+	protected String clientVersion = "0.00";
 	protected String serverVersion = "";
 	protected String defaultSchema = "";
 
@@ -336,7 +336,11 @@ public class XGConnection implements Connection
 		this.portNum = portNum;
 		this.database = database;
 		this.protocolVersion = protocolVersion;
-		this.clientVersion = clientVersion;
+		if(clientVersion != null){
+			this.clientVersion = clientVersion;
+		} else {
+			LOGGER.log(Level.WARN, "Null clientVersion passed to the connection constructor. Something is probably wrong with manifest.");
+		}
 		retryCounter = 0;
 		this.tls = tls;
 		typeMap = new HashMap<>();
@@ -366,7 +370,11 @@ public class XGConnection implements Connection
 		this.portNum = portNum;
 		this.database = database;
 		this.protocolVersion = protocolVersion;
-		this.clientVersion = clientVersion;
+		if(clientVersion != null){
+			this.clientVersion = clientVersion;
+		} else {
+			LOGGER.log(Level.WARN, "Null clientVersion passed to the connection constructor. Something is probably wrong with manifest.");
+		}
 		retryCounter = 0;
 		this.tls = tls;
 		typeMap = new HashMap<>();
