@@ -5,6 +5,13 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[]
+== 2.25 (2021-7-27)
+
+New Features::
+
+ * Default clientVersion to 0.00 if the driver provides a null clientVersion to XGConnection.
+
+//tag::compact[]
 == 2.24 (2021-7-12)
 
 New Features::
