@@ -339,7 +339,7 @@ public class XGConnection implements Connection
 		if(clientVersion != null){
 			this.clientVersion = clientVersion;
 		} else {
-			LOGGER.log(Level.WARN, "Null clientVersion passed to the connection constructor. Something is probably wrong with manifest.");
+			LOGGER.log(Level.WARNING, "Null clientVersion passed to the connection constructor. Something is probably wrong with manifest.");
 		}
 		retryCounter = 0;
 		this.tls = tls;
@@ -373,7 +373,7 @@ public class XGConnection implements Connection
 		if(clientVersion != null){
 			this.clientVersion = clientVersion;
 		} else {
-			LOGGER.log(Level.WARN, "Null clientVersion passed to the connection constructor. Something is probably wrong with manifest.");
+			LOGGER.log(Level.WARNING, "Null clientVersion passed to the connection constructor. Something is probably wrong with manifest.");
 		}
 		retryCounter = 0;
 		this.tls = tls;
