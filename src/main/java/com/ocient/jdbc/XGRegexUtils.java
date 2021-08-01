@@ -14,6 +14,7 @@ public class XGRegexUtils{
 	public static Pattern listIndexesSyntax = Pattern.compile("list\\s+ind(ic|ex)es\\s+((" + XGRegexUtils.tk("schema") + ")\\.)?(" + XGRegexUtils.tk("table") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
 	public static Pattern describeTableSyntax = Pattern.compile("describe(\\s+table\\s+)?((" + XGRegexUtils.tk("schema") + ")\\.)?(" + XGRegexUtils.tk("table") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
 	public static Pattern describeViewSyntax = Pattern.compile("describe(\\s+view\\s+)?((" + XGRegexUtils.tk("schema") + ")\\.)?(" + XGRegexUtils.tk("view") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);    
+    public static Pattern setSchemaSyntax = Pattern.compile("set\\s+schema\\s+" + XGRegexUtils.tk("schema"));
 
 
     // Get a token from its generated regex according to SQL case-sensitivity rules

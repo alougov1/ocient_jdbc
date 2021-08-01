@@ -2957,18 +2957,12 @@ public class XGStatement implements Statement
 	private int setSchema(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's setSchema()");
-		String schema = cmd.substring(11).trim();
-		if (schema.startsWith("\""))
+		final Matcher m = XGRegexUtils.setSchemaSyntax.matcher(cmd);
+		if (!m.matches())
 		{
-			if (!schema.endsWith("\""))
-			{
-				throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Uncloseed Quotes!");
-			}
-
-			schema = schema.substring(1, schema.length() - 1);
-		} else {
-			schema = schema.toLowerCase();
+			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper set schema syntax: set schema <schema>");
 		}
+		String schema = XGRegexUtils.getTk(m, "schema", "");
 		conn.setSchema(schema);
 		return 0;
 	}
