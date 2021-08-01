@@ -2574,7 +2574,6 @@ public class XGStatement implements Statement
 	private int setParallelismSQL(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's setParallelism()");
-		// final String ending = cmd.toUpperCase().substring("SET PARALLELISM ".length()).trim();
 		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("parallelism", cmd);
 		if (!m.matches())
 		{

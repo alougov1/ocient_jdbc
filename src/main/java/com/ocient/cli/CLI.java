@@ -1685,7 +1685,7 @@ public class CLI
 	private static boolean processCommand(final String cmd)
 	{
 		boolean quit = false;
-		System.out.println("processCommand(" + cmd + ")");
+		// System.out.println("processCommand(" + cmd + ")");
 		if (cmd.equals(""))
 		{
 			return quit;

@@ -43,6 +43,8 @@ public class XGRegexUtils{
     
     // Syntax is set <optionName> <optionValue>;
     // Option value can be quoted or unquoted. Unquoted values can only be alphanumeric
+    // This creates a pattern using the specified option name allows for the matcher
+    // to extract the option value. We use this for the general class of set commands.
     public static Matcher genericSetSyntaxMatch(final String optionName, final String cmd) 
     {
         String regex = "set\\s+" + optionName + "\\s+" + XGRegexUtils.tk(optionName);
