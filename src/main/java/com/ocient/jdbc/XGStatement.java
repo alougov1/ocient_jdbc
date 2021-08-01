@@ -2574,8 +2574,14 @@ public class XGStatement implements Statement
 	private int setParallelismSQL(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's setParallelism()");
-		final String ending = cmd.toUpperCase().substring("SET PARALLELISM ".length()).trim();
-		final boolean reset = ending.equals("RESET");
+		// final String ending = cmd.toUpperCase().substring("SET PARALLELISM ".length()).trim();
+		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("parallelism", cmd);
+		if (!m.matches())
+		{
+			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper set parallelism syntax: set parallelism <parallelismValue>");
+		}
+		String ending = XGRegexUtils.getTk(m, "parallelism", "");		
+		final boolean reset = ending.toUpperCase().equals("RESET");
 		int parallelism = 0;
 		try
 		{
@@ -2668,8 +2674,13 @@ public class XGStatement implements Statement
 	private int setMaxRowsSQL(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's setMaxRows()");
-		final String ending = cmd.toUpperCase().substring("SET MAXROWS ".length()).trim();
-		final boolean reset = ending.equals("RESET");
+		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("maxrows", cmd);
+		if (!m.matches())
+		{
+			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper set maxrows syntax: set maxrows <maxrowValue>");
+		}
+		final String ending = XGRegexUtils.getTk(m, "maxrows", "");
+		final boolean reset = ending.toUpperCase().equals("RESET");
 		int maxRows = 0;
 		try
 		{
@@ -2684,8 +2695,13 @@ public class XGStatement implements Statement
 	private int setMaxTempDiskSQL(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's setMaxTempDisk()");
-		final String ending = cmd.toUpperCase().substring("SET MAXTEMPDISK ".length()).trim();
-		final boolean reset = ending.equals("RESET");
+		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("maxtempdisk", cmd);
+		if (!m.matches())
+		{
+			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper set maxtempdisk syntax: set maxtempdisk <maxtempdiskValue>");
+		}
+		final String ending = XGRegexUtils.getTk(m, "maxtempdisk", "");
+		final boolean reset = ending.toUpperCase().equals("RESET");
 		int maxTempDisk = 0;
 		try
 		{
@@ -2700,8 +2716,13 @@ public class XGStatement implements Statement
 	private int setMaxTimeSQL(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's setMaxTime()");
-		final String ending = cmd.toUpperCase().substring("SET MAXTIME ".length()).trim();
-		final boolean reset = ending.equals("RESET");
+		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("maxtime", cmd);
+		if (!m.matches())
+		{
+			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper set maxtime syntax: set maxtime <maxtimeValue>");
+		}
+		final String ending = XGRegexUtils.getTk(m, "maxtime", "");
+		final boolean reset = ending.toUpperCase().equals("RESET");
 		int maxTime = 0;
 		try
 		{
@@ -2913,8 +2934,13 @@ public class XGStatement implements Statement
 	private int setPrioritySQL(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's setPriority()");
-		final String ending = cmd.toUpperCase().substring("SET PRIORITY ".length()).trim();
-		final boolean reset = ending.equals("RESET");
+		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("priority", cmd);
+		if (!m.matches())
+		{
+			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper set priority syntax: set priority <priorityValue>");
+		}
+		String ending = XGRegexUtils.getTk(m, "priority", "");		
+		final boolean reset = ending.toUpperCase().equals("RESET");
 		double priority = 0;
 		try
 		{
@@ -2957,10 +2983,10 @@ public class XGStatement implements Statement
 	private int setSchema(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's setSchema()");
-		final Matcher m = XGRegexUtils.setSchemaSyntax.matcher(cmd);
+		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("schema", cmd);
 		if (!m.matches())
 		{
-			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper set schema syntax: set schema <schema>");
+			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper set schema syntax: set schema <schemaValue>");
 		}
 		String schema = XGRegexUtils.getTk(m, "schema", "");
 		conn.setSchema(schema);
