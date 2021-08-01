@@ -5,6 +5,15 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[]
+== 2.26 (2021-7-30)
+
+New Features::
+
+ * Move the duplicated regex code in CLI.java and XGStatement.java into a new file.
+ * Implement a generic regex for syntax checking the set family of sql commands.
+ * Fix a bug in resetting commands using lower cases. "set maxrow reset;" does not work. Needs to be capitalized.
+
+//tag::compact[]
 == 2.25 (2021-7-27)
 
 New Features::

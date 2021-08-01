@@ -37,7 +37,6 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.google.common.base.Preconditions;
 import com.ocient.jdbc.proto.ClientWireProtocol;
@@ -63,6 +62,7 @@ import com.ocient.jdbc.proto.ClientWireProtocol.SystemWideCompletedQueries;
 import com.ocient.jdbc.proto.ClientWireProtocol.SystemWideQueries;
 
 import com.ocient.jdbc.KML;
+import com.ocient.jdbc.XGRegexUtils;
 
 public class XGStatement implements Statement
 {
@@ -95,14 +95,6 @@ public class XGStatement implements Statement
 	private static final int defaultFetchSize = 30000;
 
 	private static HashMap<XGConnection, HashSet<XGStatement>> cache = new HashMap<>();
-
-	private static Pattern listTablesSyntax = Pattern.compile("list\\s+tables(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-
-	private static Pattern listSystemTablesSyntax = Pattern.compile("list\\s+system\\s+tables(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-	private static Pattern listViewsSyntax = Pattern.compile("list\\s+views(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-	private static Pattern listIndexesSyntax = Pattern.compile("list\\s+ind(ic|ex)es\\s+((" + tk("schema") + ")\\.)?(" + tk("table") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-	private static Pattern describeTableSyntax = Pattern.compile("describe(\\s+table\\s+)?((" + tk("schema") + ")\\.)?(" + tk("table") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-	private static Pattern describeViewSyntax = Pattern.compile("describe(\\s+view\\s+)?((" + tk("schema") + ")\\.)?(" + tk("view") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
 	
 	public static void setKMLFile(final String cmd) {
 		try
@@ -133,22 +125,6 @@ public class XGStatement implements Statement
 	{
 		final int ret = java.nio.ByteBuffer.wrap(val).getInt();
 		return ret;
-	}
-
-	// Get a token from its generated regex according to SQL case-sensitivity rules
-	// (sensitive iff quoted).
-	// Do not call on a matcher that has not yet called matches().
-	private static String getTk(final Matcher m, final String name, final String def)
-	{
-		if (m.group(name) == null)
-		{
-			return def;
-		}
-		if (m.group("q0" + name).length() == 0)
-		{
-			return m.group(name).toLowerCase();
-		}
-		return m.group(name);
 	}
 
 	public void returnStatementToCache(){
@@ -411,15 +387,6 @@ public class XGStatement implements Statement
 		return false;
 	}
 
-	// Generate a regex for an unquoted alphanumeric ([a-zA-Z0-9_]) or quoted free
-	// (.) token. Reluctant.
-	// Do not insert multiple regexes for tokens of the same name (or "q0" + another
-	// name) into a single pattern.
-	private static String tk(final String name)
-	{
-		return "(?<q0" + name + ">\"?)(?<" + name + ">(\\w+?|(?<=\").+?(?=\")))\\k<q0" + name + ">";
-	}
-
 	protected boolean poolable = true;
 
 	protected boolean closed = false;
@@ -675,27 +642,27 @@ public class XGStatement implements Statement
 	{
 		LOGGER.log(Level.INFO, "Entered driver's describeTable()");
 		final ResultSet rs = null;
-		final Matcher m = describeTableSyntax.matcher(cmd);
+		final Matcher m = XGRegexUtils.describeTableSyntax.matcher(cmd);
 		if (!m.matches())
 		{
 			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax: describe (<schema>.)?<table>");
 		}
 		final DatabaseMetaData dbmd = conn.getMetaData();
-		return dbmd.getColumns("", getTk(m, "schema", conn.getSchema()), getTk(m, "table", null), "%");
+		return dbmd.getColumns("", XGRegexUtils.getTk(m, "schema", conn.getSchema()), XGRegexUtils.getTk(m, "table", null), "%");
 	}
 
 	private ResultSet describeView(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's describeView()");
 		final ResultSet rs = null;
-		final Matcher m = describeViewSyntax.matcher(cmd);
+		final Matcher m = XGRegexUtils.describeViewSyntax.matcher(cmd);
 		if (!m.matches())
 		{
 			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax: describe view (<schema>.)?<view>");
 		}
 		final DatabaseMetaData md = conn.getMetaData();
 		final XGDatabaseMetaData dbmd = (XGDatabaseMetaData) md;
-		return dbmd.getViews("", getTk(m, "schema", conn.getSchema()), getTk(m, "view", null), null);
+		return dbmd.getViews("", XGRegexUtils.getTk(m, "schema", conn.getSchema()), XGRegexUtils.getTk(m, "view", null), null);
 	}
 
 	/** Dissociate the current query with this statement */
@@ -2161,14 +2128,14 @@ public class XGStatement implements Statement
 	{
 		LOGGER.log(Level.INFO, "Entered driver's listIndexes()");
 		final ResultSet rs = null;
-		final Matcher m = listIndexesSyntax.matcher(cmd);
+		final Matcher m = XGRegexUtils.listIndexesSyntax.matcher(cmd);
 
 		if (!m.matches())
 		{
 			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax: list indexes (<schema>.)?<table>");
 		}
 		final DatabaseMetaData dbmd = conn.getMetaData();
-		return dbmd.getIndexInfo("", getTk(m, "schema", conn.getSchema()), getTk(m, "table", null), false, false);
+		return dbmd.getIndexInfo("", XGRegexUtils.getTk(m, "schema", conn.getSchema()), XGRegexUtils.getTk(m, "table", null), false, false);
 	}
 
 	// used by CLI
@@ -2189,7 +2156,7 @@ public class XGStatement implements Statement
 		LOGGER.log(Level.INFO, "Entered driver's listTables()");
 		ResultSet rs = null;
 
-		final Matcher m = isSystemTables ? listSystemTablesSyntax.matcher(cmd) : listTablesSyntax.matcher(cmd);
+		final Matcher m = isSystemTables ? XGRegexUtils.listSystemTablesSyntax.matcher(cmd) : XGRegexUtils.listTablesSyntax.matcher(cmd);
 		if (!m.matches())
 		{
 			// this line will never be reached,
@@ -2215,7 +2182,7 @@ public class XGStatement implements Statement
 		LOGGER.log(Level.INFO, "Entered driver's listViews()");
 		final ResultSet rs = null;
 
-		final Matcher m = listViewsSyntax.matcher(cmd);
+		final Matcher m = XGRegexUtils.listViewsSyntax.matcher(cmd);
 		if (!m.matches())
 		{
 			// this line will never be reached,
@@ -2607,8 +2574,13 @@ public class XGStatement implements Statement
 	private int setParallelismSQL(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's setParallelism()");
-		final String ending = cmd.toUpperCase().substring("SET PARALLELISM ".length()).trim();
-		final boolean reset = ending.equals("RESET");
+		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("parallelism", cmd);
+		if (!m.matches())
+		{
+			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper set parallelism syntax: set parallelism <parallelismValue>");
+		}
+		String ending = XGRegexUtils.getTk(m, "parallelism", "");		
+		final boolean reset = ending.toUpperCase().equals("RESET");
 		int parallelism = 0;
 		try
 		{
@@ -2701,8 +2673,13 @@ public class XGStatement implements Statement
 	private int setMaxRowsSQL(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's setMaxRows()");
-		final String ending = cmd.toUpperCase().substring("SET MAXROWS ".length()).trim();
-		final boolean reset = ending.equals("RESET");
+		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("maxrows", cmd);
+		if (!m.matches())
+		{
+			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper set maxrows syntax: set maxrows <maxrowValue>");
+		}
+		final String ending = XGRegexUtils.getTk(m, "maxrows", "");
+		final boolean reset = ending.toUpperCase().equals("RESET");
 		int maxRows = 0;
 		try
 		{
@@ -2717,8 +2694,13 @@ public class XGStatement implements Statement
 	private int setMaxTempDiskSQL(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's setMaxTempDisk()");
-		final String ending = cmd.toUpperCase().substring("SET MAXTEMPDISK ".length()).trim();
-		final boolean reset = ending.equals("RESET");
+		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("maxtempdisk", cmd);
+		if (!m.matches())
+		{
+			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper set maxtempdisk syntax: set maxtempdisk <maxtempdiskValue>");
+		}
+		final String ending = XGRegexUtils.getTk(m, "maxtempdisk", "");
+		final boolean reset = ending.toUpperCase().equals("RESET");
 		int maxTempDisk = 0;
 		try
 		{
@@ -2733,8 +2715,13 @@ public class XGStatement implements Statement
 	private int setMaxTimeSQL(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's setMaxTime()");
-		final String ending = cmd.toUpperCase().substring("SET MAXTIME ".length()).trim();
-		final boolean reset = ending.equals("RESET");
+		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("maxtime", cmd);
+		if (!m.matches())
+		{
+			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper set maxtime syntax: set maxtime <maxtimeValue>");
+		}
+		final String ending = XGRegexUtils.getTk(m, "maxtime", "");
+		final boolean reset = ending.toUpperCase().equals("RESET");
 		int maxTime = 0;
 		try
 		{
@@ -2946,8 +2933,13 @@ public class XGStatement implements Statement
 	private int setPrioritySQL(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's setPriority()");
-		final String ending = cmd.toUpperCase().substring("SET PRIORITY ".length()).trim();
-		final boolean reset = ending.equals("RESET");
+		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("priority", cmd);
+		if (!m.matches())
+		{
+			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper set priority syntax: set priority <priorityValue>");
+		}
+		String ending = XGRegexUtils.getTk(m, "priority", "");		
+		final boolean reset = ending.toUpperCase().equals("RESET");
 		double priority = 0;
 		try
 		{
@@ -2990,18 +2982,12 @@ public class XGStatement implements Statement
 	private int setSchema(final String cmd) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Entered driver's setSchema()");
-		String schema = cmd.substring(11).trim();
-		if (schema.startsWith("\""))
+		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("schema", cmd);
+		if (!m.matches())
 		{
-			if (!schema.endsWith("\""))
-			{
-				throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Uncloseed Quotes!");
-			}
-
-			schema = schema.substring(1, schema.length() - 1);
-		} else {
-			schema = schema.toLowerCase();
+			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper set schema syntax: set schema <schemaValue>");
 		}
+		String schema = XGRegexUtils.getTk(m, "schema", "");
 		conn.setSchema(schema);
 		return 0;
 	}

@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
@@ -43,6 +42,7 @@ import com.ocient.jdbc.XGConnection;
 import com.ocient.jdbc.XGDatabaseMetaData;
 import com.ocient.jdbc.XGStatement;
 import com.ocient.jdbc.proto.ClientWireProtocol.SysQueriesRow;
+import com.ocient.jdbc.XGRegexUtils;
 
 public class CLI
 {
@@ -58,25 +58,7 @@ public class CLI
 
 	private static char quote = '\0';
 	private static boolean comment = false;
-
-	private static Pattern connectToSyntax = Pattern.compile(
-		"connect\\s+to\\s+(?<preurl>jdbc:ocient://?)(?<hosts>.+?)(?<posturl>/.+?)(?<up>\\s+user\\s+(" + userTk() + ")\\s+using\\s+(?<q>\"?)(?<pwd>.+?)\\k<q>)?(?<force>\\s+force)?",
-		Pattern.CASE_INSENSITIVE);
-
-	private static Pattern listTablesSyntax = Pattern.compile("list\\s+tables(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-
-	private static Pattern listSystemTablesSyntax = Pattern.compile("list\\s+system\\s+tables(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-
-	private static Pattern listViewsSyntax = Pattern.compile("list\\s+views(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-
-	private static Pattern describeTableSyntax = Pattern.compile("describe(\\s+table\\s+)?((" + tk("schema") + ")\\.)?(" + tk("table") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-
-	private static Pattern describeViewSyntax = Pattern.compile("describe(\\s+view\\s+)?((" + tk("schema") + ")\\.)?(" + tk("view") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-
-	private static Pattern listIndexesSyntax = Pattern.compile("list\\s+ind(ic|ex)es\\s+((" + tk("schema") + ")\\.)?(" + tk("table") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-
 	private static final char[] hexArray = "0123456789abcdef".toCharArray();
-
 	private static Statement stmt;
 
 	private static String bytesToHex(final byte[] bytes)
@@ -183,7 +165,7 @@ public class CLI
 
 		try
 		{
-			final Matcher m = connectToSyntax.matcher(cmd);
+			final Matcher m = XGRegexUtils.connectToSyntax.matcher(cmd);
 			if (!m.matches())
 			{
 				System.out.println("Syntax: connect to <jdbc url>( user <username> using <password>)?( force)?");
@@ -204,7 +186,7 @@ public class CLI
 				}
 				else
 				{
-					doConnect(getTk(m, "user", null), m.group("pwd"), m.group("force") != null, url);
+					doConnect(XGRegexUtils.getTk(m, "user", null), m.group("pwd"), m.group("force") != null, url);
 				}
 				// No exception thrown means connection was successful, and connectTo may return
 				stmt = conn.createStatement();
@@ -241,7 +223,7 @@ public class CLI
 
 		try
 		{
-			final Matcher m = describeTableSyntax.matcher(cmd);
+			final Matcher m = XGRegexUtils.describeTableSyntax.matcher(cmd);
 			if (!m.matches())
 			{
 				System.out.println("Syntax: describe (<schema>.)?<table>");
@@ -341,7 +323,7 @@ public class CLI
 
 		try
 		{
-			final Matcher m = describeViewSyntax.matcher(cmd);
+			final Matcher m = XGRegexUtils.describeViewSyntax.matcher(cmd);
 			if (!m.matches())
 			{
 				System.out.println("Syntax: describe view (<schema>.)?<view>");
@@ -802,22 +784,6 @@ public class CLI
 		}
 	}
 
-	// Get a token from its generated regex according to SQL case-sensitivity rules
-	// (sensitive iff quoted).
-	// Do not call on a matcher that has not yet called matches().
-	private static String getTk(final Matcher m, final String name, final String def)
-	{
-		if (m.group(name) == null)
-		{
-			return def;
-		}
-		if (m.group("q0" + name).length() == 0)
-		{
-			return m.group(name).toLowerCase();
-		}
-		return m.group(name);
-	}
-
 	private static boolean isConnected()
 	{
 		if (conn != null)
@@ -962,7 +928,7 @@ public class CLI
 
 		try
 		{
-			final Matcher m = listIndexesSyntax.matcher(cmd);
+			final Matcher m = XGRegexUtils.listIndexesSyntax.matcher(cmd);
 			if (!m.matches())
 			{
 				System.out.println("Syntax: list indexes (<schema>.)?<table>");
@@ -1157,7 +1123,7 @@ public class CLI
 
 		try
 		{
-			final Matcher m = isSystemTables ? listSystemTablesSyntax.matcher(cmd) : listTablesSyntax.matcher(cmd);
+			final Matcher m = isSystemTables ? XGRegexUtils.listSystemTablesSyntax.matcher(cmd) : XGRegexUtils.listTablesSyntax.matcher(cmd);
 			if (!m.matches())
 			{
 				// this line will never be reached,
@@ -1240,7 +1206,7 @@ public class CLI
 		{
 			final DatabaseMetaData md = conn.getMetaData();
 			final XGDatabaseMetaData dbmd = (XGDatabaseMetaData) md;
-			final Matcher m = listViewsSyntax.matcher(cmd);
+			final Matcher m = XGRegexUtils.listViewsSyntax.matcher(cmd);
 			if (!m.matches())
 			{
 				// this line will never be reached,
@@ -2232,15 +2198,6 @@ public class CLI
 		return false;
 	}
 
-	// Generate a regex for an unquoted alphanumeric ([a-zA-Z0-9_]) or quoted free
-	// (.) token. Reluctant.
-	// Do not insert multiple regexes for tokens of the same name (or "q0" + another
-	// name) into a single pattern.
-	private static String tk(final String name)
-	{
-		return "(?<q0" + name + ">\"?)(?<" + name + ">(\\w+?|(?<=\").+?(?=\")))\\k<q0" + name + ">";
-	}
-
 	private static void update(final String cmd)
 	{
 		long start = 0;
@@ -2266,13 +2223,5 @@ public class CLI
 		{
 			System.out.println("Error: " + e.getMessage());
 		}
-	}
-
-	// Generate a regex for an unquoted alphanumeric ([a-zA-Z0-9_]) or quoted free
-	// (.) token possibly followed
-	// by @ and more unquoted alphanumeric ([a-zA-Z0-9_]) or quoted free (.) tokens.
-	private static String userTk()
-	{
-		return "(?<q0user>\"?)(?<user>(\\w+?|(?<=\").+?(?=\"))(@(\\w+?|(?<=\").+?(?=\")))?)\\k<q0user>";
 	}
 }
