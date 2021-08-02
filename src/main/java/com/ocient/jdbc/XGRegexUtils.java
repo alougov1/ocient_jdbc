@@ -4,16 +4,16 @@ import java.util.regex.Pattern;
 
 public class XGRegexUtils{
 
-	public static Pattern connectToSyntax = Pattern.compile(
+	public static final Pattern connectToSyntax = Pattern.compile(
 		"connect\\s+to\\s+(?<preurl>jdbc:ocient://?)(?<hosts>.+?)(?<posturl>/.+?)(?<up>\\s+user\\s+(" + userTk() + ")\\s+using\\s+(?<q>\"?)(?<pwd>.+?)\\k<q>)?(?<force>\\s+force)?",
 		Pattern.CASE_INSENSITIVE);    
 
-	public static Pattern listTablesSyntax = Pattern.compile("list\\s+tables(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-    public static Pattern listSystemTablesSyntax = Pattern.compile("list\\s+system\\s+tables(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-	public static Pattern listViewsSyntax = Pattern.compile("list\\s+views(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-	public static Pattern listIndexesSyntax = Pattern.compile("list\\s+ind(ic|ex)es\\s+((" + XGRegexUtils.tk("schema") + ")\\.)?(" + XGRegexUtils.tk("table") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-	public static Pattern describeTableSyntax = Pattern.compile("describe(\\s+table\\s+)?((" + XGRegexUtils.tk("schema") + ")\\.)?(" + XGRegexUtils.tk("table") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
-	public static Pattern describeViewSyntax = Pattern.compile("describe(\\s+view\\s+)?((" + XGRegexUtils.tk("schema") + ")\\.)?(" + XGRegexUtils.tk("view") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);    
+	public static final Pattern listTablesSyntax = Pattern.compile("list\\s+tables(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
+    public static final Pattern listSystemTablesSyntax = Pattern.compile("list\\s+system\\s+tables(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
+	public static final Pattern listViewsSyntax = Pattern.compile("list\\s+views(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
+	public static final Pattern listIndexesSyntax = Pattern.compile("list\\s+ind(ic|ex)es\\s+((" + XGRegexUtils.tk("schema") + ")\\.)?(" + XGRegexUtils.tk("table") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
+	public static final Pattern describeTableSyntax = Pattern.compile("describe(\\s+table\\s+)?((" + XGRegexUtils.tk("schema") + ")\\.)?(" + XGRegexUtils.tk("table") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);
+	public static final Pattern describeViewSyntax = Pattern.compile("describe(\\s+view\\s+)?((" + XGRegexUtils.tk("schema") + ")\\.)?(" + XGRegexUtils.tk("view") + ")(?<verbose>\\s+verbose)?", Pattern.CASE_INSENSITIVE);    
 
 
     // Get a token from its generated regex according to SQL case-sensitivity rules
