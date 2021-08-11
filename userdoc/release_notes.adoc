@@ -5,6 +5,14 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[]
+== 2.27 (2021-8-10)
+
+New Features::
+
+ * Fixed poorly structured if statement in CLI source command.
+ * Remove more stack trace printing and add more logs.
+
+//tag::compact[]
 == 2.26 (2021-7-30)
 
 New Features::
