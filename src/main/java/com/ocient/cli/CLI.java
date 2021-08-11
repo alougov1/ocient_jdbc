@@ -769,7 +769,6 @@ public class CLI
 		}
 		catch (final Exception e)
 		{
-			e.printStackTrace();
 			try
 			{
 				if (rs != null)
@@ -2161,10 +2160,7 @@ public class CLI
 						}
 					}
 				}
-				if (startsWithIgnoreCase(cmd, "CLI SET MAX HISTORY"))
-				{
-				}
-				else
+				if (!startsWithIgnoreCase(cmd, "CLI SET MAX HISTORY"))
 				{
 					quit = processCommand(cmd);
 				}
