@@ -681,7 +681,6 @@ public class XGConnection implements Connection
 		catch (final Exception e)
 		{
 			LOGGER.log(Level.WARNING, String.format("Exception %s occurred during handshake with message %s", e.toString(), e.getMessage()));
-			e.printStackTrace();
 
 			try
 			{
@@ -689,6 +688,7 @@ public class XGConnection implements Connection
 			}
 			catch (final Exception f)
 			{
+				LOGGER.log(Level.WARNING, "Failed to close socket in clientHandshakeGCM");
 			}
 
 			throw e;
@@ -947,7 +947,6 @@ public class XGConnection implements Connection
 		catch (final Exception e)
 		{
 			LOGGER.log(Level.WARNING, String.format("Exception %s occurred during handshake with message %s", e.toString(), e.getMessage()));
-			e.printStackTrace();
 
 			try
 			{
@@ -955,6 +954,7 @@ public class XGConnection implements Connection
 			}
 			catch (final Exception f)
 			{
+				LOGGER.log(Level.WARNING, "Failed to close socket in clientHandshakeCBC");
 			}
 
 			throw e;
@@ -1054,7 +1054,7 @@ public class XGConnection implements Connection
 		}
 		catch (final Exception e)
 		{
-			e.printStackTrace();
+			LOGGER.log(Level.WARNING, "Failed to connect()");
 			throw e;
 		}
 	}
