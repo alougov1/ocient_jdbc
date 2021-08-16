@@ -2510,6 +2510,7 @@ public class XGConnection implements Connection
 
 	private void resendParameters()
 	{
+		LOGGER.log(Level.INFO, "resendParameters() called");
 		if (maxRows != null)
 		{
 			setMaxRows(maxRows, false);

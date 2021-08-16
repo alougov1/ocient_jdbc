@@ -129,6 +129,7 @@ public class XGStatement implements Statement
 
 	public void returnStatementToCache(){
 		// Reset statement
+		LOGGER.log(Level.INFO, "Called returnStatementToCache()");
 		reset();
 
 		// Cache this
@@ -602,7 +603,8 @@ public class XGStatement implements Statement
 			result = null;
 			closed = true;
 
-			if (poolable)
+			// Only return this statement to the pool if its connection is not closed.
+			if (poolable && !conn.isClosed())
 			{
 				// This sets the timer task as a daemon
 				timer = new Timer(true);
@@ -674,7 +676,7 @@ public class XGStatement implements Statement
 	@Override
 	public boolean execute(String sql) throws SQLException
 	{
-		LOGGER.log(Level.INFO, "Called execute()");
+		LOGGER.log(Level.INFO, String.format("Called execute() for sql: %s", sql));
 		setRunningQueryThread(Thread.currentThread());
 		sql = sql.trim();
 
@@ -2230,10 +2232,10 @@ public class XGStatement implements Statement
 		}
 		else if (rType.equals(ResponseType.RESPONSE_WARN))
 		{
-			LOGGER.log(Level.WARNING, "Server returned a warning response");
 			final String reason = response.getReason();
 			final String sqlState = response.getSqlState();
 			final int code = response.getVendorCode();
+			LOGGER.log(Level.WARNING, String.format("Server returned an warning response [%s] %s", sqlState, reason));
 			warnings.add(new SQLWarning(reason, sqlState, code));
 		}
 	}
