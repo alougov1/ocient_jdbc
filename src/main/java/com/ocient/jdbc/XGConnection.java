@@ -2510,25 +2510,37 @@ public class XGConnection implements Connection
 
 	private void resendParameters()
 	{
+		LOGGER.log(Level.INFO, "resendParameters() called");
 		if (maxRows != null)
 		{
-			setMaxRows(maxRows, false);
+			LOGGER.log(Level.INFO, String.format("Timmy debug maxRows was %d", maxRows));
+			setMaxRowsHardLimit(maxRows, false);
+		} else {
+			setMaxRowsHardLimit(0, true);
 		}
 		if (maxTime != null)
 		{
 			setMaxTime(maxTime, false);
+		} else {
+			setMaxTime(0, true);
 		}
 		if (maxTempDisk != null)
 		{
 			setMaxTempDisk(maxTempDisk, false);
+		} else {
+			setMaxTempDisk(0, true);
 		}
 		if (parallelism != null)
 		{
 			setParallelism(parallelism, false);
+		} else {
+			setParallelism(0, true);
 		}
 		if (priority != null)
 		{
 			setPriority(priority, false);
+		} else {
+			setPriority(0.0, true);
 		}
 	}
 
@@ -2570,7 +2582,7 @@ public class XGConnection implements Connection
 		catch (final Exception e)
 		{
 		}
-
+		
 		resendParameters();
 	}
 
