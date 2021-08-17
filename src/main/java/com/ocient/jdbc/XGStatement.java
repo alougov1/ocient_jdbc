@@ -901,7 +901,7 @@ public class XGStatement implements Statement
 			}
 			else if (startsWithIgnoreCase(sql, "LIST ALL QUERIES"))
 			{
-				return listAllQueries();
+				sql = "SELECT * FROM SYS.QUERIES";
 			}
 			else if (startsWithIgnoreCase(sql, "LIST TABLE PRIVILEGES"))
 			{
