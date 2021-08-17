@@ -2582,7 +2582,7 @@ public class XGConnection implements Connection
 		catch (final Exception e)
 		{
 		}
-		LOGGER.log(Level.INFO, "About to call resendParameters()");
+		
 		resendParameters();
 	}
 
