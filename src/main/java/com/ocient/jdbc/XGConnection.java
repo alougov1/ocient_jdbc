@@ -2314,6 +2314,33 @@ public class XGConnection implements Connection
 		}
 	}
 
+	/**
+	 * Utility function for remapping endpoints. Given a host and a port, remaps it to the correct secondary interface being used.
+	 */
+	public String reMapHost(final String host, final int port){
+		LOGGER.log(Level.INFO, String.format("Called reMapHost() with host: %s and port: %d", host, port));
+		if(secondaryIndex != -1){
+			final String unMappedEndpoint = host + ":" + port;
+			int listIndex = 0;
+			for(final ArrayList<String> list: secondaryInterfaces){
+				if(list.get(0).equals(unMappedEndpoint)){
+					break;
+				}
+				listIndex++;
+			}
+			if(listIndex < secondaryInterfaces.size()){
+				LOGGER.log(Level.INFO, String.format("Successfully remapped host : %s and port: %d to a proper endpoint", host, port));
+				return secondaryInterfaces.get(listIndex).get(secondaryIndex);
+			} else {
+				// Failed remapping.
+				LOGGER.log(Level.WARNING, String.format("Failed to remap host: %s and port: %d to a proper endpoint", host, port));
+				return "";
+			}
+		}
+		LOGGER.log(Level.WARNING, String.format("Failed to remap host: %s and port: %d to a proper endpoint", host, port));
+		return "";
+	}
+
 	/*
 	 * We have to told to redirect our request elsewhere.
 	 */
@@ -2513,7 +2540,6 @@ public class XGConnection implements Connection
 		LOGGER.log(Level.INFO, "resendParameters() called");
 		if (maxRows != null)
 		{
-			LOGGER.log(Level.INFO, String.format("Timmy debug maxRows was %d", maxRows));
 			setMaxRowsHardLimit(maxRows, false);
 		} else {
 			setMaxRowsHardLimit(0, true);
@@ -2785,7 +2811,11 @@ public class XGConnection implements Connection
 	public int setParallelism(final Integer parallelism, final boolean reset)
 	{
 		LOGGER.log(Level.INFO, String.format("Setting parallelism to: %d", parallelism));
-		this.parallelism = parallelism;
+		if(reset){
+			this.parallelism = null;
+		} else {
+			this.parallelism = parallelism;
+		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.Concurrency.Builder innerBuilder = ClientWireProtocol.SetParameter.Concurrency.newBuilder();
@@ -2824,7 +2854,11 @@ public class XGConnection implements Connection
 		// Set a "hard" limit on the number of rows returned. "Hard" in this case
 		// implies the server will abort queries which emit excess rows
 		LOGGER.log(Level.INFO, String.format("Setting maxrow to: %d", maxRows));
-		this.maxRows = maxRows;
+		if(reset){
+			this.maxRows = null;	
+		} else {
+			this.maxRows = maxRows;
+		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.RowLimit.Builder innerBuilder = ClientWireProtocol.SetParameter.RowLimit.newBuilder();
@@ -2836,7 +2870,11 @@ public class XGConnection implements Connection
 	public int setMaxTempDisk(final Integer maxTempDisk, final boolean reset)
 	{
 		LOGGER.log(Level.INFO, String.format("Setting maxTempDisk to: %d", maxTempDisk));
-		this.maxTempDisk = maxTempDisk;
+		if(reset){
+			this.maxTempDisk = null;
+		} else {
+			this.maxTempDisk = maxTempDisk;
+		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.MaxTempDiskLimit.Builder innerBuilder = ClientWireProtocol.SetParameter.MaxTempDiskLimit.newBuilder();
@@ -2849,7 +2887,11 @@ public class XGConnection implements Connection
 	public int setMaxTime(final Integer maxTime, final boolean reset)
 	{
 		LOGGER.log(Level.INFO, String.format("Setting maxTime to: %d", maxTime));
-		this.maxTime = maxTime;
+		if(reset){
+			this.maxTime = null;
+		} else {
+			this.maxTime = maxTime;
+		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.TimeLimit.Builder innerBuilder = ClientWireProtocol.SetParameter.TimeLimit.newBuilder();
@@ -2875,7 +2917,11 @@ public class XGConnection implements Connection
 	public int setPriority(final Double priority, final boolean reset)
 	{
 		LOGGER.log(Level.INFO, String.format("Setting priority to: %f", priority));
-		this.priority = priority;
+		if(reset){
+			this.priority = null;
+		} else {
+			this.priority = priority;
+		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.Priority.Builder innerBuilder = ClientWireProtocol.SetParameter.Priority.newBuilder();

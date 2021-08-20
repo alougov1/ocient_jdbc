@@ -29,6 +29,7 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
+import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -2058,7 +2059,16 @@ public class XGStatement implements Statement
 			// If we fail to redirect, the statement will just use the old connection.
 			return;
 		}
-		XGConnection newConn = 	(XGConnection) driver.createConnection(host, port, conn.getDB(), conn.getProperties());
+		String remappedString = conn.reMapHost(host, port);
+		if(remappedString.equals("")){
+			// If we fail to redirect, the statement will just use the old connection.
+			return;
+		}
+		LOGGER.log(Level.INFO, String.format("Successfully remapped host: %s and port %d to %s", host, port, remappedString));
+		final StringTokenizer tokens = new StringTokenizer(remappedString, ":", false);		
+		String newHost = tokens.nextToken();
+		int newPort = Integer.parseInt(tokens.nextToken());
+		XGConnection newConn = 	(XGConnection) driver.createConnection(newHost, newPort, conn.getDB(), conn.getProperties());
 		XGStatement cachedOrNewStatement = (XGStatement)newConn.createStatement();
 		// Swap the connection on the two statements.
 		XGConnection newConnForThisStatement = cachedOrNewStatement.conn;

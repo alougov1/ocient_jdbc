@@ -5,6 +5,14 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[]
+== 2.29 (2021-8-20)
+
+New Features::
+
+ * Fix the way connection resets parameters when reset is true.
+ * Fix an issue where redirect was not properly using mapped secondary interfaces
+
+//tag::compact[]
 == 2.28 (2021-8-16)
 
 New Features::
