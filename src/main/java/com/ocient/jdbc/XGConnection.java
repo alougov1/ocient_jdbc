@@ -2538,35 +2538,41 @@ public class XGConnection implements Connection
 	private void resendParameters()
 	{
 		LOGGER.log(Level.INFO, "resendParameters() called");
-		if (maxRows != null)
-		{
-			setMaxRowsHardLimit(maxRows, false);
-		} else {
-			setMaxRowsHardLimit(0, true);
-		}
-		if (maxTime != null)
-		{
-			setMaxTime(maxTime, false);
-		} else {
-			setMaxTime(0, true);
-		}
-		if (maxTempDisk != null)
-		{
-			setMaxTempDisk(maxTempDisk, false);
-		} else {
-			setMaxTempDisk(0, true);
-		}
-		if (parallelism != null)
-		{
-			setParallelism(parallelism, false);
-		} else {
-			setParallelism(0, true);
-		}
-		if (priority != null)
-		{
-			setPriority(priority, false);
-		} else {
-			setPriority(0.0, true);
+		try{
+			if (maxRows != null)
+			{
+				setMaxRowsHardLimit(maxRows, false);
+			} else {
+				setMaxRowsHardLimit(0, true);
+			}
+			if (maxTime != null)
+			{
+				setMaxTime(maxTime, false);
+			} else {
+				setMaxTime(0, true);
+			}
+			if (maxTempDisk != null)
+			{
+				setMaxTempDisk(maxTempDisk, false);
+			} else {
+				setMaxTempDisk(0, true);
+			}
+			if (parallelism != null)
+			{
+				setParallelism(parallelism, false);
+			} else {
+				setParallelism(0, true);
+			}
+			if (priority != null)
+			{
+				setPriority(priority, false);
+			} else {
+				setPriority(0.0, true);
+			}
+		} catch (SQLException e){
+			// This should never happen. We protect against bad arguments for these settings in the driver default. Also, we protect
+			// against them when these methods are called from statement.executeUpdate(...). So the arguments here should always be valid.
+			LOGGER.log(Level.WARNING, "");
 		}
 	}
 
@@ -2733,7 +2739,7 @@ public class XGConnection implements Connection
 		}
 	}
 
-	public int sendParameterMessage(final ClientWireProtocol.SetParameter param)
+	public int sendParameterMessage(final ClientWireProtocol.SetParameter param) throws SQLException
 	{
 		final ClientWireProtocol.Request.Builder builder = ClientWireProtocol.Request.newBuilder();
 		builder.setType(ClientWireProtocol.Request.RequestType.SET_PARAMETER);
@@ -2746,12 +2752,13 @@ public class XGConnection implements Connection
 			wrapper.writeTo(out);
 			out.flush();
 			getStandardResponse();
+		} catch(final SQLException sqlEx){
+			throw sqlEx;
 		}
-		catch (final Exception e)
+		catch (final Exception ex)
 		{
-			// Doesn't matter...
-			LOGGER.log(Level.WARNING, String.format("Failed sending set parameter request to the server with exception %s with message %s", e, e.getMessage()));
-			return 1;
+			LOGGER.log(Level.WARNING, String.format("Failed sending set parameter request to the server with exception %s with message %s", ex, ex.getMessage()));
+			throw SQLStates.newGenericException(ex);
 		}
 		return 0;
 	}
@@ -2808,21 +2815,22 @@ public class XGConnection implements Connection
 		LOGGER.log(Level.WARNING, "Called setClientInfo()");
 	}
 
-	public int setParallelism(final Integer parallelism, final boolean reset)
+	public int setParallelism(final Integer parallelism, final boolean reset) throws SQLException
 	{
 		LOGGER.log(Level.INFO, String.format("Setting parallelism to: %d", parallelism));
-		if(reset){
-			this.parallelism = null;
-		} else {
-			this.parallelism = parallelism;
-		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.Concurrency.Builder innerBuilder = ClientWireProtocol.SetParameter.Concurrency.newBuilder();
 		innerBuilder.setConcurrency(parallelism != null ? parallelism : 0);
 		builder.setConcurrency(innerBuilder.build());
 
-		return sendParameterMessage(builder.build());
+		int rowsModified = sendParameterMessage(builder.build());		
+		if(reset){
+			this.parallelism = null;
+		} else {
+			this.parallelism = parallelism;
+		}
+		return rowsModified;
 	}
 
 	@Override
@@ -2849,56 +2857,60 @@ public class XGConnection implements Connection
 		return 0;
 	}
 
-	public int setMaxRowsHardLimit(final Integer maxRows, final boolean reset)
+	public int setMaxRowsHardLimit(final Integer maxRows, final boolean reset) throws SQLException
 	{
 		// Set a "hard" limit on the number of rows returned. "Hard" in this case
 		// implies the server will abort queries which emit excess rows
 		LOGGER.log(Level.INFO, String.format("Setting maxrow to: %d", maxRows));
-		if(reset){
-			this.maxRows = null;	
-		} else {
-			this.maxRows = maxRows;
-		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.RowLimit.Builder innerBuilder = ClientWireProtocol.SetParameter.RowLimit.newBuilder();
 		innerBuilder.setRowLimit(maxRows != null ? maxRows : 0);
 		builder.setRowLimit(innerBuilder.build());
-		return sendParameterMessage(builder.build());
+		int rowsModified = sendParameterMessage(builder.build());
+
+		if(reset){
+			this.maxRows = null;	
+		} else {
+			this.maxRows = maxRows;
+		}
+		return rowsModified;
 	}
 
-	public int setMaxTempDisk(final Integer maxTempDisk, final boolean reset)
+	public int setMaxTempDisk(final Integer maxTempDisk, final boolean reset) throws SQLException
 	{
 		LOGGER.log(Level.INFO, String.format("Setting maxTempDisk to: %d", maxTempDisk));
-		if(reset){
-			this.maxTempDisk = null;
-		} else {
-			this.maxTempDisk = maxTempDisk;
-		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.MaxTempDiskLimit.Builder innerBuilder = ClientWireProtocol.SetParameter.MaxTempDiskLimit.newBuilder();
 		innerBuilder.setTempDiskLimit(maxTempDisk != null ? maxTempDisk : 0);
 		builder.setTempDiskLimit(innerBuilder.build());
+		int rowsModified = sendParameterMessage(builder.build());	
 
-		return sendParameterMessage(builder.build());
+		if(reset){
+			this.maxTempDisk = null;
+		} else {
+			this.maxTempDisk = maxTempDisk;
+		}
+		return rowsModified;
 	}
 
-	public int setMaxTime(final Integer maxTime, final boolean reset)
+	public int setMaxTime(final Integer maxTime, final boolean reset) throws SQLException
 	{
 		LOGGER.log(Level.INFO, String.format("Setting maxTime to: %d", maxTime));
-		if(reset){
-			this.maxTime = null;
-		} else {
-			this.maxTime = maxTime;
-		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.TimeLimit.Builder innerBuilder = ClientWireProtocol.SetParameter.TimeLimit.newBuilder();
 		innerBuilder.setTimeLimit(maxTime != null ? maxTime : 0);
 		builder.setTimeLimit(innerBuilder.build());
+		int rowsModified = sendParameterMessage(builder.build());		
 
-		return sendParameterMessage(builder.build());
+		if(reset){
+			this.maxTime = null;
+		} else {
+			this.maxTime = maxTime;
+		}
+		return rowsModified;
 	}
 
 	@Override
@@ -2914,21 +2926,22 @@ public class XGConnection implements Connection
 		networkTimeout = milliseconds;
 	}
 
-	public int setPriority(final Double priority, final boolean reset)
+	public int setPriority(final Double priority, final boolean reset) throws SQLException
 	{
 		LOGGER.log(Level.INFO, String.format("Setting priority to: %f", priority));
-		if(reset){
-			this.priority = null;
-		} else {
-			this.priority = priority;
-		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.Priority.Builder innerBuilder = ClientWireProtocol.SetParameter.Priority.newBuilder();
 		innerBuilder.setPriority(priority != null ? priority : 0.0);
 		builder.setPriority(innerBuilder.build());
 
-		return sendParameterMessage(builder.build());
+		int rowsModified = sendParameterMessage(builder.build());		
+		if(reset){
+			this.priority = null;
+		} else {
+			this.priority = priority;
+		}
+		return rowsModified;
 	}
 
 	// sets the pso RNG seed. If this is never called, by default PSO uses current time to generate seed 
