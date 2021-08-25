@@ -440,6 +440,7 @@ public class JDBCDriver implements Driver
 		handshake.choices = new String[2];
 		tls.choices[0] = "GCM";
 		tls.choices[1] = "CBC";
+		tls.choices[2] = "SSO";
 		retval[14] = handshake;
 		
 		return retval;

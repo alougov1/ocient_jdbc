@@ -391,9 +391,13 @@ public class CLI
 		prop.setProperty("password", pwd);
 		prop.setProperty("force", force ? "true" : "false");
 		conn = DriverManager.getConnection(url, prop);
-		CLI.db = ((XGConnection) conn).getDB();
+		if(conn != null){
+			// CLI.db = ((XGConnection) conn).getDB();
 
-		System.out.println("Connected to " + ((XGConnection) conn).getURL());
+			System.out.println("Connected to " + ((XGConnection) conn).getURL());
+		} else {
+			System.out.println("Failed to connect to " + ((XGConnection) conn).getURL());
+		}
 	}
 
 	private static boolean endsWithIgnoreCase(final String in, final String cmp)

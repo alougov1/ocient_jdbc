@@ -131,6 +131,7 @@ public class XGStatement implements Statement
 	public void returnStatementToCache(){
 		// Reset statement
 		LOGGER.log(Level.INFO, "Called returnStatementToCache()");
+		LOGGER.log(Level.INFO, String.format("Timmy debug returningStatementToCache hashCode: %d", this.hashCode()));
 		reset();
 
 		// Cache this
@@ -196,13 +197,17 @@ public class XGStatement implements Statement
 				{
 				}
 			}
-			LOGGER.log(Level.INFO, "newXGStatement returning a cached statement");
+			// LOGGER.log(Level.INFO, "newXGStatement returning a cached statement");
+			LOGGER.log(Level.INFO, String.format("newXGStatement returning a cached statement: %d", retval.hashCode()));
 			return retval;
 		}
 		else
 		{
-			LOGGER.log(Level.INFO, "newXGStatement returning a new statement");
-			return new XGStatement(conn, shouldRequestVersion);
+			// LOGGER.log(Level.INFO, "newXGStatement returning a new statement");
+			// return new XGStatement(conn, shouldRequestVersion);
+			XGStatement ret = new XGStatement(conn, shouldRequestVersion);
+			LOGGER.log(Level.INFO, String.format("newXGStatement returning a new statement: %d", ret.hashCode()));	
+			return ret;
 		}
 	}
 
@@ -240,13 +245,17 @@ public class XGStatement implements Statement
 			catch (final Exception e)
 			{
 			}
-			LOGGER.log(Level.INFO, "newXGStatement returning a cached statement");
+			// LOGGER.log(Level.INFO, "newXGStatement returning a cached statement");
+			LOGGER.log(Level.INFO, String.format("newXGStatement returning a cached statement: %d", retval.hashCode()));
 			return retval;
 		}
 		else
 		{
-			LOGGER.log(Level.INFO, "newXGStatement returning a new statement");
-			return new XGStatement(conn, force, oneShotForce);
+			// LOGGER.log(Level.INFO, "newXGStatement returning a new statement");
+			// return new XGStatement(conn, force, oneShotForce);
+			XGStatement ret = new XGStatement(conn, force, oneShotForce);
+			LOGGER.log(Level.INFO, String.format("newXGStatement returning a new statement: %d", ret.hashCode()));
+			return ret;
 		}
 	}
 
@@ -296,13 +305,17 @@ public class XGStatement implements Statement
 			catch (final Exception e)
 			{
 			}
-			LOGGER.log(Level.INFO, "newXGStatement returning a cached statement");
+			// LOGGER.log(Level.INFO, "newXGStatement returning a cached statement");
+			LOGGER.log(Level.INFO, String.format("newXGStatement returning a cached statement: %d", retval.hashCode()));
 			return retval;
 		}
 		else
 		{
-			LOGGER.log(Level.INFO, "newXGStatement returning a new statement");
-			return new XGStatement(conn, type, concur, force, oneShotForce);
+			// LOGGER.log(Level.INFO, "newXGStatement returning a new statement");
+			// return new XGStatement(conn, type, concur, force, oneShotForce);
+			XGStatement ret = new XGStatement(conn, type, concur, force, oneShotForce);
+			LOGGER.log(Level.INFO, String.format("newXGStatement returning a new statement: %d", ret.hashCode()));
+			return ret;
 		}
 	}
 
@@ -362,8 +375,11 @@ public class XGStatement implements Statement
 		}
 		else
 		{
-			LOGGER.log(Level.INFO, "newXGStatement returning a new statement");
-			return new XGStatement(conn, type, concur, force, oneShotForce);
+			// LOGGER.log(Level.INFO, "newXGStatement returning a new statement");
+			// return new XGStatement(conn, type, concur, force, oneShotForce);
+			XGStatement ret = new XGStatement(conn, type, concur, force, oneShotForce);
+			LOGGER.log(Level.INFO, String.format("newXGStatement returning a new statement: %d", ret.hashCode()));		
+			return ret;	
 		}
 	}
 
