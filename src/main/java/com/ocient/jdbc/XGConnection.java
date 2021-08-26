@@ -323,9 +323,10 @@ public class XGConnection implements Connection
 	protected boolean force = false;
 	private volatile long timeoutMillis = 0L; // 0L means no timeout set	
 
-	public XGConnection(final String user, final String pwd, final int portNum, final String url, final String database, final String protocolVersion, String clientVersion, final boolean force, final Tls tls,
+	private XGConnection(final String user, final String pwd, final int portNum, final String url, final String database, final String protocolVersion, String clientVersion, final boolean force, final Tls tls,
 		final Properties properties)
 	{
+		// Note that this constructor is only used by internally by connection copy(). Thus we do not need to call validateDefaultProperties(properties)
 		this.properties = properties;
 		resetLocalVars();
 		this.force = force;
@@ -351,6 +352,7 @@ public class XGConnection implements Connection
 	public XGConnection(final String user, final String pwd, final String ip, final int portNum, final String url, final String database, final String protocolVersion, String clientVersion, final String force, final Tls tls,
 		final Properties properties) throws Exception
 	{
+		validateDefaultProperties(properties);
 		this.properties = properties;
 		resetLocalVars();
 		originalIp = ip;
@@ -1709,7 +1711,7 @@ public class XGConnection implements Connection
 		int hash = originalIp.hashCode() + originalPort + user.hashCode()
 		+ pwd.hashCode() + database.hashCode() + tls.hashCode() 
 		+ properties.hashCode() + setSchema.hashCode() + Long.hashCode(setPso) 
-		+ (force ? 1 : 0) + Long.hashCode(timeoutMillis);
+		+ (force ? 1 : 0) + Long.hashCode(timeoutMillis) + networkTimeout;
 		hash += maxRows == null ? 0 : maxRows.hashCode();
 		hash += maxTime == null ? 0 : maxTime.hashCode();
 		hash += maxTempDisk == null ? 0 : maxTempDisk.hashCode();
@@ -2535,38 +2537,114 @@ public class XGConnection implements Connection
 		throw new SQLFeatureNotSupportedException();
 	}
 
+	/**
+	 * Validates certain default properties and throws if an invalid properties
+	 * is invalid. The checks here is the intersection of the set of parameters being sent in
+	 * resendParameters and the set of those with limits in serviceClass.cpp (server side)
+	 */
+
+	
+	private void validateDefaultProperties(Properties properties) throws SQLException 
+	{
+		LOGGER.log(Level.INFO, "Called validateDefaultProperties()");
+		if (properties.containsKey("maxRows") && properties.get("maxRows") != null)
+		{
+			int proposedMaxRows = Integer.parseInt((String) properties.get("maxRows"));
+			if((proposedMaxRows < 1) && (proposedMaxRows != -1)){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("maxrows must be a positive integer or -1 for infinite, specified: %d", proposedMaxRows));
+			}
+		}
+		if (properties.containsKey("maxTempDisk") && properties.get("maxTempDisk") != null)
+		{
+			int proposedMaxTempDisk = Integer.parseInt((String) properties.get("maxTempDisk"));
+			if((proposedMaxTempDisk < 0) || (proposedMaxTempDisk > 100)){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("max_temp_disk_usage must be a percentage between 0 and 100, specified: %d", proposedMaxTempDisk));
+			}			
+		}
+		if (properties.containsKey("maxTime") && properties.get("maxTime") != null)
+		{
+			int proposedMaxTime = Integer.parseInt((String) properties.get("maxTime"));
+			if((proposedMaxTime < 1) && (proposedMaxTime != -1)){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("max time must be a positive integer or -1 for infinite, specified: %d", proposedMaxTime));
+			}		
+		}
+		// Parallelism is not checked.
+		if (properties.containsKey("priority") && properties.get("priority") != null)
+		{
+			double proposedPriority = Double.parseDouble((String) properties.get("priority"));
+			if(proposedPriority <= 0.0){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("scheduling priority must be greater than 0.0, specified: %d", proposedPriority));
+			}
+		}
+		// Not sent to server. Only used driver side.
+		if (properties.containsKey("networkTimeout") && properties.get("networkTimeout") != null)
+		{
+			int proposedNetworkTimeout = Integer.parseInt((String) properties.get("networkTimeout"));
+			if(proposedNetworkTimeout <= 0){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("network timeout must be greater than 0, specified: %d", proposedNetworkTimeout));
+			}
+		}
+		if (properties.containsKey("longQueryThreshold") && properties.get("longQueryThreshold") != null)
+		{
+			int proposedSetPso = Integer.parseInt((String) properties.get("longQueryThreshold"));
+			if(proposedSetPso < -1){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("longQueryThreshold greater than 0 to specify, 0 for server default, -1 for no deep optimization. specified: %d", proposedSetPso));
+			}			
+		}
+		// Not sent to server. Only used driver side.
+		if (properties.containsKey("timeoutMillis") && properties.get("timeoutMillis") != null)
+		{
+			long proposedTimeoutMillis = Long.parseLong((String) properties.get("timeoutMillis"));
+			if(proposedTimeoutMillis < 0){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("timeoutMillis must be greater than or equal to 0. 0 means no timeout specified: %d", proposedTimeoutMillis));
+			}
+		}		
+		LOGGER.log(Level.INFO, "Passed validateDefaultProperties()");
+	}		
+
+	/**
+	 * Resends parameters to the server. Anything sent here should be verified in validateDefaulProperties
+	 * so that there are no invalid defaults being sent.
+	 */
+
 	private void resendParameters()
 	{
 		LOGGER.log(Level.INFO, "resendParameters() called");
-		if (maxRows != null)
-		{
-			setMaxRowsHardLimit(maxRows, false);
-		} else {
-			setMaxRowsHardLimit(0, true);
-		}
-		if (maxTime != null)
-		{
-			setMaxTime(maxTime, false);
-		} else {
-			setMaxTime(0, true);
-		}
-		if (maxTempDisk != null)
-		{
-			setMaxTempDisk(maxTempDisk, false);
-		} else {
-			setMaxTempDisk(0, true);
-		}
-		if (parallelism != null)
-		{
-			setParallelism(parallelism, false);
-		} else {
-			setParallelism(0, true);
-		}
-		if (priority != null)
-		{
-			setPriority(priority, false);
-		} else {
-			setPriority(0.0, true);
+		try{
+			if (maxRows != null)
+			{
+				setMaxRowsHardLimit(maxRows, false);
+			} else {
+				setMaxRowsHardLimit(0, true);
+			}
+			if (maxTime != null)
+			{
+				setMaxTime(maxTime, false);
+			} else {
+				setMaxTime(0, true);
+			}
+			if (maxTempDisk != null)
+			{
+				setMaxTempDisk(maxTempDisk, false);
+			} else {
+				setMaxTempDisk(0, true);
+			}
+			if (parallelism != null)
+			{
+				setParallelism(parallelism, false);
+			} else {
+				setParallelism(0, true);
+			}
+			if (priority != null)
+			{
+				setPriority(priority, false);
+			} else {
+				setPriority(0.0, true);
+			}
+		} catch (SQLException e){
+			// This should never happen. We protect against bad arguments for these settings in the driver default. Also, we protect
+			// against them when these methods are called from statement.executeUpdate(...). So the arguments here should always be valid.
+			LOGGER.log(Level.WARNING, String.format("resendParameters go unexpected exception %s with message %s", e.toString(), e.getMessage()));
 		}
 	}
 
@@ -2644,7 +2722,7 @@ public class XGConnection implements Connection
 
 		if (properties.containsKey("networkTimeout") && properties.get("networkTimeout") != null)
 		{
-			networkTimeout = Integer.parseInt((String) properties.get("newtworkTimeout"));
+			networkTimeout = Integer.parseInt((String) properties.get("networkTimeout"));
 		}
 		else
 		{
@@ -2733,7 +2811,7 @@ public class XGConnection implements Connection
 		}
 	}
 
-	public int sendParameterMessage(final ClientWireProtocol.SetParameter param)
+	public int sendParameterMessage(final ClientWireProtocol.SetParameter param) throws SQLException
 	{
 		final ClientWireProtocol.Request.Builder builder = ClientWireProtocol.Request.newBuilder();
 		builder.setType(ClientWireProtocol.Request.RequestType.SET_PARAMETER);
@@ -2746,12 +2824,10 @@ public class XGConnection implements Connection
 			wrapper.writeTo(out);
 			out.flush();
 			getStandardResponse();
-		}
-		catch (final Exception e)
+		} catch (final Exception ex)
 		{
-			// Doesn't matter...
-			LOGGER.log(Level.WARNING, String.format("Failed sending set parameter request to the server with exception %s with message %s", e, e.getMessage()));
-			return 1;
+			LOGGER.log(Level.WARNING, String.format("Failed sending set parameter request to the server with exception %s with message %s", ex, ex.getMessage()));
+			throw SQLStates.newGenericException(ex);
 		}
 		return 0;
 	}
@@ -2808,21 +2884,23 @@ public class XGConnection implements Connection
 		LOGGER.log(Level.WARNING, "Called setClientInfo()");
 	}
 
-	public int setParallelism(final Integer parallelism, final boolean reset)
+	public int setParallelism(final Integer parallelism, final boolean reset) throws SQLException
 	{
 		LOGGER.log(Level.INFO, String.format("Setting parallelism to: %d", parallelism));
-		if(reset){
-			this.parallelism = null;
-		} else {
-			this.parallelism = parallelism;
-		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.Concurrency.Builder innerBuilder = ClientWireProtocol.SetParameter.Concurrency.newBuilder();
 		innerBuilder.setConcurrency(parallelism != null ? parallelism : 0);
 		builder.setConcurrency(innerBuilder.build());
 
-		return sendParameterMessage(builder.build());
+		int rowsModified = sendParameterMessage(builder.build());
+		// Change this only if sendParameterMessage succeeded. It would have thrown otherwise.
+		if(reset){
+			this.parallelism = null;
+		} else {
+			this.parallelism = parallelism;
+		}
+		return rowsModified;
 	}
 
 	@Override
@@ -2849,56 +2927,60 @@ public class XGConnection implements Connection
 		return 0;
 	}
 
-	public int setMaxRowsHardLimit(final Integer maxRows, final boolean reset)
+	public int setMaxRowsHardLimit(final Integer maxRows, final boolean reset) throws SQLException
 	{
 		// Set a "hard" limit on the number of rows returned. "Hard" in this case
 		// implies the server will abort queries which emit excess rows
 		LOGGER.log(Level.INFO, String.format("Setting maxrow to: %d", maxRows));
-		if(reset){
-			this.maxRows = null;	
-		} else {
-			this.maxRows = maxRows;
-		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.RowLimit.Builder innerBuilder = ClientWireProtocol.SetParameter.RowLimit.newBuilder();
 		innerBuilder.setRowLimit(maxRows != null ? maxRows : 0);
 		builder.setRowLimit(innerBuilder.build());
-		return sendParameterMessage(builder.build());
+		int rowsModified = sendParameterMessage(builder.build());
+		// Change this only if sendParameterMessage succeeded. It would have thrown otherwise.
+		if(reset){
+			this.maxRows = null;	
+		} else {
+			this.maxRows = maxRows;
+		}
+		return rowsModified;
 	}
 
-	public int setMaxTempDisk(final Integer maxTempDisk, final boolean reset)
+	public int setMaxTempDisk(final Integer maxTempDisk, final boolean reset) throws SQLException
 	{
 		LOGGER.log(Level.INFO, String.format("Setting maxTempDisk to: %d", maxTempDisk));
-		if(reset){
-			this.maxTempDisk = null;
-		} else {
-			this.maxTempDisk = maxTempDisk;
-		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.MaxTempDiskLimit.Builder innerBuilder = ClientWireProtocol.SetParameter.MaxTempDiskLimit.newBuilder();
 		innerBuilder.setTempDiskLimit(maxTempDisk != null ? maxTempDisk : 0);
 		builder.setTempDiskLimit(innerBuilder.build());
-
-		return sendParameterMessage(builder.build());
+		int rowsModified = sendParameterMessage(builder.build());	
+		// Change this only if sendParameterMessage succeeded. It would have thrown otherwise.
+		if(reset){
+			this.maxTempDisk = null;
+		} else {
+			this.maxTempDisk = maxTempDisk;
+		}
+		return rowsModified;
 	}
 
-	public int setMaxTime(final Integer maxTime, final boolean reset)
+	public int setMaxTime(final Integer maxTime, final boolean reset) throws SQLException
 	{
 		LOGGER.log(Level.INFO, String.format("Setting maxTime to: %d", maxTime));
-		if(reset){
-			this.maxTime = null;
-		} else {
-			this.maxTime = maxTime;
-		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.TimeLimit.Builder innerBuilder = ClientWireProtocol.SetParameter.TimeLimit.newBuilder();
 		innerBuilder.setTimeLimit(maxTime != null ? maxTime : 0);
 		builder.setTimeLimit(innerBuilder.build());
-
-		return sendParameterMessage(builder.build());
+		int rowsModified = sendParameterMessage(builder.build());		
+		// Change this only if sendParameterMessage succeeded. It would have thrown otherwise.
+		if(reset){
+			this.maxTime = null;
+		} else {
+			this.maxTime = maxTime;
+		}
+		return rowsModified;
 	}
 
 	@Override
@@ -2914,21 +2996,23 @@ public class XGConnection implements Connection
 		networkTimeout = milliseconds;
 	}
 
-	public int setPriority(final Double priority, final boolean reset)
+	public int setPriority(final Double priority, final boolean reset) throws SQLException
 	{
 		LOGGER.log(Level.INFO, String.format("Setting priority to: %f", priority));
-		if(reset){
-			this.priority = null;
-		} else {
-			this.priority = priority;
-		}
 		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
 		builder.setReset(reset);
 		final ClientWireProtocol.SetParameter.Priority.Builder innerBuilder = ClientWireProtocol.SetParameter.Priority.newBuilder();
 		innerBuilder.setPriority(priority != null ? priority : 0.0);
 		builder.setPriority(innerBuilder.build());
 
-		return sendParameterMessage(builder.build());
+		int rowsModified = sendParameterMessage(builder.build());
+		// Change this only if sendParameterMessage succeeded. It would have thrown otherwise.	
+		if(reset){
+			this.priority = null;
+		} else {
+			this.priority = priority;
+		}
+		return rowsModified;
 	}
 
 	// sets the pso RNG seed. If this is never called, by default PSO uses current time to generate seed 

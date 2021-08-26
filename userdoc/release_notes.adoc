@@ -5,6 +5,14 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[]
+== 2.30 (2021-8-26)
+
+New Features::
+
+ * Add validation on the driver side for set parameter settings.
+ * Pass up invalid set parameter command errors.
+
+//tag::compact[]
 == 2.29 (2021-8-20)
 
 New Features::
