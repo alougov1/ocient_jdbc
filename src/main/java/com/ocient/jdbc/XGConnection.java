@@ -326,8 +326,7 @@ public class XGConnection implements Connection
 	private XGConnection(final String user, final String pwd, final int portNum, final String url, final String database, final String protocolVersion, String clientVersion, final boolean force, final Tls tls,
 		final Properties properties)
 	{
-		// Note that this constructor is only used by internally by connection copy(). Thus we do not need to validate below.
-		// validateDefaultProperties(properties);
+		// Note that this constructor is only used by internally by connection copy(). Thus we do not need to call validateDefaultProperties(properties)
 		this.properties = properties;
 		resetLocalVars();
 		this.force = force;
@@ -1712,7 +1711,7 @@ public class XGConnection implements Connection
 		int hash = originalIp.hashCode() + originalPort + user.hashCode()
 		+ pwd.hashCode() + database.hashCode() + tls.hashCode() 
 		+ properties.hashCode() + setSchema.hashCode() + Long.hashCode(setPso) 
-		+ (force ? 1 : 0) + Long.hashCode(timeoutMillis);
+		+ (force ? 1 : 0) + Long.hashCode(timeoutMillis) + networkTimeout;
 		hash += maxRows == null ? 0 : maxRows.hashCode();
 		hash += maxTime == null ? 0 : maxTime.hashCode();
 		hash += maxTempDisk == null ? 0 : maxTempDisk.hashCode();
@@ -2540,7 +2539,7 @@ public class XGConnection implements Connection
 
 	/**
 	 * Validates certain default properties and throws if an invalid properties
-	 * is over. The checks here is the intersection of the set of parameters being sent in
+	 * is invalid. The checks here is the intersection of the set of parameters being sent in
 	 * resendParameters and the set of those with limits in serviceClass.cpp (server side)
 	 */
 
@@ -2551,7 +2550,6 @@ public class XGConnection implements Connection
 		if (properties.containsKey("maxRows") && properties.get("maxRows") != null)
 		{
 			int proposedMaxRows = Integer.parseInt((String) properties.get("maxRows"));
-			LOGGER.log(Level.WARNING, String.format("proposedMaxRows: %d", proposedMaxRows));
 			if((proposedMaxRows < 1) && (proposedMaxRows != -1)){
 				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("maxrows must be a positive integer or -1 for infinite, specified: %d", proposedMaxRows));
 			}
@@ -2577,7 +2575,31 @@ public class XGConnection implements Connection
 			if(proposedPriority <= 0.0){
 				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("scheduling priority must be greater than 0.0, specified: %d", proposedPriority));
 			}
-		}			
+		}
+		// Not sent to server. Only used driver side.
+		if (properties.containsKey("networkTimeout") && properties.get("networkTimeout") != null)
+		{
+			int proposedNetworkTimeout = Integer.parseInt((String) properties.get("networkTimeout"));
+			if(proposedNetworkTimeout <= 0){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("network timeout must be greater than 0, specified: %d", proposedNetworkTimeout));
+			}
+		}
+		if (properties.containsKey("longQueryThreshold") && properties.get("longQueryThreshold") != null)
+		{
+			int proposedSetPso = Integer.parseInt((String) properties.get("longQueryThreshold"));
+			if(proposedSetPso < -1){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("longQueryThreshold greater than 0 to specify, 0 for server default, -1 for no deep optimization. specified: %d", proposedSetPso));
+			}			
+		}
+		// Not sent to server. Only used driver side.
+		if (properties.containsKey("timeoutMillis") && properties.get("timeoutMillis") != null)
+		{
+			long proposedTimeoutMillis = Long.parseLong((String) properties.get("timeoutMillis"));
+			if(proposedTimeoutMillis < 0){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("timeoutMillis must be greater than or equal to 0. 0 means no timeout specified: %d", proposedTimeoutMillis));
+			}
+		}		
+		LOGGER.log(Level.INFO, "Passed validateDefaultProperties()");
 	}		
 
 	/**
@@ -2622,7 +2644,7 @@ public class XGConnection implements Connection
 		} catch (SQLException e){
 			// This should never happen. We protect against bad arguments for these settings in the driver default. Also, we protect
 			// against them when these methods are called from statement.executeUpdate(...). So the arguments here should always be valid.
-			LOGGER.log(Level.WARNING, "");
+			LOGGER.log(Level.WARNING, String.format("resendParameters go unexpected exception %s with message %s", e.toString(), e.getMessage()));
 		}
 	}
 
@@ -2700,7 +2722,7 @@ public class XGConnection implements Connection
 
 		if (properties.containsKey("networkTimeout") && properties.get("networkTimeout") != null)
 		{
-			networkTimeout = Integer.parseInt((String) properties.get("newtworkTimeout"));
+			networkTimeout = Integer.parseInt((String) properties.get("networkTimeout"));
 		}
 		else
 		{
