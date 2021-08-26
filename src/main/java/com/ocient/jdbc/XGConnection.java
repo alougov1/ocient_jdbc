@@ -323,9 +323,11 @@ public class XGConnection implements Connection
 	protected boolean force = false;
 	private volatile long timeoutMillis = 0L; // 0L means no timeout set	
 
-	public XGConnection(final String user, final String pwd, final int portNum, final String url, final String database, final String protocolVersion, String clientVersion, final boolean force, final Tls tls,
+	private XGConnection(final String user, final String pwd, final int portNum, final String url, final String database, final String protocolVersion, String clientVersion, final boolean force, final Tls tls,
 		final Properties properties)
 	{
+		// Note that this constructor is only used by internally by connection copy(). Thus we do not need to validate below.
+		// validateDefaultProperties(properties);
 		this.properties = properties;
 		resetLocalVars();
 		this.force = force;
@@ -351,6 +353,7 @@ public class XGConnection implements Connection
 	public XGConnection(final String user, final String pwd, final String ip, final int portNum, final String url, final String database, final String protocolVersion, String clientVersion, final String force, final Tls tls,
 		final Properties properties) throws Exception
 	{
+		validateDefaultProperties(properties);
 		this.properties = properties;
 		resetLocalVars();
 		originalIp = ip;
@@ -2535,6 +2538,53 @@ public class XGConnection implements Connection
 		throw new SQLFeatureNotSupportedException();
 	}
 
+	/**
+	 * Validates certain default properties and throws if an invalid properties
+	 * is over. The checks here is the intersection of the set of parameters being sent in
+	 * resendParameters and the set of those with limits in serviceClass.cpp (server side)
+	 */
+
+	
+	private void validateDefaultProperties(Properties properties) throws SQLException 
+	{
+		LOGGER.log(Level.INFO, "Called validateDefaultProperties()");
+		if (properties.containsKey("maxRows") && properties.get("maxRows") != null)
+		{
+			int proposedMaxRows = Integer.parseInt((String) properties.get("maxRows"));
+			LOGGER.log(Level.WARNING, String.format("proposedMaxRows: %d", proposedMaxRows));
+			if((proposedMaxRows < 1) && (proposedMaxRows != -1)){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("maxrows must be a positive integer or -1 for infinite, specified: %d", proposedMaxRows));
+			}
+		}
+		if (properties.containsKey("maxTempDisk") && properties.get("maxTempDisk") != null)
+		{
+			int proposedMaxTempDisk = Integer.parseInt((String) properties.get("maxTempDisk"));
+			if((proposedMaxTempDisk < 0) || (proposedMaxTempDisk > 100)){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("max_temp_disk_usage must be a percentage between 0 and 100, specified: %d", proposedMaxTempDisk));
+			}			
+		}
+		if (properties.containsKey("maxTime") && properties.get("maxTime") != null)
+		{
+			int proposedMaxTime = Integer.parseInt((String) properties.get("maxTime"));
+			if((proposedMaxTime < 1) && (proposedMaxTime != -1)){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("max time must be a positive integer or -1 for infinite, specified: %d", proposedMaxTime));
+			}		
+		}
+		// Parallelism is not checked.
+		if (properties.containsKey("priority") && properties.get("priority") != null)
+		{
+			double proposedPriority = Double.parseDouble((String) properties.get("priority"));
+			if(proposedPriority <= 0.0){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("scheduling priority must be greater than 0.0, specified: %d", proposedPriority));
+			}
+		}			
+	}		
+
+	/**
+	 * Resends parameters to the server. Anything sent here should be verified in validateDefaulProperties
+	 * so that there are no invalid defaults being sent.
+	 */
+
 	private void resendParameters()
 	{
 		LOGGER.log(Level.INFO, "resendParameters() called");
@@ -2752,10 +2802,7 @@ public class XGConnection implements Connection
 			wrapper.writeTo(out);
 			out.flush();
 			getStandardResponse();
-		} catch(final SQLException sqlEx){
-			throw sqlEx;
-		}
-		catch (final Exception ex)
+		} catch (final Exception ex)
 		{
 			LOGGER.log(Level.WARNING, String.format("Failed sending set parameter request to the server with exception %s with message %s", ex, ex.getMessage()));
 			throw SQLStates.newGenericException(ex);
