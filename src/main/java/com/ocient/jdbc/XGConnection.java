@@ -2893,7 +2893,8 @@ public class XGConnection implements Connection
 		innerBuilder.setConcurrency(parallelism != null ? parallelism : 0);
 		builder.setConcurrency(innerBuilder.build());
 
-		int rowsModified = sendParameterMessage(builder.build());		
+		int rowsModified = sendParameterMessage(builder.build());
+		// Change this only if sendParameterMessage succeeded. It would have thrown otherwise.
 		if(reset){
 			this.parallelism = null;
 		} else {
@@ -2937,7 +2938,7 @@ public class XGConnection implements Connection
 		innerBuilder.setRowLimit(maxRows != null ? maxRows : 0);
 		builder.setRowLimit(innerBuilder.build());
 		int rowsModified = sendParameterMessage(builder.build());
-
+		// Change this only if sendParameterMessage succeeded. It would have thrown otherwise.
 		if(reset){
 			this.maxRows = null;	
 		} else {
@@ -2955,7 +2956,7 @@ public class XGConnection implements Connection
 		innerBuilder.setTempDiskLimit(maxTempDisk != null ? maxTempDisk : 0);
 		builder.setTempDiskLimit(innerBuilder.build());
 		int rowsModified = sendParameterMessage(builder.build());	
-
+		// Change this only if sendParameterMessage succeeded. It would have thrown otherwise.
 		if(reset){
 			this.maxTempDisk = null;
 		} else {
@@ -2973,7 +2974,7 @@ public class XGConnection implements Connection
 		innerBuilder.setTimeLimit(maxTime != null ? maxTime : 0);
 		builder.setTimeLimit(innerBuilder.build());
 		int rowsModified = sendParameterMessage(builder.build());		
-
+		// Change this only if sendParameterMessage succeeded. It would have thrown otherwise.
 		if(reset){
 			this.maxTime = null;
 		} else {
@@ -3004,7 +3005,8 @@ public class XGConnection implements Connection
 		innerBuilder.setPriority(priority != null ? priority : 0.0);
 		builder.setPriority(innerBuilder.build());
 
-		int rowsModified = sendParameterMessage(builder.build());		
+		int rowsModified = sendParameterMessage(builder.build());
+		// Change this only if sendParameterMessage succeeded. It would have thrown otherwise.	
 		if(reset){
 			this.priority = null;
 		} else {
