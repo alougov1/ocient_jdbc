@@ -169,7 +169,7 @@
         </configuration>
         <executions>
           <execution>
-            <phase>verify</phase>
+            <phase>package</phase>
             <goals>
               <goal>check</goal>
             </goals>
