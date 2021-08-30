@@ -500,8 +500,8 @@ message Request
 		CLIENT_CONNECTION_GCM = 36;
 		CLIENT_CONNECTION_GCM2 = 37;
 		CHECK_DATA = 38;
-        UPDATE_CACHE = 39;
-        CLEAR_CACHE = 40;		
+		UPDATE_CACHE = 39;
+		CLEAR_CACHE = 40;		
 		CLIENT_CONNECTION_SSO = 41;
 		CLIENT_CONNECTION_SSO_POLL = 42;
 		CLIENT_CONNECTION_SSO_TOKEN = 43;
@@ -549,8 +549,8 @@ message Request
 		ClientConnectionGCM client_connection_gcm = 37;
 		ClientConnectionGCM2 client_connection_gcm2 = 38;
 		CheckDataRequest check_data = 39;
-        UpdateCache update_cache = 40;
-        ClearCache clear_cache = 41;		
+		UpdateCache update_cache = 40;
+		ClearCache clear_cache = 41;		
 		ClientConnectionSSO client_connection_sso = 42;
 		ClientConnectionSSOPoll client_connection_sso_poll = 43;
 		ClientConnectionSSOToken client_connection_sso_token = 44;

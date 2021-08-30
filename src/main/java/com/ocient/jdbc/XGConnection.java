@@ -1105,6 +1105,12 @@ public class XGConnection implements Connection
 		LOGGER.log(Level.INFO, "Handshake SSO without token finished");
 	}
 
+	/**
+	 * Opens the authentication URL in the users default browser.
+	 * Solution based on: https://stackoverflow.com/a/18509384/14315585
+	 * 
+	 */
+
 	private void openAuthUrl(String authUrl) throws Exception{
 		LOGGER.log(Level.INFO, String.format("Opening authUrl: %s", authUrl));
 

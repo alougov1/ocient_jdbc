@@ -362,11 +362,8 @@ public class XGStatement implements Statement
 		}
 		else
 		{
-			// LOGGER.log(Level.INFO, "newXGStatement returning a new statement");
-			// return new XGStatement(conn, type, concur, force, oneShotForce);
-			XGStatement ret = new XGStatement(conn, type, concur, force, oneShotForce);
-			LOGGER.log(Level.INFO, String.format("newXGStatement returning a new statement: %d", ret.hashCode()));		
-			return ret;	
+			LOGGER.log(Level.INFO, "newXGStatement returning a new statement");
+			return new XGStatement(conn, type, concur, force, oneShotForce);
 		}
 	}
 
