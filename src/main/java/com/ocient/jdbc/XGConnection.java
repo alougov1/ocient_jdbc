@@ -1123,13 +1123,8 @@ public class XGConnection implements Connection
 				throw e;
             }
 		} else {
-            Runtime runtime = Runtime.getRuntime();
-            try {
-                runtime.exec("xdg-open " + url);
-            } catch (IOException e) {
-				LOGGER.log(Level.WARNING, String.format("Failed to open browser for URI: %s with runtime exec", authUrl));
-				throw e;
-            }			
+			LOGGER.log(Level.WARNING, "Could not open default browser with Desktop library");
+			throw SQLStates.FAILED_HANDSHAKE.cloneAndSpecify("Java desktop library is not supported. Could not open default browser");
 		}
 	}
 
