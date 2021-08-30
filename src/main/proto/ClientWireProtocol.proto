@@ -27,6 +27,28 @@ message ClientConnectionGCM
 	string sessionID = 7;
 }
 
+message ClientConnectionSSO
+{
+	string database = 1;
+	string clientid = 2;
+	string version = 3;
+	int32 majorClientVersion = 4;
+	int32 minorClientVersion = 5;
+	string sessionID = 6;	
+}
+
+message ClientConnectionSSOToken
+{
+	string database = 1;
+	string clientid = 2;
+	string version = 3;
+	int32 majorClientVersion = 4;
+	int32 minorClientVersion = 5;
+	string sessionID = 6;
+	string securityToken = 7;
+	bool force = 8;
+}
+
 message ClientConnectionResponse 
 {
     ConfirmationResponse response = 1;
@@ -39,6 +61,23 @@ message ClientConnectionGCMResponse
     ConfirmationResponse response = 1;
     bytes iv = 2;
     string pubKey = 3;
+}
+
+message ClientConnectionSSOResponse
+{
+	ConfirmationResponse response = 1;
+	string requestId = 2;
+	string authUrl = 3;
+}
+
+message ClientConnectionSSOTokenResponse
+{
+	ConfirmationResponse response = 1;
+	bool redirect = 2; //Redirect = true, means we are telling client to connect elsewhere
+	string redirectHost = 3;
+	fixed32 redirectPort = 4;
+	repeated string cmdcomps = 5; //If redirect = false, this is a list of all cmdcomps
+	repeated SecondaryInterfaceList secondary = 6;
 }
 
 message ClientConnection2
@@ -55,6 +94,12 @@ message ClientConnectionGCM2
 	bool force = 2; //Force = true means not allowed to redirect the connection
 	bytes hmac = 3;
 	string pubKey = 4;
+}
+
+message ClientConnectionSSOPoll
+{
+	string requestId = 1;
+	bool force = 2;
 }
 
 message SecondaryInterfaceList
@@ -80,6 +125,26 @@ message ClientConnectionGCM2Response
 	fixed32 redirectPort = 4;
 	repeated string cmdcomps = 5; //If redirect = false, this is a list of all cmdcomps
 	repeated SecondaryInterfaceList secondary = 6;
+}
+
+message ClientConnectionSSOPollResponse
+{
+	enum PollResponse
+	{
+		SUCCESS = 0;
+		ERROR = 1; // Check ConfirmationResponse for the SQLException
+		POLL = 2; // Poll again in poll_seconds seconds.
+	}
+
+	ConfirmationResponse response = 1;
+	PollResponse pollResponse = 2;
+	string securityToken = 3;
+	int32 pollSeconds = 4;
+	bool redirect = 5; //Redirect = true, means we are telling client to connect elsewhere
+	string redirectHost = 6;
+	fixed32 redirectPort = 7;
+	repeated string cmdcomps = 8; //If redirect = false, this is a list of all cmdcomps
+	repeated SecondaryInterfaceList secondary = 9;	
 }
 
 message GetSchema
@@ -360,6 +425,34 @@ message LoadBroadcast
 	double load = 2;
 }
 
+message CacheEntry
+{
+	enum Action
+	{
+		INVALID = 0;
+        ADD = 1;
+        REMOVE = 2;
+    }
+
+    uint64 cmd_time = 1;
+    string query_uuid = 2; 
+    uint64 query_hash = 3;
+    Action action = 4;
+    string database_uuid = 5;
+}
+
+message UpdateCache {
+    string server_uuid = 1;
+    bool clear = 2;
+    repeated CacheEntry entry = 3;
+}
+
+message ClearCache {
+    bool all_nodes = 1;
+    bytes user = 4; // This is the byte string representation of a user_i instance and is only set
+                    // when we broadcast from one SQL node to the others
+}
+
 // The request has a type and then the relevant optional field is 
 // filled.
 //
@@ -407,6 +500,11 @@ message Request
 		CLIENT_CONNECTION_GCM = 36;
 		CLIENT_CONNECTION_GCM2 = 37;
 		CHECK_DATA = 38;
+		UPDATE_CACHE = 39;
+		CLEAR_CACHE = 40;		
+		CLIENT_CONNECTION_SSO = 41;
+		CLIENT_CONNECTION_SSO_POLL = 42;
+		CLIENT_CONNECTION_SSO_TOKEN = 43;
     }
 
     RequestType type = 1;
@@ -451,6 +549,11 @@ message Request
 		ClientConnectionGCM client_connection_gcm = 37;
 		ClientConnectionGCM2 client_connection_gcm2 = 38;
 		CheckDataRequest check_data = 39;
+		UpdateCache update_cache = 40;
+		ClearCache clear_cache = 41;		
+		ClientConnectionSSO client_connection_sso = 42;
+		ClientConnectionSSOPoll client_connection_sso_poll = 43;
+		ClientConnectionSSOToken client_connection_sso_token = 44;
     }
 }
 
