@@ -58,6 +58,7 @@ public class CLI
 
 	private static char quote = '\0';
 	private static boolean comment = false;
+	private static boolean lastCommandErrored = false;
 	private static final char[] hexArray = "0123456789abcdef".toCharArray();
 	private static Statement stmt;
 
@@ -95,6 +96,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("CLI Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -141,6 +143,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -159,6 +162,7 @@ public class CLI
 			catch (final Exception e)
 			{
 				System.out.println("Error: " + e.getMessage());
+				lastCommandErrored = true;
 				return;
 			}
 		}
@@ -206,6 +210,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -306,6 +311,7 @@ public class CLI
 			}
 
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -381,6 +387,7 @@ public class CLI
 			}
 
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -450,6 +457,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -500,6 +508,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -546,6 +555,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -586,6 +596,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -632,6 +643,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -669,6 +681,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -715,6 +728,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -739,6 +753,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -780,6 +795,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -814,6 +830,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("CLI Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -862,6 +879,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -910,6 +928,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1017,6 +1036,7 @@ public class CLI
 			}
 
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1052,6 +1072,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("CLI Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1105,6 +1126,7 @@ public class CLI
 			}
 
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1186,6 +1208,7 @@ public class CLI
 			}
 
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1269,6 +1292,7 @@ public class CLI
 			}
 
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1357,6 +1381,8 @@ public class CLI
 		{
 			while (true)
 			{
+				// Reset this so we can run a new command.
+				lastCommandErrored = false;
 				// jline has ways to handle this, but they're underdocumented and overbuilt to
 				// the point of obscenity
 				if (!quit)
@@ -1458,6 +1484,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("CLI Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1936,6 +1963,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1979,6 +2007,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("CLI Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1997,6 +2026,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -2084,6 +2114,10 @@ public class CLI
 		{
 			while (true)
 			{
+				if(lastCommandErrored){
+					System.out.println("Source command encountered a command which erroed. Stopping");
+					return quit;
+				}
 				// jline has ways to handle this, but they're underdocumented and overbuilt to
 				// the point of obscenity
 				cmd = null;
@@ -2218,6 +2252,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 }
