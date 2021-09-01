@@ -1,11 +1,13 @@
 package com.ocient.jdbc;
 
+import java.awt.Desktop;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -35,6 +37,7 @@ import java.sql.Struct;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -67,6 +70,8 @@ import com.google.protobuf.ByteString;
 import com.ocient.jdbc.proto.ClientWireProtocol;
 import com.ocient.jdbc.proto.ClientWireProtocol.ClientConnection;
 import com.ocient.jdbc.proto.ClientWireProtocol.ClientConnectionGCM;
+import com.ocient.jdbc.proto.ClientWireProtocol.ClientConnectionSSO;
+import com.ocient.jdbc.proto.ClientWireProtocol.ClientConnectionSSOToken;
 import com.ocient.jdbc.proto.ClientWireProtocol.CloseConnection;
 import com.ocient.jdbc.proto.ClientWireProtocol.ConfirmationResponse;
 import com.ocient.jdbc.proto.ClientWireProtocol.ConfirmationResponse.ResponseType;
@@ -136,6 +141,7 @@ public class XGConnection implements Connection
 	{
 		CBC, // Original handshake method
 		GCM, // New handshake method. Now default.
+		SSO, // SSO handshake. needs to be explicitly used.
 	}
 
 	private class XGTrustManager extends X509ExtendedTrustManager
@@ -304,6 +310,7 @@ public class XGConnection implements Connection
 	private static final String sessionID = UUID.randomUUID().toString();
 
 	protected String pwd;
+	protected String ssoSecurityToken;
 	private int retryCounter;
 
 	protected Map<String, Class<?>> typeMap;
@@ -429,12 +436,72 @@ public class XGConnection implements Connection
 		warnings.clear();
 	}
 
+	/**
+	 * Saves the secondary interfaces being used and marks the secondaryIndex
+	 * according to the one we are connected to. Necessary after every completed
+	 * connection.
+	 */
+	private void saveSecondaryInterfaces(final List<String> newCmdComps, final List<com.ocient.jdbc.proto.ClientWireProtocol.SecondaryInterfaceList> newSecondaryInterfaces) throws Exception {
+		LOGGER.log(Level.INFO, "called saveSecondaryInterfaces()");
+		// TODO: Check if this cmdComps member is even used anymore. I think its deprecated by secondaryInterfaces.
+		this.cmdcomps.clear();
+		for(int i = 0; i < newCmdComps.size(); i++){
+			this.cmdcomps.add(newCmdComps.get(i));
+		}
+		LOGGER.log(Level.INFO, "Clearing and adding new secondary interfaces");
+		this.secondaryInterfaces.clear();
+		for(int i = 0; i < newSecondaryInterfaces.size(); i++){
+			this.secondaryInterfaces.add(new ArrayList<String>());
+			for(int j = 0; j < newSecondaryInterfaces.get(i).getAddressCount(); j++){
+				// Do hostname / IP translation here
+				String connInfo = newSecondaryInterfaces.get(i).getAddress(j);
+				final StringTokenizer tokens = new StringTokenizer(connInfo, ":", false);
+				final String connHost = tokens.nextToken();
+				final int connPort = Integer.parseInt(tokens.nextToken());
+				final InetAddress[] addrs = InetAddress.getAllByName(connHost);
+				for(final InetAddress addr : addrs){
+					connInfo = addr.toString().substring(addr.toString().indexOf('/') + 1) + ":" + connPort;
+					this.secondaryInterfaces.get(i).add(connInfo);
+				}
+			}
+		}
+		// Figure out what secondary index it is
+		final String combined = ip + ":" + portNum;
+		for (final ArrayList<String> list : secondaryInterfaces)
+		{
+			int index = 0;
+			for (final String address : list)
+			{
+				if (address.equals(combined))
+				{
+					secondaryIndex = index;
+					break;
+				}
+
+				index++;
+			}
+		}
+		LOGGER.log(Level.INFO, String.format("Using secondary index %d", this.secondaryIndex));
+		for (final ArrayList<String> list : this.secondaryInterfaces)
+		{
+			LOGGER.log(Level.INFO, "New SQL node");
+			for (final String address : list)
+			{
+				LOGGER.log(Level.INFO, String.format("Interface %s", address));
+			}
+		}		
+	}
+
 	private void clientHandshake(final String userid, final String pwd, final String db, final boolean shouldRequestVersion) throws Exception
 	{
 		final String handshakeStr = properties.getProperty("handshake", "GCM").toUpperCase();
 		final XGConnection.HandshakeType handshake = XGConnection.HandshakeType.valueOf(handshakeStr);
 		if(handshake == HandshakeType.CBC){
+			// CBC
 			clientHandshakeCBC(userid, pwd, db, shouldRequestVersion);
+		} else if(handshake == HandshakeType.SSO){
+			// SSO
+			clientHandshakeSSO(userid, shouldRequestVersion);
 		} else {
 			// GCM
 			clientHandshakeGCM(userid, pwd, db, shouldRequestVersion);
@@ -604,64 +671,12 @@ public class XGConnection implements Connection
 			}
 			retryCounter = 0;
 			processResponseType(rType, response);
-
-			final int count = ccr2.getCmdcompsCount();
-			cmdcomps.clear();
-			for (int i = 0; i < count; i++)
-			{
-				cmdcomps.add(ccr2.getCmdcomps(i));
-			}
-			LOGGER.log(Level.INFO, "Clearing and adding new secondary interfaces");
-			secondaryInterfaces.clear();
-			for (int i = 0; i < ccr2.getSecondaryCount(); i++)
-			{
-				secondaryInterfaces.add(new ArrayList<String>());
-				for (int j = 0; j < ccr2.getSecondary(i).getAddressCount(); j++)
-				{
-					// Do hostname / IP translation here
-					String connInfo = ccr2.getSecondary(i).getAddress(j);
-					final StringTokenizer tokens = new StringTokenizer(connInfo, ":", false);
-					final String connHost = tokens.nextToken();
-					final int connPort = Integer.parseInt(tokens.nextToken());
-					final InetAddress[] addrs = InetAddress.getAllByName(connHost);
-					for (final InetAddress addr : addrs)
-					{
-						connInfo = addr.toString().substring(addr.toString().indexOf('/') + 1) + ":" + connPort;
-						secondaryInterfaces.get(i).add(connInfo);
-					}
-				}
-			}
-
-			// Figure out what secondary index it is
-			final String combined = ip + ":" + portNum;
-			for (final ArrayList<String> list : secondaryInterfaces)
-			{
-				int index = 0;
-				for (final String address : list)
-				{
-					if (address.equals(combined))
-					{
-						secondaryIndex = index;
-						break;
-					}
-
-					index++;
-				}
-			}
-
-			LOGGER.log(Level.INFO, String.format("Using secondary index %d", secondaryIndex));
-			for (final ArrayList<String> list : secondaryInterfaces)
-			{
-				LOGGER.log(Level.INFO, "New SQL node");
-				for (final String address : list)
-				{
-					LOGGER.log(Level.INFO, String.format("Interface %s", address));
-				}
-			}
-
+			// Save the secondary interface for reconnecting and recirecting.
+			saveSecondaryInterfaces(ccr2.getCmdcompsList(), ccr2.getSecondaryList());
+			// Handle redirect
 			if (ccr2.getRedirect())
 			{
-				LOGGER.log(Level.INFO, "Redirect command in ClientConnection2Response from server");
+				LOGGER.log(Level.INFO, "Redirect command in ClientConnectionGCM2Response from server");
 				final String host = ccr2.getRedirectHost();
 				final int port = ccr2.getRedirectPort();
 				redirect(host, port, shouldRequestVersion);
@@ -870,61 +885,9 @@ public class XGConnection implements Connection
 			}
 			retryCounter = 0;
 			processResponseType(rType, response);
-
-			final int count = ccr2.getCmdcompsCount();
-			cmdcomps.clear();
-			for (int i = 0; i < count; i++)
-			{
-				cmdcomps.add(ccr2.getCmdcomps(i));
-			}
-			LOGGER.log(Level.INFO, "Clearing and adding new secondary interfaces");
-			secondaryInterfaces.clear();
-			for (int i = 0; i < ccr2.getSecondaryCount(); i++)
-			{
-				secondaryInterfaces.add(new ArrayList<String>());
-				for (int j = 0; j < ccr2.getSecondary(i).getAddressCount(); j++)
-				{
-					// Do hostname / IP translation here
-					String connInfo = ccr2.getSecondary(i).getAddress(j);
-					final StringTokenizer tokens = new StringTokenizer(connInfo, ":", false);
-					final String connHost = tokens.nextToken();
-					final int connPort = Integer.parseInt(tokens.nextToken());
-					final InetAddress[] addrs = InetAddress.getAllByName(connHost);
-					for (final InetAddress addr : addrs)
-					{
-						connInfo = addr.toString().substring(addr.toString().indexOf('/') + 1) + ":" + connPort;
-						secondaryInterfaces.get(i).add(connInfo);
-					}
-				}
-			}
-
-			// Figure out what secondary index it is
-			final String combined = ip + ":" + portNum;
-			for (final ArrayList<String> list : secondaryInterfaces)
-			{
-				int index = 0;
-				for (final String address : list)
-				{
-					if (address.equals(combined))
-					{
-						secondaryIndex = index;
-						break;
-					}
-
-					index++;
-				}
-			}
-
-			LOGGER.log(Level.INFO, String.format("Using secondary index %d", secondaryIndex));
-			for (final ArrayList<String> list : secondaryInterfaces)
-			{
-				LOGGER.log(Level.INFO, "New SQL node");
-				for (final String address : list)
-				{
-					LOGGER.log(Level.INFO, String.format("Interface %s", address));
-				}
-			}
-
+			// Save the secondary interface for reconnecting and recirecting.
+			saveSecondaryInterfaces(ccr2.getCmdcompsList(), ccr2.getSecondaryList());
+			// Handle redirect			
 			if (ccr2.getRedirect())
 			{
 				LOGGER.log(Level.INFO, "Redirect command in ClientConnection2Response from server");
@@ -971,6 +934,283 @@ public class XGConnection implements Connection
 		}
 		LOGGER.log(Level.INFO, "Handshake CBC Finished");
 	}
+
+	private void clientHandshakeSSO(final String db, final boolean shouldRequestVersion) throws Exception
+	{
+		if(ssoSecurityToken == null){
+			clientHandshakeSSONoToken(db, shouldRequestVersion);
+		} else {
+			clientHandshakeSSOToken(db, shouldRequestVersion);
+		}
+	}
+
+	private void clientHandshakeSSOToken(final String db, final boolean shouldRequestVersion) throws Exception
+	{
+		try
+		{
+			LOGGER.log(Level.INFO, "Beginning SSO handshake with token");
+			final ClientWireProtocol.ClientConnectionSSOToken.Builder builder = ClientWireProtocol.ClientConnectionSSOToken.newBuilder();
+			builder.setDatabase(database);
+			builder.setClientid(client);
+			builder.setVersion(protocolVersion);
+			String[] majorMinorVersion = clientVersion.split("\\.");
+			int majorClientVersion = Integer.parseInt(majorMinorVersion[0]);
+			int minorClientVersion = Integer.parseInt(majorMinorVersion[1]);
+			builder.setMajorClientVersion(majorClientVersion);
+			builder.setMinorClientVersion(minorClientVersion);
+			builder.setSessionID(sessionID);
+			// Set the security token
+			builder.setSecurityToken(ssoSecurityToken);
+			builder.setForce((force || oneShotForce) ? true : false);
+			oneShotForce = false;
+			final ClientConnectionSSOToken msg = builder.build();
+			ClientWireProtocol.Request.Builder b2 = ClientWireProtocol.Request.newBuilder();
+			b2.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION_SSO_TOKEN);
+			b2.setClientConnectionSsoToken(msg);
+			// Write message to server
+			Request wrapper = b2.build();
+			out.write(intToBytes(wrapper.getSerializedSize()));
+			wrapper.writeTo(out);
+			out.flush();
+			
+			// get response
+			final ClientWireProtocol.ClientConnectionSSOTokenResponse.Builder tokenHandshakeResp = ClientWireProtocol.ClientConnectionSSOTokenResponse.newBuilder();
+			int length = getLength();
+			byte[] data = new byte[length];
+			readBytes(data);
+			tokenHandshakeResp.mergeFrom(data);
+			ConfirmationResponse response = tokenHandshakeResp.getResponse();
+			ResponseType rType = response.getType();
+			processResponseType(rType, response);
+			// Save the secondary interface for reconnecting and recirecting.
+			saveSecondaryInterfaces(tokenHandshakeResp.getCmdcompsList(), tokenHandshakeResp.getSecondaryList());
+			// Handle redirect
+			if (tokenHandshakeResp.getRedirect())
+			{
+				LOGGER.log(Level.INFO, "Redirect command in ClientConnection2Response from server");
+				final String host = tokenHandshakeResp.getRedirectHost();
+				final int port = tokenHandshakeResp.getRedirectPort();
+				redirect(host, port, shouldRequestVersion);
+				// We have a lot of dangerous circular function calls.
+				// If we were redirected, then we already have the server version. We need to
+				// return here.
+				if (!getVersion().equals(""))
+				{
+					LOGGER.log(Level.INFO, "Returning in handshake redirect. Already have protocol version.");
+					return;
+				}
+			}			
+		}
+		catch(RuntimeException e)
+		{
+			LOGGER.log(Level.WARNING, String.format("Runtime Exception %s occurred during handshake with message %s", e.toString(), e.getMessage()));
+			throw e;
+		}
+		catch (final Exception e)
+		{
+			LOGGER.log(Level.WARNING, String.format("Exception %s occurred during handshake with message %s", e.toString(), e.getMessage()));
+
+			try
+			{
+				sock.close();
+			}
+			catch (final Exception f)
+			{
+				LOGGER.log(Level.WARNING, "Failed to close socket in clientHandshakeSSOToken");
+			}
+
+			throw e;
+		}
+
+		if (shouldRequestVersion)
+		{
+			if (serverVersion.equals(""))
+			{
+				fetchServerVersion();
+			}
+		}
+		LOGGER.log(Level.INFO, "Handshake SSO with token finished");		
+	}
+
+	private void clientHandshakeSSONoToken(final String db, final boolean shouldRequestVersion) throws Exception
+	{
+		try
+		{
+			LOGGER.log(Level.INFO, "Beginning SSO handshake without token");
+			final ClientWireProtocol.ClientConnectionSSO.Builder builder = ClientWireProtocol.ClientConnectionSSO.newBuilder();
+			builder.setDatabase(database);
+			builder.setClientid(client);
+			builder.setVersion(protocolVersion);
+			String[] majorMinorVersion = clientVersion.split("\\.");
+			int majorClientVersion = Integer.parseInt(majorMinorVersion[0]);
+			int minorClientVersion = Integer.parseInt(majorMinorVersion[1]);
+			builder.setMajorClientVersion(majorClientVersion);
+			builder.setMinorClientVersion(minorClientVersion);
+			builder.setSessionID(sessionID);
+			final ClientConnectionSSO msg = builder.build();
+			ClientWireProtocol.Request.Builder b2 = ClientWireProtocol.Request.newBuilder();
+			b2.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION_SSO);
+			b2.setClientConnectionSso(msg);
+			// Write to the server
+			Request wrapper = b2.build();
+			out.write(intToBytes(wrapper.getSerializedSize()));
+			wrapper.writeTo(out);
+			out.flush();
+
+			// get response
+			final ClientWireProtocol.ClientConnectionSSOResponse.Builder ccr = ClientWireProtocol.ClientConnectionSSOResponse.newBuilder();
+			int length = getLength();
+			byte[] data = new byte[length];
+			readBytes(data);
+			ccr.mergeFrom(data);
+			ConfirmationResponse response = ccr.getResponse();
+			ResponseType rType = response.getType();
+			processResponseType(rType, response);
+			
+			final String requestID = ccr.getRequestId();
+			final String authUrl = ccr.getAuthUrl();
+
+			// Do desktop stuff with authURL.
+			openAuthUrl(authUrl);
+			// Poll the database.
+			LOGGER.log(Level.INFO, "SSO handshake part 2, polling database");
+			pollDatabase(requestID, shouldRequestVersion);
+		}
+		catch(RuntimeException e)
+		{
+			LOGGER.log(Level.WARNING, String.format("Runtime Exception %s occurred during handshake with message %s", e.toString(), e.getMessage()));
+			throw e;
+		}
+		catch (final Exception e)
+		{
+			LOGGER.log(Level.WARNING, String.format("Exception %s occurred during handshake with message %s", e.toString(), e.getMessage()));
+
+			try
+			{
+				sock.close();
+			}
+			catch (final Exception f)
+			{
+				LOGGER.log(Level.WARNING, "Failed to close socket in clientHandshakeSSO");
+			}
+
+			throw e;
+		}
+
+		if (shouldRequestVersion)
+		{
+			if (serverVersion.equals(""))
+			{
+				fetchServerVersion();
+			}
+		}
+		LOGGER.log(Level.INFO, "Handshake SSO without token finished");
+	}
+
+	/**
+	 * Opens the authentication URL in the users default browser.
+	 * Solution based on: https://stackoverflow.com/a/18509384/14315585
+	 * 
+	 */
+
+	private void openAuthUrl(String authUrl) throws Exception{
+		LOGGER.log(Level.INFO, String.format("Opening authUrl: %s", authUrl));
+
+		if(Desktop.isDesktopSupported()){
+			Desktop desktop = Desktop.getDesktop();
+			try{
+				desktop.browse(new URI(authUrl));
+			} catch (Exception e) {
+				LOGGER.log(Level.WARNING, String.format("Failed to open browser for URI: %s with Desktop", authUrl));
+				throw e;
+            }
+		} else {
+			String reason = String.format("Could not open default browser with Desktop library. Please proceed to the following url on a browser: %s", authUrl);
+			LOGGER.log(Level.WARNING, reason);
+			System.out.println(reason);
+			SQLException ex = SQLStates.FAILED_HANDSHAKE.cloneAndSpecify(reason);
+			warnings.add(new SQLWarning(reason, SQLStates.FAILED_HANDSHAKE.getSqlState(), SQLStates.FAILED_HANDSHAKE.getSqlCode()));
+			// We cannot throw here as it would end the handshake.
+		}
+	}
+
+	private void pollDatabase(String requestId, boolean shouldRequestVersion) throws Exception{
+		LOGGER.log(Level.INFO, "Called pollDatabase()");
+		final ClientWireProtocol.ClientConnectionSSOPoll.Builder pollMsgBuilder = ClientWireProtocol.ClientConnectionSSOPoll.newBuilder();
+		pollMsgBuilder.setRequestId(requestId);
+		pollMsgBuilder.setForce((force || oneShotForce) ? true : false);
+		oneShotForce = false;
+		final ClientWireProtocol.ClientConnectionSSOPoll pollMsg = pollMsgBuilder.build();
+		
+		ClientWireProtocol.Request.Builder reqBuilder = ClientWireProtocol.Request.newBuilder();
+		reqBuilder.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION_SSO_POLL);
+		reqBuilder.setClientConnectionSsoPoll(pollMsg);
+		// Finish the poll message. We can use it over and over.
+		Request pollReq = reqBuilder.build();
+
+		boolean keepPolling = true;
+		int waitFor = 0;
+		ClientWireProtocol.ClientConnectionSSOPollResponse.Builder pollResponseBuilder = null;
+		while(keepPolling){
+			Thread.sleep(waitFor * 1000);
+			LOGGER.log(Level.INFO, String.format("Polling database for requestId: %s", requestId));
+
+			// Poll
+			out.write(intToBytes(pollReq.getSerializedSize()));
+			pollReq.writeTo(out);
+			out.flush();
+
+			// Receive response.
+			pollResponseBuilder = ClientWireProtocol.ClientConnectionSSOPollResponse.newBuilder();
+			int length = getLength();
+			byte[] data = new byte[length];
+			readBytes(data);
+			pollResponseBuilder.mergeFrom(data);
+			ConfirmationResponse response = pollResponseBuilder.getResponse();
+			ResponseType rType = response.getType();
+			processResponseType(rType, response);
+			// If we get to this point, then we didn't get an error. Either a continue polling, or a connection succeeded.
+			
+			// Handle the continue polling situation.
+			ClientWireProtocol.ClientConnectionSSOPollResponse.PollResponse pollEnum = pollResponseBuilder.getPollResponse();
+			if(pollEnum == ClientWireProtocol.ClientConnectionSSOPollResponse.PollResponse.ERROR){
+				// Should not happen as we already chcked
+				LOGGER.log(Level.WARNING, "SSO Poll returned an error.");
+				throw SQLStates.FAILED_HANDSHAKE.cloneAndSpecify("SSO Poll Response returned an unexpected error");
+			} else if(pollEnum == ClientWireProtocol.ClientConnectionSSOPollResponse.PollResponse.POLL){
+				// Continue polling.
+				LOGGER.log(Level.INFO, "Continue polling....");
+				waitFor = pollResponseBuilder.getPollSeconds();
+				continue;
+			} else {
+				// Success.
+				LOGGER.log(Level.INFO, "Poll successful");
+				waitFor = 0;
+				keepPolling = false;
+			}
+		}
+
+		// Save the security token. It will now be used for connecting henceforth in clientHandshakeSSOToken.
+		ssoSecurityToken = pollResponseBuilder.getSecurityToken();
+		// Save the secondary interface for reconnecting and recirecting.
+		saveSecondaryInterfaces(pollResponseBuilder.getCmdcompsList(), pollResponseBuilder.getSecondaryList());
+		// Handle redirect
+		if (pollResponseBuilder.getRedirect())
+		{
+			LOGGER.log(Level.INFO, "Redirect command in pollDatabase from server");
+			final String host = pollResponseBuilder.getRedirectHost();
+			final int port = pollResponseBuilder.getRedirectPort();
+			redirect(host, port, shouldRequestVersion);
+			// We have a lot of dangerous circular function calls.
+			// If we were redirected, then we already have the server version. We need to
+			// return here.
+			if (!getVersion().equals(""))
+			{
+				LOGGER.log(Level.INFO, "Returning in handshake redirect. Already have protocol version.");
+				return;
+			}
+		}
+	}	
 
 	@Override
 	public void close() throws SQLException
@@ -1188,6 +1428,7 @@ public class XGConnection implements Connection
 			retval.originalPort = originalPort;
 			retval.tls = tls;
 			retval.serverVersion = serverVersion;
+			retval.ssoSecurityToken = ssoSecurityToken;
 			retval.reconnect(shouldRequestVersion);
 			retval.resetLocalVars();
 		}
@@ -1717,6 +1958,7 @@ public class XGConnection implements Connection
 		hash += maxTempDisk == null ? 0 : maxTempDisk.hashCode();
 		hash += parallelism == null ? 0 : parallelism.hashCode();
 		hash += priority == null ? 0 : priority.hashCode();
+		hash += ssoSecurityToken == null ? 0 : ssoSecurityToken.hashCode();
 
 		return hash;
 	}
