@@ -1125,8 +1125,9 @@ public class XGConnection implements Connection
 				throw e;
             }
 		} else {
-			LOGGER.log(Level.WARNING, "Could not open default browser with Desktop library");
-			throw SQLStates.FAILED_HANDSHAKE.cloneAndSpecify("Java desktop library is not supported. Could not open default browser");
+			LOGGER.log(Level.WARNING, String.format("Could not open default browser with Desktop library. Please proceed to the following url on a browser: %s", authUrl));
+			System.out.println(String.format("Could not open default browser with Desktop library. Please proceed to the following url on a browser: %s", authUrl));
+			// We cannot throw here as it would end the handshake.
 		}
 	}
 
