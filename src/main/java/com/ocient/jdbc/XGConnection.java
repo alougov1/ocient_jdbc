@@ -676,7 +676,7 @@ public class XGConnection implements Connection
 			// Handle redirect
 			if (ccr2.getRedirect())
 			{
-				LOGGER.log(Level.INFO, "Redirect command in ClientConnection2Response from server");
+				LOGGER.log(Level.INFO, "Redirect command in ClientConnectionGCM2Response from server");
 				final String host = ccr2.getRedirectHost();
 				final int port = ccr2.getRedirectPort();
 				redirect(host, port, shouldRequestVersion);
@@ -1193,7 +1193,7 @@ public class XGConnection implements Connection
 		// Handle redirect
 		if (pollResponseBuilder.getRedirect())
 		{
-			LOGGER.log(Level.INFO, "Redirect command in ClientConnection2Response from server");
+			LOGGER.log(Level.INFO, "Redirect command in pollDatabase from server");
 			final String host = pollResponseBuilder.getRedirectHost();
 			final int port = pollResponseBuilder.getRedirectPort();
 			redirect(host, port, shouldRequestVersion);
