@@ -750,6 +750,8 @@ public class CLI
 
 	private static void getSchema(final String cmd)
 	{
+		long start = 0;
+		long end = 0;
 		if (!isConnected())
 		{
 			System.out.println("No database connection exists");
@@ -759,6 +761,7 @@ public class CLI
 		ResultSet rs = null;
 		try
 		{
+			start = System.currentTimeMillis();
 			stmt.execute(cmd);
 			rs = stmt.getResultSet();
 			final ResultSetMetaData meta = rs.getMetaData();
@@ -770,6 +773,56 @@ public class CLI
 			{
 				outputResultSet(rs, meta);
 			}
+			end = System.currentTimeMillis();
+
+			printTime(start, end);			
+			rs.close();
+		}
+		catch (final Exception e)
+		{
+			try
+			{
+				if (rs != null)
+				{
+					rs.close();
+				}
+			}
+			catch (final Exception f)
+			{
+			}
+			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
+		}
+	}
+
+	private static void getJdbcVersion(final String cmd)
+	{
+		long start = 0;
+		long end = 0;
+		if (!isConnected())
+		{
+			System.out.println("No database connection exists");
+			return;
+		}
+
+		ResultSet rs = null;
+		try
+		{
+			start = System.currentTimeMillis();
+			stmt.execute(cmd);
+			rs = stmt.getResultSet();
+			final ResultSetMetaData meta = rs.getMetaData();
+			if (outputCSVFile.isEmpty())
+			{
+				printResultSet(rs, meta);
+			}
+			else
+			{
+				outputResultSet(rs, meta);
+			}
+			end = System.currentTimeMillis();
+
+			printTime(start, end);			
 			rs.close();
 		}
 		catch (final Exception e)

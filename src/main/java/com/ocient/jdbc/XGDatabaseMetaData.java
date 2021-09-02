@@ -18,6 +18,8 @@ import com.ocient.jdbc.proto.ClientWireProtocol;
 public class XGDatabaseMetaData implements DatabaseMetaData
 {
 	private static final Logger LOGGER = Logger.getLogger("com.ocient.jdbc");
+	private int majorJdbcVersion = Integer.parseInt(getClass().getPackage().getImplementationVersion().split("\\.")[0]);
+	private int minorJdbcVersion = Integer.parseInt(getClass().getPackage().getImplementationVersion().split("\\.")[1]);
 	private final Connection conn;
 
 	public XGDatabaseMetaData(final Connection conn)
@@ -914,14 +916,14 @@ public class XGDatabaseMetaData implements DatabaseMetaData
 	public int getJDBCMajorVersion() throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Called getJDBCMajorVersion()");
-		return 4;
+		return majorJdbcVersion;
 	}
 
 	@Override
 	public int getJDBCMinorVersion() throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Called getJDBCMinorVersion()");
-		return 1;
+		return minorJdbcVersion;
 	}
 
 	@Override

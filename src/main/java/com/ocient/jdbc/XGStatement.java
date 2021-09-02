@@ -718,7 +718,7 @@ public class XGStatement implements Statement
 			passUpCancel(true);
 			if (sql.toUpperCase().startsWith("SELECT") || sql.toUpperCase().startsWith("WITH") || sql.toUpperCase().startsWith("EXPLAIN ") || sql.toUpperCase().startsWith("LIST TABLES")
 				|| sql.toUpperCase().startsWith("LIST SYSTEM TABLES") || sql.toUpperCase().startsWith("LIST VIEWS") || sql.toUpperCase().startsWith("LIST INDICES ")
-				|| sql.toUpperCase().startsWith("LIST INDEXES ") || sql.toUpperCase().startsWith("GET SCHEMA") || sql.toUpperCase().startsWith("DESCRIBE VIEW ")
+				|| sql.toUpperCase().startsWith("LIST INDEXES ") || sql.toUpperCase().startsWith("GET SCHEMA") || sql.toUpperCase().startsWith("GET JDBC VERSION") || sql.toUpperCase().startsWith("DESCRIBE VIEW ")
 				|| sql.toUpperCase().startsWith("DESCRIBE TABLE ") || sql.toUpperCase().startsWith("PLAN EXECUTE ") || sql.toUpperCase().startsWith("PLAN EXPLAIN ")
 				|| sql.toUpperCase().startsWith("LIST ALL QUERIES") || startsWithIgnoreCase(sql, "LIST ALL COMPLETED QUERIES") || sql.toUpperCase().startsWith("EXPORT TABLE ")
 				|| sql.toUpperCase().startsWith("EXPORT TRANSLATION ") || sql.toUpperCase().startsWith("EXPORT VIEW") || sql.toUpperCase().startsWith("LIST TABLE PRIVILEGES")
@@ -883,6 +883,9 @@ public class XGStatement implements Statement
 			else if (startsWithIgnoreCase(sql, "GET SCHEMA"))
 			{
 				return getSchema();
+			} else if (startsWithIgnoreCase(sql, "GET JDBC VERSION"))
+			{
+				return getJdbcVersion();
 			}
 			else if (startsWithIgnoreCase(sql, "DESCRIBE TABLE "))
 			{
@@ -1746,16 +1749,10 @@ public class XGStatement implements Statement
 		LOGGER.log(Level.INFO, "Entered driver's getSchema()");
 		final String schema = conn.getSchema();
 		// Construct the result set.
-		// split the proto string using the line break delimiter and build a one string
-		// column resultset.
 		final ArrayList<Object> rs = new ArrayList<>();
-		final String lines[] = schema.split("\\r?\\n");
-		for (final String str : lines)
-		{
-			final ArrayList<Object> row = new ArrayList<>();
-			row.add(str);
-			rs.add(row);
-		}
+		final ArrayList<Object> row = new ArrayList<>();
+		row.add(schema);
+		rs.add(row);
 		result = conn.rs = new XGResultSet(conn, rs, this);
 
 		final Map<String, Integer> cols2Pos = new HashMap<>();
@@ -1764,6 +1761,34 @@ public class XGStatement implements Statement
 		cols2Pos.put("schema", 0);
 		pos2Cols.put(0, "schema");
 		cols2Types.put("schema", "CHAR");
+		result.setCols2Pos(cols2Pos);
+		result.setPos2Cols(pos2Cols);
+		result.setCols2Types(cols2Types);
+
+		return result;
+	}
+
+	private ResultSet getJdbcVersion() throws SQLException
+	{
+		LOGGER.log(Level.INFO, "Entered driver's getJdbcVersion()");
+
+		// Construct the result set.
+		final ArrayList<Object> rs = new ArrayList<>();
+		final ArrayList<Object> row = new ArrayList<>();
+		DatabaseMetaData meta = conn.getMetaData();
+		int majorVersion = meta.getJDBCMajorVersion();
+		int minorVersion = meta.getJDBCMinorVersion();
+		String jdbcVersion = Integer.toString(majorVersion) + "." + Integer.toString(minorVersion);
+		row.add(jdbcVersion);
+		rs.add(row);
+		result = conn.rs = new XGResultSet(conn, rs, this);
+
+		final Map<String, Integer> cols2Pos = new HashMap<>();
+		final TreeMap<Integer, String> pos2Cols = new TreeMap<>();
+		final Map<String, String> cols2Types = new HashMap<>();
+		cols2Pos.put("jdbc_version", 0);
+		pos2Cols.put(0, "jdbc_version");
+		cols2Types.put("jdbc_version", "CHAR");
 		result.setCols2Pos(cols2Pos);
 		result.setPos2Cols(pos2Cols);
 		result.setCols2Types(cols2Types);
