@@ -51,6 +51,7 @@ public class CLI
 	private static boolean trace = false;
 	private static boolean performance = false;
 	private static String outputCSVFile = "";
+	private static boolean shouldAppendOutputCSVFile = false;
 	private static String db;
 	private static String user;
 	private static String pwd;
@@ -123,7 +124,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(stmt);
 			end = System.currentTimeMillis();
@@ -288,7 +288,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(rs);
 			end = System.currentTimeMillis();
@@ -365,7 +364,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(rs);
 			end = System.currentTimeMillis();
@@ -434,7 +432,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(stmt);
 			printWarnings(rs);
@@ -487,7 +484,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			end = System.currentTimeMillis();
 
@@ -535,7 +531,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(stmt);
 			end = System.currentTimeMillis();
@@ -583,7 +578,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 
 			rs.close();
@@ -623,7 +617,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(stmt);
 			end = System.currentTimeMillis();
@@ -670,7 +663,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(stmt);
 			end = System.currentTimeMillis();
@@ -708,7 +700,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(stmt);
 			end = System.currentTimeMillis();
@@ -778,7 +769,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			rs.close();
 		}
@@ -857,7 +847,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 
 			printWarnings(rs);
@@ -906,7 +895,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 
 			printWarnings(rs);
@@ -1013,7 +1001,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 
 			printWarnings(rs);
@@ -1103,7 +1090,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(rs);
 			end = System.currentTimeMillis();
@@ -1185,7 +1171,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(rs);
 			end = System.currentTimeMillis();
@@ -1269,7 +1254,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(rs);
 			end = System.currentTimeMillis();
@@ -1475,7 +1459,13 @@ public class CLI
 	{
 		try
 		{
-			outputCSVFile = cmd.substring("OUTPUT NEXT QUERY ".length()).trim();
+			if (startsWithIgnoreCase(cmd, "OUTPUT NEXT QUERY APPEND ")){
+				outputCSVFile = cmd.substring("OUTPUT NEXT QUERY APPEND ".length()).trim();
+				shouldAppendOutputCSVFile = true;
+			} else {
+				outputCSVFile = cmd.substring("OUTPUT NEXT QUERY ".length()).trim();
+				shouldAppendOutputCSVFile = false;
+			}
 			if (outputCSVFile.isEmpty())
 			{
 				System.out.println("Provide a filename to output the query to");
@@ -1490,7 +1480,7 @@ public class CLI
 
 	private static void outputResultSet(final ResultSet rs, final ResultSetMetaData meta) throws Exception
 	{
-		final Writer osw = new OutputStreamWriter(new FileOutputStream(outputCSVFile), Charset.defaultCharset());
+		final Writer osw = new OutputStreamWriter(new FileOutputStream(outputCSVFile, shouldAppendOutputCSVFile), Charset.defaultCharset());
 		final BufferedWriter out = new BufferedWriter(osw);
 		try
 		{
@@ -1561,11 +1551,15 @@ public class CLI
 				rowCount++;
 			}
 			out.close();
+			outputCSVFile = "";
+			shouldAppendOutputCSVFile = false;
 			System.out.println("Fetched " + rowCount + (rowCount == 1 ? " row" : " rows"));
 		}
 		catch (final Exception e)
 		{
 			out.close();
+			outputCSVFile = "";
+			shouldAppendOutputCSVFile = false;
 			System.out.println("Error: " + e.getMessage());
 		}
 	}
@@ -1756,6 +1750,10 @@ public class CLI
 		{
 			getSchema(cmd);
 		}
+		else if (cmd.equalsIgnoreCase("GET JDBC VERSION"))
+		{
+			getJdbcVersion(cmd);
+		}		
 		// recognize explain pipeline not as explain
 		else if (startsWithIgnoreCase(cmd, "EXPLAIN PIPELINE"))
 		{
@@ -1940,7 +1938,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 
 			printWarnings(rs);
