@@ -51,6 +51,7 @@ public class CLI
 	private static boolean trace = false;
 	private static boolean performance = false;
 	private static String outputCSVFile = "";
+	private static boolean shouldAppendOutputCSVFile = false;
 	private static String db;
 	private static String user;
 	private static String pwd;
@@ -58,6 +59,7 @@ public class CLI
 
 	private static char quote = '\0';
 	private static boolean comment = false;
+	private static boolean lastCommandErrored = false;
 	private static final char[] hexArray = "0123456789abcdef".toCharArray();
 	private static Statement stmt;
 
@@ -95,6 +97,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("CLI Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -121,7 +124,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(stmt);
 			end = System.currentTimeMillis();
@@ -141,6 +143,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -159,6 +162,7 @@ public class CLI
 			catch (final Exception e)
 			{
 				System.out.println("Error: " + e.getMessage());
+				lastCommandErrored = true;
 				return;
 			}
 		}
@@ -206,6 +210,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -283,7 +288,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(rs);
 			end = System.currentTimeMillis();
@@ -306,6 +310,7 @@ public class CLI
 			}
 
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -359,7 +364,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(rs);
 			end = System.currentTimeMillis();
@@ -381,6 +385,7 @@ public class CLI
 			}
 
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -427,7 +432,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(stmt);
 			printWarnings(rs);
@@ -450,6 +454,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -479,7 +484,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			end = System.currentTimeMillis();
 
@@ -500,6 +504,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -526,7 +531,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(stmt);
 			end = System.currentTimeMillis();
@@ -546,6 +550,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -573,7 +578,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 
 			rs.close();
@@ -586,6 +590,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -612,7 +617,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(stmt);
 			end = System.currentTimeMillis();
@@ -632,6 +636,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -658,7 +663,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(stmt);
 			end = System.currentTimeMillis();
@@ -669,6 +673,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -695,7 +700,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(stmt);
 			end = System.currentTimeMillis();
@@ -715,6 +719,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -739,11 +744,14 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
 	private static void getSchema(final String cmd)
 	{
+		long start = 0;
+		long end = 0;
 		if (!isConnected())
 		{
 			System.out.println("No database connection exists");
@@ -753,6 +761,7 @@ public class CLI
 		ResultSet rs = null;
 		try
 		{
+			start = System.currentTimeMillis();
 			stmt.execute(cmd);
 			rs = stmt.getResultSet();
 			final ResultSetMetaData meta = rs.getMetaData();
@@ -763,8 +772,10 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
+			end = System.currentTimeMillis();
+
+			printTime(start, end);			
 			rs.close();
 		}
 		catch (final Exception e)
@@ -780,6 +791,54 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
+		}
+	}
+
+	private static void getJdbcVersion(final String cmd)
+	{
+		long start = 0;
+		long end = 0;
+		if (!isConnected())
+		{
+			System.out.println("No database connection exists");
+			return;
+		}
+
+		ResultSet rs = null;
+		try
+		{
+			start = System.currentTimeMillis();
+			stmt.execute(cmd);
+			rs = stmt.getResultSet();
+			final ResultSetMetaData meta = rs.getMetaData();
+			if (outputCSVFile.isEmpty())
+			{
+				printResultSet(rs, meta);
+			}
+			else
+			{
+				outputResultSet(rs, meta);
+			}
+			end = System.currentTimeMillis();
+
+			printTime(start, end);			
+			rs.close();
+		}
+		catch (final Exception e)
+		{
+			try
+			{
+				if (rs != null)
+				{
+					rs.close();
+				}
+			}
+			catch (final Exception f)
+			{
+			}
+			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -814,6 +873,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("CLI Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -840,7 +900,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 
 			printWarnings(rs);
@@ -862,6 +921,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -888,7 +948,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 
 			printWarnings(rs);
@@ -910,6 +969,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -994,7 +1054,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 
 			printWarnings(rs);
@@ -1017,6 +1076,7 @@ public class CLI
 			}
 
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1052,6 +1112,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("CLI Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1082,7 +1143,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(rs);
 			end = System.currentTimeMillis();
@@ -1105,6 +1165,7 @@ public class CLI
 			}
 
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1163,7 +1224,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(rs);
 			end = System.currentTimeMillis();
@@ -1186,6 +1246,7 @@ public class CLI
 			}
 
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1246,7 +1307,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 			printWarnings(rs);
 			end = System.currentTimeMillis();
@@ -1269,6 +1329,7 @@ public class CLI
 			}
 
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1357,6 +1418,8 @@ public class CLI
 		{
 			while (true)
 			{
+				// Reset this so we can run a new command.
+				lastCommandErrored = false;
 				// jline has ways to handle this, but they're underdocumented and overbuilt to
 				// the point of obscenity
 				if (!quit)
@@ -1449,7 +1512,13 @@ public class CLI
 	{
 		try
 		{
-			outputCSVFile = cmd.substring("OUTPUT NEXT QUERY ".length()).trim();
+			if (startsWithIgnoreCase(cmd, "OUTPUT NEXT QUERY APPEND ")){
+				outputCSVFile = cmd.substring("OUTPUT NEXT QUERY APPEND ".length()).trim();
+				shouldAppendOutputCSVFile = true;
+			} else {
+				outputCSVFile = cmd.substring("OUTPUT NEXT QUERY ".length()).trim();
+				shouldAppendOutputCSVFile = false;
+			}
 			if (outputCSVFile.isEmpty())
 			{
 				System.out.println("Provide a filename to output the query to");
@@ -1458,12 +1527,13 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("CLI Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
 	private static void outputResultSet(final ResultSet rs, final ResultSetMetaData meta) throws Exception
 	{
-		final Writer osw = new OutputStreamWriter(new FileOutputStream(outputCSVFile), Charset.defaultCharset());
+		final Writer osw = new OutputStreamWriter(new FileOutputStream(outputCSVFile, shouldAppendOutputCSVFile), Charset.defaultCharset());
 		final BufferedWriter out = new BufferedWriter(osw);
 		try
 		{
@@ -1534,11 +1604,15 @@ public class CLI
 				rowCount++;
 			}
 			out.close();
+			outputCSVFile = "";
+			shouldAppendOutputCSVFile = false;
 			System.out.println("Fetched " + rowCount + (rowCount == 1 ? " row" : " rows"));
 		}
 		catch (final Exception e)
 		{
 			out.close();
+			outputCSVFile = "";
+			shouldAppendOutputCSVFile = false;
 			System.out.println("Error: " + e.getMessage());
 		}
 	}
@@ -1729,6 +1803,10 @@ public class CLI
 		{
 			getSchema(cmd);
 		}
+		else if (cmd.equalsIgnoreCase("GET JDBC VERSION"))
+		{
+			getJdbcVersion(cmd);
+		}		
 		// recognize explain pipeline not as explain
 		else if (startsWithIgnoreCase(cmd, "EXPLAIN PIPELINE"))
 		{
@@ -1913,7 +1991,6 @@ public class CLI
 			else
 			{
 				outputResultSet(rs, meta);
-				outputCSVFile = "";
 			}
 
 			printWarnings(rs);
@@ -1936,6 +2013,7 @@ public class CLI
 			{
 			}
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1979,6 +2057,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("CLI Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -1997,6 +2076,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 
@@ -2084,6 +2164,10 @@ public class CLI
 		{
 			while (true)
 			{
+				if(lastCommandErrored){
+					System.out.println("Source command encountered a command which erroed. Stopping");
+					return quit;
+				}
 				// jline has ways to handle this, but they're underdocumented and overbuilt to
 				// the point of obscenity
 				cmd = null;
@@ -2218,6 +2302,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("Error: " + e.getMessage());
+			lastCommandErrored = true;
 		}
 	}
 }

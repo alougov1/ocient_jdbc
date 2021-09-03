@@ -5,6 +5,15 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[]
+== 2.32 (2021-9-1)
+
+New Features::
+
+ * CLI source command stops on error
+ * Support "output next query append"
+ * Add statement command "get jdbc version"
+
+//tag::compact[]
 == 2.31 (2021-8-30)
 
 New Features::
