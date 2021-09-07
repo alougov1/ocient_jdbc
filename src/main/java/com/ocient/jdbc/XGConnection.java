@@ -501,14 +501,19 @@ public class XGConnection implements Connection
 			clientHandshakeCBC(userid, pwd, db, shouldRequestVersion);
 		} else if(handshake == HandshakeType.SSO){
 			// SSO
-			clientHandshakeSSO(userid, shouldRequestVersion);
+			if(userid.toLowerCase().equals("id_token") || userid.toLowerCase().equals("access_token")){
+				// SSO handshake desired but an explicit token has been provided. Use the normal gcm encryption.
+				clientHandshakeGCM(userid, pwd, db, shouldRequestVersion, true);
+			} else {
+				clientHandshakeSSO(db, shouldRequestVersion);	
+			}
 		} else {
 			// GCM
-			clientHandshakeGCM(userid, pwd, db, shouldRequestVersion);
+			clientHandshakeGCM(userid, pwd, db, shouldRequestVersion, false);
 		}
 	}
 	// DB-15559 make this and clientHandshakeCBC share code. Didn't have time to do this right now.
-	private void clientHandshakeGCM(final String userid, final String pwd, final String db, final boolean shouldRequestVersion) throws Exception
+	private void clientHandshakeGCM(final String userid, final String pwd, final String db, final boolean shouldRequestVersion, final boolean isExplicitSSO) throws Exception
 	{
 		try
 		{
@@ -525,6 +530,9 @@ public class XGConnection implements Connection
 			builder.setMajorClientVersion(majorClientVersion);
 			builder.setMinorClientVersion(minorClientVersion);
 			builder.setSessionID(sessionID);
+			// Set is whether this is explicity sso handshake.
+			builder.setExplicitSSO(isExplicitSSO);
+
 			final ClientConnectionGCM msg = builder.build();
 			ClientWireProtocol.Request.Builder b2 = ClientWireProtocol.Request.newBuilder();
 			b2.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION_GCM);
