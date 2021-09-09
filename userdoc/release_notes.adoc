@@ -10,6 +10,7 @@ Below is the release notes for every driver version that has customer implicatio
 New Features::
 
  * Add support for explicit SSO handshakes
+ * Revert executeQuery redirection change
 
 //tag::compact[]
 == 2.32 (2021-9-1)

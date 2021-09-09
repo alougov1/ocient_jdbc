@@ -2565,33 +2565,6 @@ public class XGConnection implements Connection
 		}
 	}
 
-	/**
-	 * Utility function for remapping endpoints. Given a host and a port, remaps it to the correct secondary interface being used.
-	 */
-	public String reMapHost(final String host, final int port){
-		LOGGER.log(Level.INFO, String.format("Called reMapHost() with host: %s and port: %d", host, port));
-		if(secondaryIndex != -1){
-			final String unMappedEndpoint = host + ":" + port;
-			int listIndex = 0;
-			for(final ArrayList<String> list: secondaryInterfaces){
-				if(list.get(0).equals(unMappedEndpoint)){
-					break;
-				}
-				listIndex++;
-			}
-			if(listIndex < secondaryInterfaces.size()){
-				LOGGER.log(Level.INFO, String.format("Successfully remapped host : %s and port: %d to a proper endpoint", host, port));
-				return secondaryInterfaces.get(listIndex).get(secondaryIndex);
-			} else {
-				// Failed remapping.
-				LOGGER.log(Level.WARNING, String.format("Failed to remap host: %s and port: %d to a proper endpoint", host, port));
-				return "";
-			}
-		}
-		LOGGER.log(Level.WARNING, String.format("Failed to remap host: %s and port: %d to a proper endpoint", host, port));
-		return "";
-	}
-
 	/*
 	 * We have to told to redirect our request elsewhere.
 	 */
