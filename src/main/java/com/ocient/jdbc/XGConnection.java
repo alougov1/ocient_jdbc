@@ -311,6 +311,8 @@ public class XGConnection implements Connection
 
 	protected String pwd;
 	protected String ssoSecurityToken;
+	protected String ssoTokenSignature;
+	protected String ssoIssuerFingerprint;
 	private int retryCounter;
 
 	protected Map<String, Class<?>> typeMap;
@@ -969,6 +971,8 @@ public class XGConnection implements Connection
 			builder.setSessionID(sessionID);
 			// Set the security token
 			builder.setSecurityToken(ssoSecurityToken);
+			builder.setTokenSignature(ssoTokenSignature);
+			builder.setIssuerFingerprint(ssoIssuerFingerprint);
 			builder.setForce((force || oneShotForce) ? true : false);
 			oneShotForce = false;
 			final ClientConnectionSSOToken msg = builder.build();
@@ -1197,8 +1201,10 @@ public class XGConnection implements Connection
 			}
 		}
 
-		// Save the security token. It will now be used for connecting henceforth in clientHandshakeSSOToken.
+		// Save the security token, signature, and fingerprint. They will now be used for connecting henceforth in clientHandshakeSSOToken.
 		ssoSecurityToken = pollResponseBuilder.getSecurityToken();
+		ssoTokenSignature = pollResponseBuilder.getTokenSignature();
+		ssoIssuerFingerprint = pollResponseBuilder.getIssuerFingerprint();
 		// Save the secondary interface for reconnecting and recirecting.
 		saveSecondaryInterfaces(pollResponseBuilder.getCmdcompsList(), pollResponseBuilder.getSecondaryList());
 		// Handle redirect
@@ -1436,6 +1442,8 @@ public class XGConnection implements Connection
 			retval.tls = tls;
 			retval.serverVersion = serverVersion;
 			retval.ssoSecurityToken = ssoSecurityToken;
+			retval.ssoTokenSignature = ssoTokenSignature;
+			retval.ssoIssuerFingerprint = ssoIssuerFingerprint;
 			retval.reconnect(shouldRequestVersion);
 			retval.resetLocalVars();
 		}
@@ -1966,6 +1974,8 @@ public class XGConnection implements Connection
 		hash += parallelism == null ? 0 : parallelism.hashCode();
 		hash += priority == null ? 0 : priority.hashCode();
 		hash += ssoSecurityToken == null ? 0 : ssoSecurityToken.hashCode();
+		hash += ssoTokenSignature == null ? 0 : ssoTokenSignature.hashCode();
+		hash += ssoIssuerFingerprint == null ? 0 : ssoIssuerFingerprint.hashCode();
 
 		return hash;
 	}
