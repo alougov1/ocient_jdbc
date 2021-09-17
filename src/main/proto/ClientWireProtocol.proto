@@ -25,7 +25,6 @@ message ClientConnectionGCM
 	int32 majorClientVersion = 5;
 	int32 minorClientVersion = 6;
 	string sessionID = 7;
-	bool explicitSSO = 8;
 }
 
 message ClientConnectionSSO
@@ -97,6 +96,7 @@ message ClientConnectionGCM2
 	bool force = 2; //Force = true means not allowed to redirect the connection
 	bytes hmac = 3;
 	string pubKey = 4;
+	bool explicitSSO = 5;
 }
 
 message ClientConnectionSSOPoll

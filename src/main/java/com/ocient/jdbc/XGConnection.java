@@ -532,8 +532,6 @@ public class XGConnection implements Connection
 			builder.setMajorClientVersion(majorClientVersion);
 			builder.setMinorClientVersion(minorClientVersion);
 			builder.setSessionID(sessionID);
-			// Set is whether this is explicity sso handshake.
-			builder.setExplicitSSO(isExplicitSSO);
 
 			final ClientConnectionGCM msg = builder.build();
 			ClientWireProtocol.Request.Builder b2 = ClientWireProtocol.Request.newBuilder();
@@ -651,6 +649,8 @@ public class XGConnection implements Connection
 			{
 				hand2.setForce(false);
 			}
+			// Set whether this is an explicit SSO handshake.
+			hand2.setExplicitSSO(isExplicitSSO);
 			final ClientWireProtocol.ClientConnectionGCM2 msg2 = hand2.build();
 			b2 = ClientWireProtocol.Request.newBuilder();
 			b2.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION_GCM2);
