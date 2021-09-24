@@ -25,6 +25,7 @@ message ClientConnectionGCM
 	int32 majorClientVersion = 5;
 	int32 minorClientVersion = 6;
 	string sessionID = 7;
+	bool explicitSSO = 8;
 }
 
 message ClientConnectionSSO

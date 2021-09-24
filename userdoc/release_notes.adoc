@@ -10,6 +10,7 @@ Below is the release notes for every driver version that has customer implicatio
 New Features::
 
  * Add token signature and issuer fingerprint fields to sso token handshake.
+ * Add explicit SSO flags to handshake GCM.
 
 //tag::compact[]
 == 2.33 (2021-9-7)

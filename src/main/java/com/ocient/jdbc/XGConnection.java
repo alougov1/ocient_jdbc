@@ -39,6 +39,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.Timer;
@@ -310,9 +311,30 @@ public class XGConnection implements Connection
 	private static final String sessionID = UUID.randomUUID().toString();
 
 	protected String pwd;
-	protected String ssoSecurityToken;
-	protected String ssoTokenSignature;
-	protected String ssoIssuerFingerprint;
+	/**
+	 * Represents a self-contained token used to process an SSO handshake. The token
+	 * is signed by a known entity. The token's signature and the entity's fingerprint
+	 * (identifier) are included for server-side integrity verification.
+	 */
+	private static class SSOToken {
+		SSOToken(final String tokenData, final String tokenSignature, final String issuerFingerprint) {
+			this.tokenData = tokenData;
+			this.tokenSignature = tokenSignature;
+			this.issuerFingerprint = issuerFingerprint;
+		}
+
+		final String tokenData;
+		final String tokenSignature;
+		final String issuerFingerprint;
+	}
+
+	// TODO Introduce an Either<L, R> data structure to hold either SSOToken OR PasswordToken
+	// TODO New connector versions should use signed security tokens instead of storing the 
+	// raw password in memory
+	// 
+	// Presence implies the SSO handshake was successful. Importantly, this token may be used
+	// to connect to ANY database
+	protected Optional<SSOToken> ssoToken = Optional.empty();	
 	private int retryCounter;
 
 	protected Map<String, Class<?>> typeMap;
@@ -532,6 +554,7 @@ public class XGConnection implements Connection
 			builder.setMajorClientVersion(majorClientVersion);
 			builder.setMinorClientVersion(minorClientVersion);
 			builder.setSessionID(sessionID);
+			builder.setExplicitSSO(isExplicitSSO);
 
 			final ClientConnectionGCM msg = builder.build();
 			ClientWireProtocol.Request.Builder b2 = ClientWireProtocol.Request.newBuilder();
@@ -947,7 +970,7 @@ public class XGConnection implements Connection
 
 	private void clientHandshakeSSO(final String db, final boolean shouldRequestVersion) throws Exception
 	{
-		if(ssoSecurityToken == null){
+		if(!ssoToken.isPresent()){
 			clientHandshakeSSONoToken(db, shouldRequestVersion);
 		} else {
 			clientHandshakeSSOToken(db, shouldRequestVersion);
@@ -970,9 +993,9 @@ public class XGConnection implements Connection
 			builder.setMinorClientVersion(minorClientVersion);
 			builder.setSessionID(sessionID);
 			// Set the security token
-			builder.setSecurityToken(ssoSecurityToken);
-			builder.setTokenSignature(ssoTokenSignature);
-			builder.setIssuerFingerprint(ssoIssuerFingerprint);
+			builder.setSecurityToken(ssoToken.map(t -> t.tokenData).orElse(""));
+			builder.setTokenSignature(ssoToken.map(t -> t.tokenSignature).orElse(""));
+			builder.setIssuerFingerprint(ssoToken.map(t -> t.issuerFingerprint).orElse(""));
 			builder.setForce((force || oneShotForce) ? true : false);
 			oneShotForce = false;
 			final ClientConnectionSSOToken msg = builder.build();
@@ -1202,9 +1225,11 @@ public class XGConnection implements Connection
 		}
 
 		// Save the security token, signature, and fingerprint. They will now be used for connecting henceforth in clientHandshakeSSOToken.
-		ssoSecurityToken = pollResponseBuilder.getSecurityToken();
-		ssoTokenSignature = pollResponseBuilder.getTokenSignature();
-		ssoIssuerFingerprint = pollResponseBuilder.getIssuerFingerprint();
+		this.ssoToken = Optional.of(new SSOToken(
+			pollResponseBuilder.getSecurityToken(),
+			pollResponseBuilder.getTokenSignature(),
+			pollResponseBuilder.getIssuerFingerprint()
+		));
 		// Save the secondary interface for reconnecting and recirecting.
 		saveSecondaryInterfaces(pollResponseBuilder.getCmdcompsList(), pollResponseBuilder.getSecondaryList());
 		// Handle redirect
@@ -1441,9 +1466,7 @@ public class XGConnection implements Connection
 			retval.originalPort = originalPort;
 			retval.tls = tls;
 			retval.serverVersion = serverVersion;
-			retval.ssoSecurityToken = ssoSecurityToken;
-			retval.ssoTokenSignature = ssoTokenSignature;
-			retval.ssoIssuerFingerprint = ssoIssuerFingerprint;
+			retval.ssoToken = ssoToken;
 			retval.reconnect(shouldRequestVersion);
 			retval.resetLocalVars();
 		}
@@ -1973,9 +1996,7 @@ public class XGConnection implements Connection
 		hash += maxTempDisk == null ? 0 : maxTempDisk.hashCode();
 		hash += parallelism == null ? 0 : parallelism.hashCode();
 		hash += priority == null ? 0 : priority.hashCode();
-		hash += ssoSecurityToken == null ? 0 : ssoSecurityToken.hashCode();
-		hash += ssoTokenSignature == null ? 0 : ssoTokenSignature.hashCode();
-		hash += ssoIssuerFingerprint == null ? 0 : ssoIssuerFingerprint.hashCode();
+		hash += ssoToken.map(Object::hashCode).orElse(0);
 
 		return hash;
 	}
