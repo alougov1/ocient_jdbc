@@ -47,7 +47,9 @@ message ClientConnectionSSOToken
 	int32 minorClientVersion = 5;
 	string sessionID = 6;
 	string securityToken = 7;
-	bool force = 8;
+	string tokenSignature = 8;
+	string issuerFingerprint = 9;	
+	bool force = 10;
 }
 
 message ClientConnectionResponse 
@@ -95,6 +97,7 @@ message ClientConnectionGCM2
 	bool force = 2; //Force = true means not allowed to redirect the connection
 	bytes hmac = 3;
 	string pubKey = 4;
+	bool explicitSSO = 5;
 }
 
 message ClientConnectionSSOPoll
@@ -139,13 +142,15 @@ message ClientConnectionSSOPollResponse
 
 	ConfirmationResponse response = 1;
 	PollResponse pollResponse = 2;
-	string securityToken = 3;
-	int32 pollSeconds = 4;
-	bool redirect = 5; //Redirect = true, means we are telling client to connect elsewhere
-	string redirectHost = 6;
-	fixed32 redirectPort = 7;
-	repeated string cmdcomps = 8; //If redirect = false, this is a list of all cmdcomps
-	repeated SecondaryInterfaceList secondary = 9;	
+	string securityToken = 3; // SSO security token usage
+	string tokenSignature = 4; // SSO security token usage
+	string issuerFingerprint = 5;	// SSO security token usage	
+	int32 pollSeconds = 6;
+	bool redirect = 7; //Redirect = true, means we are telling client to connect elsewhere
+	string redirectHost = 8;
+	fixed32 redirectPort = 9;
+	repeated string cmdcomps = 10; //If redirect = false, this is a list of all cmdcomps
+	repeated SecondaryInterfaceList secondary = 11;			
 }
 
 message GetSchema
