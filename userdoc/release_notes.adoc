@@ -11,6 +11,7 @@ New Features::
 
  * Add token signature and issuer fingerprint fields to sso token handshake.
  * Add explicit SSO flags to handshake GCM.
+ * Pass networkTimeout to new connection upon copy.
 
 //tag::compact[]
 == 2.33 (2021-9-7)

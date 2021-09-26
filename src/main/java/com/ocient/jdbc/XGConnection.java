@@ -1456,6 +1456,7 @@ public class XGConnection implements Connection
 			retval.defaultSchema = defaultSchema;
 			retval.setPso = setPso;
 			retval.timeoutMillis = timeoutMillis;
+			retval.networkTimeout = networkTimeout;
 			retval.cmdcomps = (ArrayList<String>) cmdcomps.clone();
 			retval.secondaryInterfaces = (ArrayList<ArrayList<String>>) secondaryInterfaces.clone();
 			retval.secondaryIndex = secondaryIndex;
