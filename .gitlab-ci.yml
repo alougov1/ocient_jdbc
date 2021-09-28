@@ -66,6 +66,7 @@ build-deps:
     #Separate this from verify in case deploy fails for some reason
     - mvn deploy -gs mavenGlobalSettings.xml -s ${DEPLOY_SETTINGS_XML} -Djarsigner.storepass=$(cat /home/gitlab-runner/codesignstore.pwd)
     - ls public/
+    - sudo cp -r public/ /mnt/ocarchive1/www/ocientrepo/java/jdbc/release_notes/
 
     - rm -rf $JAR_DIR
     - rm -rf target
