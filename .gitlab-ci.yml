@@ -75,6 +75,8 @@ build-deps:
 
 build-docs:
   stage: build-jar
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "user/tli/CITest"'  
   timeout: 1 hour
   interruptible: true
   script:
