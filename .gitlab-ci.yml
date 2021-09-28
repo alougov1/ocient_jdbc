@@ -8,7 +8,7 @@ build-deps:
     - lightweight
     - gpg-signing
   rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "user/tli/mvn_plugin_branch"'
   script:
     #gitlab clones the repo into the same directory that you're in
     #check buildtool dependencies exist
