@@ -72,3 +72,58 @@ build-deps:
     - rm -rf apache-maven-${MVN_VERSION}
     - rm -rf .m2
     - rm mavenGlobalSettings.xml
+
+build-docs:
+  stage: build-jar
+  timeout: 1 hour
+  interruptible: true
+  script:
+    # Some scripting logic
+    - echo "HELLO TEST"
+
+# stage-docs:
+#   stage: stage-docs
+#   needs: ["build-docs"]
+#   dependencies: ["build-docs"]
+#   timeout: 2 hours
+#   resource_group: installer_docs_repo
+#   tags:
+#     - lightweight
+#   variables:
+#     IMAGE_NAME: $RELEASE_IMAGE_NAME
+#   script:
+#     # Download artifacts using the image name known to be used by this pipeline
+#     - mkdir -p ${CI_PROJECT_DIR}/artifacts
+#     - rclone copy dev_cos:docker/$IMAGE_NAME/$CI_PIPELINE_ID $CI_PIPELINE_ID
+#     - cd $CI_PIPELINE_ID && { setfacl --restore=permissions.facl || true; } &> ${CI_PROJECT_DIR}/artifacts/setfacl_restore.txt && cd -
+#     # Determine the tree name according to https://ocient.atlassian.net/wiki/spaces/PLAT/pages/1666777462/RPM+Naming+Conventions
+#     - |
+#       VERSION=$(cat $(pwd)/version)
+#       [ -n "$VERSION" ] && echo "Determined VERSION to be $VERSION" || { echo "Could not determine version!"; exit 1; }
+#     - |
+#       DATE_TIME=$(docker run --rm -v $(pwd)/$CI_PIPELINE_ID:/$CI_PIPELINE_ID centos:8 /bin/bash -c "/$CI_PIPELINE_ID/rolehostd --build-info" | grep "^Version =" | awk '{print $3}' | rev | cut -c 1-13 | rev)
+#       [ -n "$DATE_TIME" ] && echo "Determined DATE_TIME to be $DATE_TIME" || { echo "Could not determine date time from $RELEASE_IMAGE_NAME!"; exit 1; }
+#     - |
+#       if [ "${CI_COMMIT_BRANCH:0:7}" = "release" ]
+#       then
+#         TREE_NAME="ocient_${VERSION}_${DATE_TIME}"
+#       else
+#         TREE_NAME="ocient_${VERSION}_${FEATURE_NAME}_${DATE_TIME}"
+#       fi
+#     # Copy artifacts to their respective trees
+#     - echo "Copying docs to $DOCS_REPO_PATH/$TREE_NAME ..."
+#     - rsync -Larvh --delete $ARCHIVE_PATH/$CI_PIPELINE_ID/docs/* $DOCS_REPO_PATH/$TREE_NAME
+#     # Handle symlinks if necessary
+#     - |
+#       if [ "${CI_COMMIT_BRANCH:0:7}" = "release" ]
+#       then
+#         echo "Not updating symlinks for release branches - defer to manual process ..."
+#       else
+#         LATEST_TREE_NAME="ocient_${FEATURE_NAME}"
+#         for REPO_PATH in "$DOCS_REPO_PATH"
+#         do
+#           echo "Updating $REPO_PATH/$LATEST_TREE_NAME to point to $TREE_NAME ..."
+#           ln -snf $TREE_NAME $REPO_PATH/$LATEST_TREE_NAME
+#           sudo chmod 0777 $REPO_PATH/$LATEST_TREE_NAME || echo "Error changing permissions on $REPO_PATH/$LATEST_TREE_NAME"
+#         done
+#       fi    

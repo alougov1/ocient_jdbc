@@ -15,3 +15,46 @@ cp -r $$(dirname $(rootpath pom.xml))/target/ocient-jdbc4-*-jar-with-dependencie
     tools = ["@com_google_protobuf//:protoc"],
     visibility = ["//visibility:public"],
 )
+
+genrule(
+    name = "jdbc_release_notes_pdf",
+    srcs = glob(["userdoc/*"]) + [
+        "@ruby_gems//:gem",
+        "@ruby_gems//bin:asciidoctor-pdf",
+    ],
+    outs = ["release_notes.pdf"],
+    cmd = """
+        # Set gem path so we can run asciidoctor
+        export GEM_PATH=$$(pwd)/$$(dirname $$(dirname $(execpath @ruby_gems//bin:asciidoctor-pdf)))
+        
+        # run asciidoctor
+        $(execpath @ruby_install//bin:ruby) $(execpath @ruby_gems//bin:asciidoctor-pdf) userdoc/release_notes.adoc -o $@
+    """,
+    tags = ["no-remote"],
+    tools = [
+        "@ruby_install//bin:ruby",
+    ],
+)
+
+genrule(
+    name = "jdbc_release_notes_html",
+    srcs = glob(["userdoc/*"]) + [
+        "@ruby_gems//:gem",
+        "@ruby_gems//bin:asciidoctor",
+    ],
+    outs = ["release_notes.html"],
+    cmd = """
+        # Set gem path so we can run asciidoctor
+        export GEM_PATH=$$(pwd)/$$(dirname $$(dirname $(execpath @ruby_gems//bin:asciidoctor)))
+
+        echo $$(pwd)
+        echo $(RULEDIR)
+
+        # run asciidoctor
+        $(execpath @ruby_install//bin:ruby) $(execpath @ruby_gems//bin:asciidoctor) -d book -D $(RULEDIR) userdoc/release_notes.adoc
+    """,
+    tags = ["no-remote"],
+    tools = [
+        "@ruby_install//bin:ruby",
+    ],
+)
