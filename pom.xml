@@ -41,7 +41,6 @@
   <properties>
     <asciidoctor-maven-plugin.version>2.1.0</asciidoctor-maven-plugin.version>
     <asciidoctorj.pdf.version>1.6.0</asciidoctorj.pdf.version>
-    <asciidoctorj.version>2.5.2</asciidoctorj.version>  
     <protoc>${project.basedir}/bazel-protoc.sh</protoc>
     <spotbugs-maven-plugin.version>4.2.0</spotbugs-maven-plugin.version>
     <findsecbugs-plugin.version>1.10.1</findsecbugs-plugin.version>
@@ -111,7 +110,7 @@
         </dependencies>        
         <executions>
           <execution> 
-              <id>output-html</id>
+              <id>build-html-release-notes</id>
               <phase>generate-resources</phase>
               <goals>
                   <goal>process-asciidoc</goal>
@@ -124,7 +123,7 @@
               </configuration>
           </execution>
           <execution>
-              <id>generate-pdf-doc</id>
+              <id>build-pdf-release-notes</id>
               <phase>generate-resources</phase>
               <goals>
                   <goal>process-asciidoc</goal>
@@ -133,17 +132,12 @@
                   <backend>pdf</backend>
                   <attributes>
                       <source-highlighter>coderay</source-highlighter>
-                      <icons>font</icons>
-                      <pagenums/>
-                      <idprefix/>
-                      <idseparator>-</idseparator>
                   </attributes>
               </configuration>
           </execution>
         </executions>        
         <configuration>
           <sourceDirectory>userdoc</sourceDirectory>
-          <outputDirectory>public</outputDirectory>
           <enableVerbose>true</enableVerbose>
           <logHandler>
             <failIf>
