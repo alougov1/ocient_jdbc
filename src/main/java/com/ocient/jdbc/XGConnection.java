@@ -319,7 +319,7 @@ public class XGConnection implements Connection
 	private static class Session {
 
 		static class SecurityToken {
-			final String tokenData; // On first connection or passed along when connections are copied.
+			final String tokenData;
 			final String tokenSignature;
 			final String issuerFingerprint;
 	
@@ -439,10 +439,6 @@ public class XGConnection implements Connection
 			} finally {
 				refreshMutex.unlock();
 			}
-			return currentState;
-		}
-
-		public State getState(){
 			return currentState;
 		}
 	}
@@ -652,7 +648,14 @@ public class XGConnection implements Connection
 				// SSO handshake desired but non empty password or username.
 				clientHandshakeGCM(userid, pwd, db, shouldRequestVersion, true);
 			} else {
-				clientHandshakeSSO(db, shouldRequestVersion);	
+				// SSO but may or may not have a securitty token yet.
+				if(!session.currentState.securityToken.isPresent()){
+					// No token yet.
+					clientHandshakeSSO(db, shouldRequestVersion);
+				} else {
+					// Already have a token.
+					clientHandshakeSecurityToken(db, shouldRequestVersion);
+				}				
 			}
 		} else {
 			// GCM
@@ -1099,21 +1102,11 @@ public class XGConnection implements Connection
 		LOGGER.log(Level.INFO, "Handshake CBC Finished");
 	}
 
-	private void clientHandshakeSSO(final String db, final boolean shouldRequestVersion) throws Exception
-	{
-		// If we don't have the security token yet.
-		if(!session.currentState.securityToken.isPresent()){
-			clientHandshakeSSONoToken(db, shouldRequestVersion);
-		} else {
-			clientHandshakeSSOToken(db, shouldRequestVersion);
-		}
-	}
-
-	private void clientHandshakeSSOToken(final String db, final boolean shouldRequestVersion) throws Exception
+	private void clientHandshakeSecurityToken(final String db, final boolean shouldRequestVersion) throws Exception
 	{
 		try
 		{
-			LOGGER.log(Level.INFO, "Beginning SSO handshake with token");
+			LOGGER.log(Level.INFO, "Beginning security token handshake");
 			final ClientWireProtocol.ClientConnectionSecurityToken.Builder builder = ClientWireProtocol.ClientConnectionSecurityToken.newBuilder();
 			builder.setDatabase(database);
 			builder.setClientid(client);
@@ -1124,10 +1117,10 @@ public class XGConnection implements Connection
 			builder.setMajorClientVersion(majorClientVersion);
 			builder.setMinorClientVersion(minorClientVersion);
 			builder.setSessionID(sessionID);
-			// Set the security token. This can only really get here if sessionState is not null.
-			builder.setSecurityToken(sessionState == null ? "" : sessionState.securityToken.get().tokenData);
-			builder.setTokenSignature(sessionState == null ? "" : sessionState.securityToken.get().tokenSignature);
-			builder.setIssuerFingerprint(sessionState == null ? "" : sessionState.securityToken.get().issuerFingerprint);
+			// Set the security token.
+			builder.setSecurityToken(sessionState.securityToken.get().tokenData);
+			builder.setTokenSignature(sessionState.securityToken.get().tokenSignature);
+			builder.setIssuerFingerprint(sessionState.securityToken.get().issuerFingerprint);
 			builder.setForce((force || oneShotForce) ? true : false);
 			oneShotForce = false;
 			final ClientConnectionSecurityToken msg = builder.build();
@@ -1202,7 +1195,7 @@ public class XGConnection implements Connection
 		LOGGER.log(Level.INFO, "Handshake SSO with token finished");		
 	}
 
-	private void clientHandshakeSSONoToken(final String db, final boolean shouldRequestVersion) throws Exception
+	private void clientHandshakeSSO(final String db, final boolean shouldRequestVersion) throws Exception
 	{
 		try
 		{
@@ -1348,6 +1341,7 @@ public class XGConnection implements Connection
 				waitFor = sso2ResponseBuilder.getPollingIntervalSeconds();
 				continue;				
 			} else {
+				// Success
 				LOGGER.log(Level.INFO, "Poll successful");
 				waitFor = 0;
 				keepPolling = false;				
