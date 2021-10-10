@@ -430,16 +430,15 @@ public class XGConnection implements Connection
 				}
 				// else
 				// we are responsible for updating the state
-				// TODO send refresh request to server
 				// Importantly, we are the only thread in this critical section
 				boolean ignoreSecurityToken = expectedState.userAndPassword.isPresent();
 				State newState = conn.sendRefresh(ignoreSecurityToken);
 				LOGGER.log(Level.INFO, "Successfully refreshed session");
 				currentState = newState;
+				return newState;
 			} finally {
 				refreshMutex.unlock();
 			}
-			return currentState;
 		}
 	}
 
@@ -453,9 +452,8 @@ public class XGConnection implements Connection
 	// TODO New connector versions should use signed security tokens instead of storing the 
 	// raw password in memory
 	// 
-	// Presence implies the SSO handshake was successful. Importantly, this token may be used
-	// to connect to ANY database
 	protected Session session = null;
+	// Presence implies the connection was established successfully
 	protected UUID serverSessionId = null;
 	// We keep our own copy of what we believe is the security token for purposes of synchronization.
 	protected Session.State sessionState = null;
