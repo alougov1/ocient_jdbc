@@ -443,6 +443,11 @@ public class XGConnection implements Connection
 		}
 	}
 
+	// Refresh the session be refreshed.
+	public void refreshSession() throws SQLException{
+		this.sessionState = this.session.refresh(this.sessionState, this);
+	}
+
 
 	// TODO Introduce an Either<L, R> data structure to hold either SSOToken OR PasswordToken
 	// TODO New connector versions should use signed security tokens instead of storing the 
@@ -1983,7 +1988,7 @@ public class XGConnection implements Connection
 			out.flush();
 		}
 		catch (final IOException | NullPointerException e)
-		{
+		{		
 			if (!setSchema.equals(""))
 			{
 				return setSchema;
@@ -2007,7 +2012,14 @@ public class XGConnection implements Connection
 		}
 		catch (SQLException | IOException e)
 		{
-			if (e instanceof SQLException && !SQLStates.UNEXPECTED_EOF.equals((SQLException) e))
+			if(e instanceof SQLException && SQLStates.SESSION_EXPIRED.equals((SQLException) e)){
+				LOGGER.log(Level.INFO, "getSchemaFromServer() received session expired. Attempting to refresh session");
+				// Refresh my session.
+				this.refreshSession();
+				// Now we should be able to re-run the command.
+				return getSchemaFromServer();
+			}				
+			else if (e instanceof SQLException && !SQLStates.UNEXPECTED_EOF.equals((SQLException) e))
 			{
 				throw e;
 			}
@@ -3222,6 +3234,13 @@ public class XGConnection implements Connection
 			getStandardResponse();
 		} catch (final Exception ex)
 		{
+			if(ex instanceof SQLException && SQLStates.SESSION_EXPIRED.equals((SQLException) ex)){
+				LOGGER.log(Level.INFO, "sendParameterMessage() received session expired. Attempting to refresh session");
+				// Refresh my session.
+				refreshSession();
+				// Now we should be able to re-run the command.
+				return sendParameterMessage(param);
+			}				
 			LOGGER.log(Level.WARNING, String.format("Failed sending set parameter request to the server with exception %s with message %s", ex, ex.getMessage()));
 			throw SQLStates.newGenericException(ex);
 		}
@@ -3247,8 +3266,16 @@ public class XGConnection implements Connection
 			out.flush();
 			getStandardResponse();
 		}
-		catch (final IOException e)
+		catch (final IOException | SQLException e)
 		{
+			if(e instanceof SQLException && SQLStates.SESSION_EXPIRED.equals((SQLException) e)){
+				LOGGER.log(Level.INFO, "sendSetSchema() received session expired. Attempting to refresh session");
+				// Refresh my session.
+				refreshSession();
+				// Now we should be able to re-run the command.
+				sendSetSchema(schema);
+				return;
+			}			
 			// Doesn't matter...
 			LOGGER.log(Level.WARNING, String.format("Failed sending set schema request to the server with exception %s with message %s", e.toString(), e.getMessage()));
 		}

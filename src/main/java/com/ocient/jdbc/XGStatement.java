@@ -1485,6 +1485,13 @@ public class XGStatement implements Statement
 			}
 			catch (SQLException | NullPointerException | IOException e)
 			{
+				if(e instanceof SQLException && SQLStates.SESSION_EXPIRED.equals((SQLException) e)){
+					LOGGER.log(Level.INFO, "fetchSystemMetadata() received session expired. Attempting to refresh session");
+					// Refresh my session.
+					this.conn.refreshSession();
+					// Now we should be able to re-run the command.
+					return fetchSystemMetadata(call, schema, table, col, test);
+				}
 				LOGGER.log(Level.WARNING, "fetchSystemMetadataResponse: ", e);
 				if (e instanceof SQLException && !SQLStates.UNEXPECTED_EOF.equals((SQLException) e))
 				{
@@ -2291,7 +2298,14 @@ public class XGStatement implements Statement
 			}
 			catch (SQLException | NullPointerException | IOException e)
 			{
-				if (e instanceof SQLException && !SQLStates.UNEXPECTED_EOF.equals((SQLException) e))
+				if(e instanceof SQLException && SQLStates.SESSION_EXPIRED.equals((SQLException) e)){
+					LOGGER.log(Level.INFO, "sendAndReceive() received session expired. Attempting to refresh session");
+					// Refresh my session.
+					this.conn.refreshSession();
+					// Now we should be able to re-run the command.
+					return sendAndReceive(sql, requestType, val, isInMb, additionalPropertySetter);
+				}
+				else if (e instanceof SQLException && !SQLStates.UNEXPECTED_EOF.equals((SQLException) e))
 				{
 					LOGGER.log(Level.WARNING, "sendAndReceive() SQL or IO Exception.");
 					throw e;
