@@ -837,6 +837,7 @@ public class XGConnection implements Connection
 			LOGGER.log(Level.INFO, String.format("Connected to session id: %s", ccr2.getServerSessionId()));
 			serverSessionId = UUID.fromString(ccr2.getServerSessionId());
 			this.session = new Session(user, pwd);
+			this.sessionState = this.session.currentState; // record the current state.
 			// Save the secondary interface for reconnecting and recirecting.
 			saveSecondaryInterfaces(ccr2.getCmdcompsList(), ccr2.getSecondaryList());
 			// Handle redirect
@@ -1055,6 +1056,7 @@ public class XGConnection implements Connection
 			LOGGER.log(Level.INFO, String.format("Connected to session id: %s", ccr2.getServerSessionId()));
 			serverSessionId = UUID.fromString(ccr2.getServerSessionId());
 			this.session = new Session(user, pwd);
+			this.sessionState = this.session.currentState; // record the current state.
 			// Save the secondary interface for reconnecting and recirecting.
 			saveSecondaryInterfaces(ccr2.getCmdcompsList(), ccr2.getSecondaryList());
 			// Handle redirect			
@@ -1150,6 +1152,7 @@ public class XGConnection implements Connection
 			serverSessionId = UUID.fromString(tokenHandshakeResp.getServerSessionId());
 			// Save the secondary interface for reconnecting and recirecting.
 			saveSecondaryInterfaces(tokenHandshakeResp.getCmdcompsList(), tokenHandshakeResp.getSecondaryList());
+			// This can only be called after a connection was copied. So it should have already had its state set.
 			// Handle redirect
 			if (tokenHandshakeResp.getRedirect())
 			{
@@ -1363,6 +1366,7 @@ public class XGConnection implements Connection
 			receivedSecurityToken.getSignature().toString(),
 			receivedSecurityToken.getIssuerFingerprint().toString()
 		);
+		this.sessionState = this.session.currentState; // record the current state.
 		// Save the secondary interface for reconnecting and recirecting.
 		saveSecondaryInterfaces(sso2ResponseBuilder.getCmdcompsList(), sso2ResponseBuilder.getSecondaryList());
 		// Handle redirect
