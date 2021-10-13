@@ -246,6 +246,10 @@
           <!--Additional builds settings configured in settings.xml at https://gitlab.com/ocient/ocient_jdbc/-/settings/ci_cd-->
           <keystore>${keystorePath}</keystore>
           <alias>${signAlias}</alias>
+          <errorWhenNotSigned>True</errorWhenNotSigned>
+          <arguments>
+            <argument>-strict</argument>
+          </arguments>
         </configuration>
       </plugin>
       <plugin>
