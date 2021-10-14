@@ -431,8 +431,7 @@ public class XGConnection implements Connection
 				// else
 				// we are responsible for updating the state
 				// Importantly, we are the only thread in this critical section
-				boolean ignoreSecurityToken = expectedState.userAndPassword.isPresent();
-				State newState = conn.sendRefresh(ignoreSecurityToken);
+				State newState = conn.sendRefresh();
 				LOGGER.log(Level.INFO, "Successfully refreshed session");
 				currentState = newState;
 				return newState;
@@ -3696,7 +3695,7 @@ public class XGConnection implements Connection
 	}
 
 	// Requests that the server refreshes our current session.
-	public Session.State sendRefresh(boolean shouldIgnoreSecurityToken) throws SQLException{
+	public Session.State sendRefresh() throws SQLException{
 
 		LOGGER.log(Level.INFO, "Sending refresh request to server");
 		final ClientWireProtocol.ClientConnectionRefreshSession.Builder refreshMsgBuilder = ClientWireProtocol.ClientConnectionRefreshSession.newBuilder();
@@ -3731,7 +3730,7 @@ public class XGConnection implements Connection
 		// Save the server session ID
 		LOGGER.log(Level.INFO, String.format("Connected to server session id: %s", sessionInfo.getServerSessionId()));
 		serverSessionId = sessionInfo.getServerSessionId();
-		if(shouldIgnoreSecurityToken){
+		if(this.sessionState.userAndPassword.isPresent()){
 			// Discard the security token.
 			return new Session.State(new Session.UserAndPassword(user, pwd));
 		} else {

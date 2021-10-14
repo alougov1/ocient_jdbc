@@ -795,7 +795,7 @@ public class CLI
 		}
 	}
 
-	private static void getJdbcVersion(final String cmd)
+	private static void customGetCommand(final String cmd)
 	{
 		long start = 0;
 		long end = 0;
@@ -1805,8 +1805,12 @@ public class CLI
 		}
 		else if (cmd.equalsIgnoreCase("GET JDBC VERSION"))
 		{
-			getJdbcVersion(cmd);
-		}		
+			customGetCommand(cmd);
+		}
+		else if(cmd.equalsIgnoreCase("GET SERVER SESSION ID"))
+		{
+			customGetCommand(cmd);
+		}
 		// recognize explain pipeline not as explain
 		else if (startsWithIgnoreCase(cmd, "EXPLAIN PIPELINE"))
 		{

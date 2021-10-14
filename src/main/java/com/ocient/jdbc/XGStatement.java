@@ -718,7 +718,8 @@ public class XGStatement implements Statement
 			passUpCancel(true);
 			if (sql.toUpperCase().startsWith("SELECT") || sql.toUpperCase().startsWith("WITH") || sql.toUpperCase().startsWith("EXPLAIN ") || sql.toUpperCase().startsWith("LIST TABLES")
 				|| sql.toUpperCase().startsWith("LIST SYSTEM TABLES") || sql.toUpperCase().startsWith("LIST VIEWS") || sql.toUpperCase().startsWith("LIST INDICES ")
-				|| sql.toUpperCase().startsWith("LIST INDEXES ") || sql.toUpperCase().startsWith("GET SCHEMA") || sql.toUpperCase().startsWith("GET JDBC VERSION") || sql.toUpperCase().startsWith("DESCRIBE VIEW ")
+				|| sql.toUpperCase().startsWith("LIST INDEXES ") || sql.toUpperCase().startsWith("GET SCHEMA") || sql.toUpperCase().startsWith("GET JDBC VERSION")
+				|| sql.toUpperCase().startsWith("GET SERVER SESSION ID") || sql.toUpperCase().startsWith("DESCRIBE VIEW ")
 				|| sql.toUpperCase().startsWith("DESCRIBE TABLE ") || sql.toUpperCase().startsWith("PLAN EXECUTE ") || sql.toUpperCase().startsWith("PLAN EXPLAIN ")
 				|| sql.toUpperCase().startsWith("LIST ALL QUERIES") || startsWithIgnoreCase(sql, "LIST ALL COMPLETED QUERIES") || sql.toUpperCase().startsWith("EXPORT TABLE ")
 				|| sql.toUpperCase().startsWith("EXPORT TRANSLATION ") || sql.toUpperCase().startsWith("EXPORT VIEW") || sql.toUpperCase().startsWith("LIST TABLE PRIVILEGES")
@@ -886,6 +887,9 @@ public class XGStatement implements Statement
 			} else if (startsWithIgnoreCase(sql, "GET JDBC VERSION"))
 			{
 				return getJdbcVersion();
+			} else if(startsWithIgnoreCase(sql, "GET SERVER SESSION ID"))
+			{
+				return getServerSessionId();
 			}
 			else if (startsWithIgnoreCase(sql, "DESCRIBE TABLE "))
 			{
@@ -1802,6 +1806,30 @@ public class XGStatement implements Statement
 
 		return result;
 	}
+
+	private ResultSet getServerSessionId()
+	{
+		LOGGER.log(Level.INFO, "Entered driver's getServerSessionId()");
+
+		// Construct the result set.
+		final ArrayList<Object> rs = new ArrayList<>();
+		final ArrayList<Object> row = new ArrayList<>();
+		row.add(this.conn.serverSessionId);
+		rs.add(row);
+		result = conn.rs = new XGResultSet(conn, rs, this);
+
+		final Map<String, Integer> cols2Pos = new HashMap<>();
+		final TreeMap<Integer, String> pos2Cols = new TreeMap<>();
+		final Map<String, String> cols2Types = new HashMap<>();
+		cols2Pos.put("server_session_id", 0);
+		pos2Cols.put(0, "server_session_id");
+		cols2Types.put("server_session_id", "CHAR");
+		result.setCols2Pos(cols2Pos);
+		result.setPos2Cols(pos2Cols);
+		result.setCols2Types(cols2Types);
+
+		return result;
+	}	
 
 	@Override
 	public int getUpdateCount() throws SQLException
