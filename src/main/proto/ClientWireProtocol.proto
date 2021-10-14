@@ -110,9 +110,9 @@ message ClientConnectionSSO2
 // For Connectors v2, we should be using compact JWE's which provide integrity verifiction + encryption
 message SecurityToken 
 {
-	bytes data = 1; // The token payload
-	bytes signature = 2;
-	bytes issuerFingerprint = 3;
+	string data = 1; // The token payload
+	string signature = 2;
+	string issuerFingerprint = 3;
 }
 
 message SessionInfo 

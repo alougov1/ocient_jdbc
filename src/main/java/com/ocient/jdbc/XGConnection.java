@@ -48,7 +48,7 @@ import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.crypto.Cipher;
@@ -364,7 +364,7 @@ public class XGConnection implements Connection
 		// volatile provides thread safety within single producer, multi consumer contexts
 		private volatile State currentState;
 		// provides mutual exclusion 
-		private Lock refreshMutex;
+		private ReentrantLock refreshMutex = new ReentrantLock();
 		// Copyable when >= 1
 		final AtomicInteger refCount = new AtomicInteger(1);	
 		
@@ -442,7 +442,7 @@ public class XGConnection implements Connection
 		}
 	}
 
-	// Refresh the session be refreshed.
+	// Refresh the session.
 	public void refreshSession() throws SQLException{
 		this.sessionState = this.session.refresh(this.sessionState, this);
 	}
@@ -454,7 +454,7 @@ public class XGConnection implements Connection
 	// 
 	protected Session session = null;
 	// Presence implies the connection was established successfully
-	protected UUID serverSessionId = null;
+	protected String serverSessionId = "";
 	// We keep our own copy of what we believe is the security token for purposes of synchronization.
 	protected Session.State sessionState = null;
 	private int retryCounter;
@@ -652,7 +652,7 @@ public class XGConnection implements Connection
 				clientHandshakeGCM(userid, pwd, db, shouldRequestVersion, true);
 			} else {
 				// SSO but may or may not have a securitty token yet.
-				if(!session.currentState.securityToken.isPresent()){
+				if(this.session == null){
 					// No token yet.
 					clientHandshakeSSO(db, shouldRequestVersion);
 				} else {
@@ -835,7 +835,7 @@ public class XGConnection implements Connection
 			processResponseType(rType, response);
 			// Set the server session id
 			LOGGER.log(Level.INFO, String.format("Connected to session id: %s", ccr2.getServerSessionId()));
-			serverSessionId = UUID.fromString(ccr2.getServerSessionId());
+			serverSessionId = ccr2.getServerSessionId();
 			this.session = new Session(user, pwd);
 			this.sessionState = this.session.currentState; // record the current state.
 			// Save the secondary interface for reconnecting and recirecting.
@@ -1054,7 +1054,7 @@ public class XGConnection implements Connection
 			processResponseType(rType, response);
 			// Save the server session id.
 			LOGGER.log(Level.INFO, String.format("Connected to session id: %s", ccr2.getServerSessionId()));
-			serverSessionId = UUID.fromString(ccr2.getServerSessionId());
+			serverSessionId = ccr2.getServerSessionId();
 			this.session = new Session(user, pwd);
 			this.sessionState = this.session.currentState; // record the current state.
 			// Save the secondary interface for reconnecting and recirecting.
@@ -1123,9 +1123,10 @@ public class XGConnection implements Connection
 			builder.setMinorClientVersion(minorClientVersion);
 			builder.setSessionID(sessionID);
 			// Set the security token.
-			builder.setSecurityToken(sessionState.securityToken.get().tokenData);
-			builder.setTokenSignature(sessionState.securityToken.get().tokenSignature);
-			builder.setIssuerFingerprint(sessionState.securityToken.get().issuerFingerprint);
+			Session.SecurityToken securityToken = sessionState.securityToken.get();
+			builder.setSecurityToken(securityToken.tokenData);
+			builder.setTokenSignature(securityToken.tokenSignature);
+			builder.setIssuerFingerprint(securityToken.issuerFingerprint);
 			builder.setForce((force || oneShotForce) ? true : false);
 			oneShotForce = false;
 			final ClientConnectionSecurityToken msg = builder.build();
@@ -1149,7 +1150,7 @@ public class XGConnection implements Connection
 			processResponseType(rType, response);
 			// Log the server session ID we are connected to.
 			LOGGER.log(Level.INFO, String.format("Connected to server session ID: %s", tokenHandshakeResp.getServerSessionId()));
-			serverSessionId = UUID.fromString(tokenHandshakeResp.getServerSessionId());
+			serverSessionId = tokenHandshakeResp.getServerSessionId();
 			// Save the secondary interface for reconnecting and recirecting.
 			saveSecondaryInterfaces(tokenHandshakeResp.getCmdcompsList(), tokenHandshakeResp.getSecondaryList());
 			// This can only be called after a connection was copied. So it should have already had its state set.
@@ -1359,7 +1360,7 @@ public class XGConnection implements Connection
 		ClientWireProtocol.SecurityToken receivedSecurityToken = sessionInfo.getSecurityToken();
 		// Save the server session id
 		LOGGER.log(Level.INFO, String.format("Connected to session id: %s", sessionInfo.getServerSessionId()));
-		serverSessionId = UUID.fromString(sessionInfo.getServerSessionId());
+		serverSessionId = sessionInfo.getServerSessionId();
 
 		this.session = new Session(
 			receivedSecurityToken.getData().toString(),
@@ -1367,6 +1368,7 @@ public class XGConnection implements Connection
 			receivedSecurityToken.getIssuerFingerprint().toString()
 		);
 		this.sessionState = this.session.currentState; // record the current state.
+		Session.SecurityToken securityToken = sessionState.securityToken.get();
 		// Save the secondary interface for reconnecting and recirecting.
 		saveSecondaryInterfaces(sso2ResponseBuilder.getCmdcompsList(), sso2ResponseBuilder.getSecondaryList());
 		// Handle redirect
@@ -2013,15 +2015,8 @@ public class XGConnection implements Connection
 			gsr.mergeFrom(data);
 		}
 		catch (SQLException | IOException e)
-		{
-			if(e instanceof SQLException && SQLStates.SESSION_EXPIRED.equals((SQLException) e)){
-				LOGGER.log(Level.INFO, "getSchemaFromServer() received session expired. Attempting to refresh session");
-				// Refresh my session.
-				this.refreshSession();
-				// Now we should be able to re-run the command.
-				return getSchemaFromServer();
-			}				
-			else if (e instanceof SQLException && !SQLStates.UNEXPECTED_EOF.equals((SQLException) e))
+		{			
+			if (e instanceof SQLException && !SQLStates.UNEXPECTED_EOF.equals((SQLException) e))
 			{
 				throw e;
 			}
@@ -2039,7 +2034,19 @@ public class XGConnection implements Connection
 
 		final ConfirmationResponse response = gsr.getResponse();
 		final ResponseType rType = response.getType();
-		processResponseType(rType, response);
+		try{
+			processResponseType(rType, response);
+		} catch (SQLException e){
+			if(e instanceof SQLException && SQLStates.SESSION_EXPIRED.equals((SQLException) e)){
+				LOGGER.log(Level.INFO, "getSchemaFromServer() received session expired. Attempting to refresh session");
+				// Refresh my session.
+				this.refreshSession();
+				// Now we should be able to re-run the command.
+				return getSchemaFromServer();
+			} else {
+				throw e;
+			}
+		}
 		LOGGER.log(Level.INFO, String.format("Got schema: %s from server", gsr.getSchema()));
 		return gsr.getSchema();
 	}
@@ -2150,8 +2157,6 @@ public class XGConnection implements Connection
 		hash += maxTempDisk == null ? 0 : maxTempDisk.hashCode();
 		hash += parallelism == null ? 0 : parallelism.hashCode();
 		hash += priority == null ? 0 : priority.hashCode();
-		hash += sessionState == null ? 0 : sessionState.hashCode();
-		hash += session == null ? 0 : session.hashCode();
 
 		return hash;
 	}
@@ -3705,7 +3710,7 @@ public class XGConnection implements Connection
 		Request refreshReq = reqBuilder.build();
 		try {
 			// Send request.
-			out.write(refreshReq.getSerializedSize());
+			out.write(intToBytes(refreshReq.getSerializedSize()));
 			refreshReq.writeTo(out);
 			out.flush();
 			// Receive response.
@@ -3725,7 +3730,7 @@ public class XGConnection implements Connection
 		ClientWireProtocol.SecurityToken receivedSecurityToken = sessionInfo.getSecurityToken();
 		// Save the server session ID
 		LOGGER.log(Level.INFO, String.format("Connected to server session id: %s", sessionInfo.getServerSessionId()));
-		serverSessionId = UUID.fromString(sessionInfo.getServerSessionId());
+		serverSessionId = sessionInfo.getServerSessionId();
 		if(shouldIgnoreSecurityToken){
 			// Discard the security token.
 			return new Session.State(new Session.UserAndPassword(user, pwd));
