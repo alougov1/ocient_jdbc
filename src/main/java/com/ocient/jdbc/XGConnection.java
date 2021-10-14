@@ -1294,7 +1294,7 @@ public class XGConnection implements Connection
 				throw e;
             }
 		} else {
-			String reason = String.format("Could not open default browser with Desktop library. Please proceed to the following url on a browser: %s", authUrl);
+			String reason = String.format("Could not open default browser with Desktop library. Please authenticate at: %s", authUrl);
 			LOGGER.log(Level.WARNING, reason);
 			System.out.println(reason);
 			warnings.add(new SQLWarning(reason, SQLStates.FAILED_HANDSHAKE.getSqlState(), SQLStates.FAILED_HANDSHAKE.getSqlCode()));
