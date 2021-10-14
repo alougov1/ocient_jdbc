@@ -31,7 +31,7 @@ build-deps:
     - MVN_VERSION=3.3.9
 
     # download a jdk
-    - wget -nv http://i01-fil-001/xgsrc/toolchain/jdk-${JDK_VERSION}_linux-x64_bin.tar.gz
+    - cp /mnt/ocarchive1/www/ocientrepo/java/jdk/jdk-${JDK_VERSION}_linux-x64_bin.tar.gz .
     - tar xzf jdk-${JDK_VERSION}_linux-x64_bin.tar.gz
     - rm jdk-${JDK_VERSION}_linux-x64_bin.tar.gz
     - export JAVA_HOME="$(pwd)/jdk-${JDK_VERSION}"

@@ -777,58 +777,14 @@ public class XGStatement implements Statement
 	{
 		LOGGER.log(Level.INFO, "executeInlinePlan()");
 		sendAndReceive(plan, Request.RequestType.EXECUTE_INLINE_PLAN, 0, false, Optional.empty());
-		try
-		{
-			result = conn.rs = new XGResultSet(conn, fetchSize, this);
-		}
-		catch (final Exception e)
-		{
-			passUpCancel(false);
-			try
-			{
-				reconnect();
-			}
-			catch (final Exception reconnectException)
-			{
-				if (reconnectException instanceof SQLException)
-				{
-					throw (SQLException) reconnectException;
-				}
-				throw SQLStates.newGenericException(reconnectException);
-			}
-			return executePlan(plan);
-		}
-		updateCount = -1;
-		return result;
+		return resultSetForCurrentQuery();
 	}
 
 	public ResultSet executePlan(final String plan) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "executePlan()");
 		sendAndReceive(plan, Request.RequestType.EXECUTE_PLAN, 0, false, Optional.empty());
-		try
-		{
-			result = conn.rs = new XGResultSet(conn, fetchSize, this);
-		}
-		catch (final Exception e)
-		{
-			passUpCancel(false);
-			try
-			{
-				reconnect();
-			}
-			catch (final Exception reconnectException)
-			{
-				if (reconnectException instanceof SQLException)
-				{
-					throw (SQLException) reconnectException;
-				}
-				throw SQLStates.newGenericException(reconnectException);
-			}
-			return executePlan(plan);
-		}
-		updateCount = -1;
-		return result;
+		return resultSetForCurrentQuery();
 	}
 
 	private ResultSet executePlanSQL(final String cmd) throws SQLException
@@ -950,6 +906,16 @@ public class XGStatement implements Statement
 		LOGGER.log(Level.INFO, String.format("Executing query: %s", sql));
 		passUpCancel(true);
 		sendAndReceive(sql, Request.RequestType.EXECUTE_QUERY, 0, false, Optional.empty());
+		return resultSetForCurrentQuery();
+	}
+
+	/**
+	 * @brief creates a result set for the current query
+	 * 
+	 * sendAndReceive must start a query immediately before this call
+	 * Does not retry on exception
+	 */
+	private ResultSet resultSetForCurrentQuery() throws SQLException {
 		try
 		{
 			if (numClientThreads == 0)
@@ -971,7 +937,7 @@ public class XGStatement implements Statement
 		}
 		catch (final Exception e)
 		{
-			LOGGER.log(Level.WARNING, String.format("Exception %s occurred during executeQuery() with message %s", e.toString(), e.getMessage()));
+			LOGGER.log(Level.WARNING, String.format("Exception %s occurred during resultSetForCurrentQuery() with message %s", e.toString(), e.getMessage()));
 			passUpCancel(false);
 			try
 			{
@@ -979,7 +945,7 @@ public class XGStatement implements Statement
 			}
 			catch (final Exception reconnectException)
 			{
-				LOGGER.log(Level.WARNING, "executeQuery: reconnect", reconnectException);
+				LOGGER.log(Level.WARNING, "resultSetForCurrentQuery(): reconnect", reconnectException);
 				if (reconnectException instanceof SQLException)
 				{
 					throw (SQLException) reconnectException;

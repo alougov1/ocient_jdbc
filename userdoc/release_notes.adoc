@@ -11,6 +11,11 @@ New Features::
 
  * Implemented refresh sessions support.
  * Implement get server session ID.
+== 2.35 (2021-10-11)
+
+New Features::
+
+ * ExecutePlan and ExecuteInlinePlan bugfixes
 
 //tag::compact[]
 == 2.34 (2021-9-9)
