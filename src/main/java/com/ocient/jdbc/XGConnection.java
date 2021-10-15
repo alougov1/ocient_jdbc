@@ -44,20 +44,21 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.UUID;
-
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
@@ -72,16 +73,19 @@ import com.ocient.jdbc.proto.ClientWireProtocol;
 import com.ocient.jdbc.proto.ClientWireProtocol.ClientConnection;
 import com.ocient.jdbc.proto.ClientWireProtocol.ClientConnectionGCM;
 import com.ocient.jdbc.proto.ClientWireProtocol.ClientConnectionSSO;
-import com.ocient.jdbc.proto.ClientWireProtocol.ClientConnectionSSOToken;
+import com.ocient.jdbc.proto.ClientWireProtocol.ClientConnectionSecurityToken;
 import com.ocient.jdbc.proto.ClientWireProtocol.CloseConnection;
 import com.ocient.jdbc.proto.ClientWireProtocol.ConfirmationResponse;
 import com.ocient.jdbc.proto.ClientWireProtocol.ConfirmationResponse.ResponseType;
 import com.ocient.jdbc.proto.ClientWireProtocol.ForceExternal;
 import com.ocient.jdbc.proto.ClientWireProtocol.GetSchema;
 import com.ocient.jdbc.proto.ClientWireProtocol.Request;
+import com.ocient.jdbc.proto.ClientWireProtocol.SessionInfo;
+import com.ocient.jdbc.proto.ClientWireProtocol.SecurityToken;
 import com.ocient.jdbc.proto.ClientWireProtocol.SetParameter;
 import com.ocient.jdbc.proto.ClientWireProtocol.SetSchema;
 import com.ocient.jdbc.proto.ClientWireProtocol.TestConnection;
+import com.ocient.jdbc.proto.ClientWireProtocol.ClientConnectionSSO2Response.ResponseOneofCase;
 
 public class XGConnection implements Connection
 {
@@ -311,30 +315,147 @@ public class XGConnection implements Connection
 	private static final String sessionID = UUID.randomUUID().toString();
 
 	protected String pwd;
-	/**
-	 * Represents a self-contained token used to process an SSO handshake. The token
-	 * is signed by a known entity. The token's signature and the entity's fingerprint
-	 * (identifier) are included for server-side integrity verification.
-	 */
-	private static class SSOToken {
-		SSOToken(final String tokenData, final String tokenSignature, final String issuerFingerprint) {
-			this.tokenData = tokenData;
-			this.tokenSignature = tokenSignature;
-			this.issuerFingerprint = issuerFingerprint;
+
+	private static class Session {
+
+		static class SecurityToken {
+			final String tokenData;
+			final String tokenSignature;
+			final String issuerFingerprint;
+	
+			SecurityToken(final String tokenData, final String tokenSignature, final String issuerFingerprint) {
+				this.tokenData = tokenData;
+				this.tokenSignature = tokenSignature;
+				this.issuerFingerprint = issuerFingerprint;
+			}
+		}
+		static class UserAndPassword{
+			final String user;
+			final String password;
+			
+			UserAndPassword(final String user, final String password){
+				this.user = user;
+				this.password = password;
+			}
+		}
+		static class State {
+
+			public Optional<SecurityToken> securityToken = Optional.empty();
+			public Optional<UserAndPassword> userAndPassword = Optional.empty();
+			
+			// Constructor for state with securityToken
+			State(SecurityToken securityToken){
+				this.securityToken = Optional.of(securityToken);
+			}
+			// Constructor for state with user name and password
+			State(UserAndPassword userAndPassword){
+				this.userAndPassword = Optional.of(userAndPassword);
+			}
+		}		
+
+		Session(final String tokenData, final String tokenSignature, final String issuerFingerprint) {
+			currentState = new State(new SecurityToken(tokenData, tokenSignature, issuerFingerprint));
 		}
 
-		final String tokenData;
-		final String tokenSignature;
-		final String issuerFingerprint;
+		Session(final String user, final String password){
+			currentState = new State(new UserAndPassword(user, password));
+		}
+		
+		// volatile provides thread safety within single producer, multi consumer contexts
+		private volatile State currentState;
+		// provides mutual exclusion 
+		private ReentrantLock refreshMutex = new ReentrantLock();
+		// Copyable when >= 1
+		final AtomicInteger refCount = new AtomicInteger(1);	
+		
+		// Retains a reference to this session iff its ref count is greater than 0 (implies the 
+		// session has not been destroyed). Returns EMPTY if the ref count was 0 session has been 
+		// destroyed.
+		public Optional<State> retain() {
+			// Retain a reference to this session by CAS
+			int curr;
+			do {
+				curr = refCount.get();
+				if (curr == 0) {
+					// The session was destroyed
+					return Optional.empty();
+				}
+
+				assert curr > 0;
+			} while (!refCount.compareAndSet(curr, curr + 1));
+
+			// Success
+			// 
+			// Return a reference to the current session state. Would be nice 
+			// to return an opaque handle that decrements on desctrution, but
+			// we can't do this with JAVA because garbage collectors can't 
+			// guarantee is called Object.finalize() happens exactly once. 
+			// Technically, they don't even guarantee at-least-once semantics
+			// (no RAII sigh...)
+			return Optional.of(currentState);
+		}
+
+		// Decrements the ref count by 1 and returns true iff the session is safe
+		// to destroy. The caller is responsible for signaling to the server the
+		// session is safe to terminate.
+		public boolean release() {
+			// Release a reference to this session by CAS
+			int curr;
+			do {
+				curr = refCount.get();
+				assert curr > 0;
+			} while (!refCount.compareAndSet(curr, curr - 1));
+
+			return curr == 1;
+		}		
+
+		// Multiple threads may attempt to refresh a security token, an operation
+		// that requires at most once semantics. A lock is used to provide mutual 
+		// exclusion within the critical section which compares the manager's token
+		// with the thread's expectation. If the comparison fails, this indicates
+		// another thread has already performed the refresh. The calling thread's
+		// state simply needs to be updated.
+		public State refresh(final State expectedState, XGConnection conn) throws SQLException{
+			LOGGER.log(Level.INFO, "Attempting to refresh session");
+			// Acquire the refresh mutex
+			refreshMutex.lock();
+			try {
+				// when you get the lock, check the manager's current state
+				// NOTE: this is an intentional reference comparison, we essentially are comparing a mem address, 
+				// not object equality (though in this particular case, equality would actually work too)
+				if (currentState != expectedState) {
+					// we interleaved with a sibling connection thread that performed a refresh
+					LOGGER.log(Level.INFO, "Interweaved refresh attempt. Returning");
+					return currentState;
+				}
+				// else
+				// we are responsible for updating the state
+				// Importantly, we are the only thread in this critical section
+				State newState = conn.sendRefresh();
+				LOGGER.log(Level.INFO, "Successfully refreshed session");
+				currentState = newState;
+				return newState;
+			} finally {
+				refreshMutex.unlock();
+			}
+		}
 	}
+
+	// Refresh the session.
+	public void refreshSession() throws SQLException{
+		this.sessionState = this.session.refresh(this.sessionState, this);
+	}
+
 
 	// TODO Introduce an Either<L, R> data structure to hold either SSOToken OR PasswordToken
 	// TODO New connector versions should use signed security tokens instead of storing the 
 	// raw password in memory
 	// 
-	// Presence implies the SSO handshake was successful. Importantly, this token may be used
-	// to connect to ANY database
-	protected Optional<SSOToken> ssoToken = Optional.empty();	
+	protected Session session = null;
+	// Presence implies the connection was established successfully
+	protected String serverSessionId = "";
+	// We keep our own copy of what we believe is the security token for purposes of synchronization.
+	protected Session.State sessionState = null;
 	private int retryCounter;
 
 	protected Map<String, Class<?>> typeMap;
@@ -525,11 +646,18 @@ public class XGConnection implements Connection
 			clientHandshakeCBC(userid, pwd, db, shouldRequestVersion);
 		} else if(handshake == HandshakeType.SSO){
 			// SSO
-			if(userid.toLowerCase().equals("id_token") || userid.toLowerCase().equals("access_token")){
-				// SSO handshake desired but an explicit token has been provided. Use the normal gcm encryption.
+			if(!userid.toLowerCase().equals("") || !pwd.toLowerCase().equals("")){
+				// SSO handshake desired but non empty password or username.
 				clientHandshakeGCM(userid, pwd, db, shouldRequestVersion, true);
 			} else {
-				clientHandshakeSSO(db, shouldRequestVersion);	
+				// SSO but may or may not have a securitty token yet.
+				if(this.session == null){
+					// No token yet.
+					clientHandshakeSSO(db, shouldRequestVersion);
+				} else {
+					// Already have a token.
+					clientHandshakeSecurityToken(db, shouldRequestVersion);
+				}				
 			}
 		} else {
 			// GCM
@@ -704,6 +832,11 @@ public class XGConnection implements Connection
 			}
 			retryCounter = 0;
 			processResponseType(rType, response);
+			// Set the server session id
+			LOGGER.log(Level.INFO, String.format("Connected to session id: %s", ccr2.getServerSessionId()));
+			serverSessionId = ccr2.getServerSessionId();
+			this.session = new Session(user, pwd);
+			this.sessionState = this.session.currentState; // record the current state.
 			// Save the secondary interface for reconnecting and recirecting.
 			saveSecondaryInterfaces(ccr2.getCmdcompsList(), ccr2.getSecondaryList());
 			// Handle redirect
@@ -918,6 +1051,11 @@ public class XGConnection implements Connection
 			}
 			retryCounter = 0;
 			processResponseType(rType, response);
+			// Save the server session id.
+			LOGGER.log(Level.INFO, String.format("Connected to session id: %s", ccr2.getServerSessionId()));
+			serverSessionId = ccr2.getServerSessionId();
+			this.session = new Session(user, pwd);
+			this.sessionState = this.session.currentState; // record the current state.
 			// Save the secondary interface for reconnecting and recirecting.
 			saveSecondaryInterfaces(ccr2.getCmdcompsList(), ccr2.getSecondaryList());
 			// Handle redirect			
@@ -968,21 +1106,12 @@ public class XGConnection implements Connection
 		LOGGER.log(Level.INFO, "Handshake CBC Finished");
 	}
 
-	private void clientHandshakeSSO(final String db, final boolean shouldRequestVersion) throws Exception
-	{
-		if(!ssoToken.isPresent()){
-			clientHandshakeSSONoToken(db, shouldRequestVersion);
-		} else {
-			clientHandshakeSSOToken(db, shouldRequestVersion);
-		}
-	}
-
-	private void clientHandshakeSSOToken(final String db, final boolean shouldRequestVersion) throws Exception
+	private void clientHandshakeSecurityToken(final String db, final boolean shouldRequestVersion) throws Exception
 	{
 		try
 		{
-			LOGGER.log(Level.INFO, "Beginning SSO handshake with token");
-			final ClientWireProtocol.ClientConnectionSSOToken.Builder builder = ClientWireProtocol.ClientConnectionSSOToken.newBuilder();
+			LOGGER.log(Level.INFO, "Beginning security token handshake");
+			final ClientWireProtocol.ClientConnectionSecurityToken.Builder builder = ClientWireProtocol.ClientConnectionSecurityToken.newBuilder();
 			builder.setDatabase(database);
 			builder.setClientid(client);
 			builder.setVersion(protocolVersion);
@@ -992,16 +1121,17 @@ public class XGConnection implements Connection
 			builder.setMajorClientVersion(majorClientVersion);
 			builder.setMinorClientVersion(minorClientVersion);
 			builder.setSessionID(sessionID);
-			// Set the security token
-			builder.setSecurityToken(ssoToken.map(t -> t.tokenData).orElse(""));
-			builder.setTokenSignature(ssoToken.map(t -> t.tokenSignature).orElse(""));
-			builder.setIssuerFingerprint(ssoToken.map(t -> t.issuerFingerprint).orElse(""));
+			// Set the security token.
+			Session.SecurityToken securityToken = sessionState.securityToken.get();
+			builder.setSecurityToken(securityToken.tokenData);
+			builder.setTokenSignature(securityToken.tokenSignature);
+			builder.setIssuerFingerprint(securityToken.issuerFingerprint);
 			builder.setForce((force || oneShotForce) ? true : false);
 			oneShotForce = false;
-			final ClientConnectionSSOToken msg = builder.build();
+			final ClientConnectionSecurityToken msg = builder.build();
 			ClientWireProtocol.Request.Builder b2 = ClientWireProtocol.Request.newBuilder();
-			b2.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION_SSO_TOKEN);
-			b2.setClientConnectionSsoToken(msg);
+			b2.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION_SECURITY_TOKEN);
+			b2.setClientConnectionSecurityToken(msg);
 			// Write message to server
 			Request wrapper = b2.build();
 			out.write(intToBytes(wrapper.getSerializedSize()));
@@ -1009,7 +1139,7 @@ public class XGConnection implements Connection
 			out.flush();
 			
 			// get response
-			final ClientWireProtocol.ClientConnectionSSOTokenResponse.Builder tokenHandshakeResp = ClientWireProtocol.ClientConnectionSSOTokenResponse.newBuilder();
+			final ClientWireProtocol.ClientConnectionSecurityTokenResponse.Builder tokenHandshakeResp = ClientWireProtocol.ClientConnectionSecurityTokenResponse.newBuilder();
 			int length = getLength();
 			byte[] data = new byte[length];
 			readBytes(data);
@@ -1017,8 +1147,12 @@ public class XGConnection implements Connection
 			ConfirmationResponse response = tokenHandshakeResp.getResponse();
 			ResponseType rType = response.getType();
 			processResponseType(rType, response);
+			// Log the server session ID we are connected to.
+			LOGGER.log(Level.INFO, String.format("Connected to server session ID: %s", tokenHandshakeResp.getServerSessionId()));
+			serverSessionId = tokenHandshakeResp.getServerSessionId();
 			// Save the secondary interface for reconnecting and recirecting.
 			saveSecondaryInterfaces(tokenHandshakeResp.getCmdcompsList(), tokenHandshakeResp.getSecondaryList());
+			// This can only be called after a connection was copied. So it should have already had its state set.
 			// Handle redirect
 			if (tokenHandshakeResp.getRedirect())
 			{
@@ -1067,7 +1201,7 @@ public class XGConnection implements Connection
 		LOGGER.log(Level.INFO, "Handshake SSO with token finished");		
 	}
 
-	private void clientHandshakeSSONoToken(final String db, final boolean shouldRequestVersion) throws Exception
+	private void clientHandshakeSSO(final String db, final boolean shouldRequestVersion) throws Exception
 	{
 		try
 		{
@@ -1160,7 +1294,7 @@ public class XGConnection implements Connection
 				throw e;
             }
 		} else {
-			String reason = String.format("Could not open default browser with Desktop library. Please proceed to the following url on a browser: %s", authUrl);
+			String reason = String.format("Could not open default browser with Desktop library. Please authenticate at: %s", authUrl);
 			LOGGER.log(Level.WARNING, reason);
 			System.out.println(reason);
 			warnings.add(new SQLWarning(reason, SQLStates.FAILED_HANDSHAKE.getSqlState(), SQLStates.FAILED_HANDSHAKE.getSqlCode()));
@@ -1170,74 +1304,77 @@ public class XGConnection implements Connection
 
 	private void pollDatabase(String requestId, boolean shouldRequestVersion) throws Exception{
 		LOGGER.log(Level.INFO, "Called pollDatabase()");
-		final ClientWireProtocol.ClientConnectionSSOPoll.Builder pollMsgBuilder = ClientWireProtocol.ClientConnectionSSOPoll.newBuilder();
-		pollMsgBuilder.setRequestId(requestId);
-		pollMsgBuilder.setForce((force || oneShotForce) ? true : false);
+		final ClientWireProtocol.ClientConnectionSSO2.Builder sso2MsgBuilder = ClientWireProtocol.ClientConnectionSSO2.newBuilder();
+		sso2MsgBuilder.setRequestId(requestId);
+		sso2MsgBuilder.setForce((force || oneShotForce) ? true : false);
 		oneShotForce = false;
-		final ClientWireProtocol.ClientConnectionSSOPoll pollMsg = pollMsgBuilder.build();
+		final ClientWireProtocol.ClientConnectionSSO2 sso2Msg = sso2MsgBuilder.build();
 		
 		ClientWireProtocol.Request.Builder reqBuilder = ClientWireProtocol.Request.newBuilder();
-		reqBuilder.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION_SSO_POLL);
-		reqBuilder.setClientConnectionSsoPoll(pollMsg);
+		reqBuilder.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION_SSO2);
+		reqBuilder.setClientConnectionSso2(sso2Msg);
 		// Finish the poll message. We can use it over and over.
-		Request pollReq = reqBuilder.build();
+		Request sso2Req = reqBuilder.build();
 
 		boolean keepPolling = true;
 		int waitFor = 0;
-		ClientWireProtocol.ClientConnectionSSOPollResponse.Builder pollResponseBuilder = null;
+		ClientWireProtocol.ClientConnectionSSO2Response.Builder sso2ResponseBuilder = null;
 		while(keepPolling){
 			Thread.sleep(waitFor * 1000);
 			LOGGER.log(Level.INFO, String.format("Polling database for requestId: %s", requestId));
 
 			// Poll
-			out.write(intToBytes(pollReq.getSerializedSize()));
-			pollReq.writeTo(out);
+			out.write(intToBytes(sso2Req.getSerializedSize()));
+			sso2Req.writeTo(out);
 			out.flush();
 
 			// Receive response.
-			pollResponseBuilder = ClientWireProtocol.ClientConnectionSSOPollResponse.newBuilder();
+			sso2ResponseBuilder = ClientWireProtocol.ClientConnectionSSO2Response.newBuilder();
 			int length = getLength();
 			byte[] data = new byte[length];
 			readBytes(data);
-			pollResponseBuilder.mergeFrom(data);
-			ConfirmationResponse response = pollResponseBuilder.getResponse();
+			sso2ResponseBuilder.mergeFrom(data);
+			ConfirmationResponse response = sso2ResponseBuilder.getResponse();
 			ResponseType rType = response.getType();
 			processResponseType(rType, response);
 			// If we get to this point, then we didn't get an error. Either a continue polling, or a connection succeeded.
 			
 			// Handle the continue polling situation.
-			ClientWireProtocol.ClientConnectionSSOPollResponse.PollResponse pollEnum = pollResponseBuilder.getPollResponse();
-			if(pollEnum == ClientWireProtocol.ClientConnectionSSOPollResponse.PollResponse.ERROR){
-				// Should not happen as we already chcked
-				LOGGER.log(Level.WARNING, "SSO Poll returned an error.");
-				throw SQLStates.FAILED_HANDSHAKE.cloneAndSpecify("SSO Poll Response returned an unexpected error");
-			} else if(pollEnum == ClientWireProtocol.ClientConnectionSSOPollResponse.PollResponse.POLL){
+			ResponseOneofCase responseCase = sso2ResponseBuilder.getResponseOneofCase();
+			if(responseCase == ResponseOneofCase.POLLINGINTERVALSECONDS){
 				// Continue polling.
 				LOGGER.log(Level.INFO, "Continue polling....");
-				waitFor = pollResponseBuilder.getPollSeconds();
-				continue;
+				waitFor = sso2ResponseBuilder.getPollingIntervalSeconds();
+				continue;				
 			} else {
-				// Success.
+				// Success
 				LOGGER.log(Level.INFO, "Poll successful");
 				waitFor = 0;
-				keepPolling = false;
+				keepPolling = false;				
 			}
 		}
+		
+		// Save the security token, signature, and fingerprint. They will now be used for connecting henceforth in clientHandshakeSecurityToken.
+		SessionInfo sessionInfo = sso2ResponseBuilder.getSessionInfo();
+		ClientWireProtocol.SecurityToken receivedSecurityToken = sessionInfo.getSecurityToken();
+		// Save the server session id
+		LOGGER.log(Level.INFO, String.format("Connected to session id: %s", sessionInfo.getServerSessionId()));
+		serverSessionId = sessionInfo.getServerSessionId();
 
-		// Save the security token, signature, and fingerprint. They will now be used for connecting henceforth in clientHandshakeSSOToken.
-		this.ssoToken = Optional.of(new SSOToken(
-			pollResponseBuilder.getSecurityToken(),
-			pollResponseBuilder.getTokenSignature(),
-			pollResponseBuilder.getIssuerFingerprint()
-		));
+		this.session = new Session(
+			receivedSecurityToken.getData().toString(),
+			receivedSecurityToken.getSignature().toString(),
+			receivedSecurityToken.getIssuerFingerprint().toString()
+		);
+		this.sessionState = this.session.currentState; // record the current state.
 		// Save the secondary interface for reconnecting and recirecting.
-		saveSecondaryInterfaces(pollResponseBuilder.getCmdcompsList(), pollResponseBuilder.getSecondaryList());
+		saveSecondaryInterfaces(sso2ResponseBuilder.getCmdcompsList(), sso2ResponseBuilder.getSecondaryList());
 		// Handle redirect
-		if (pollResponseBuilder.getRedirect())
+		if (sso2ResponseBuilder.getRedirect())
 		{
 			LOGGER.log(Level.INFO, "Redirect command in pollDatabase from server");
-			final String host = pollResponseBuilder.getRedirectHost();
-			final int port = pollResponseBuilder.getRedirectPort();
+			final String host = sso2ResponseBuilder.getRedirectHost();
+			final int port = sso2ResponseBuilder.getRedirectPort();
 			redirect(host, port, shouldRequestVersion);
 			// We have a lot of dangerous circular function calls.
 			// If we were redirected, then we already have the server version. We need to
@@ -1467,7 +1604,16 @@ public class XGConnection implements Connection
 			retval.originalPort = originalPort;
 			retval.tls = tls;
 			retval.serverVersion = serverVersion;
-			retval.ssoToken = ssoToken;
+			// Pass on the session manager. By reference
+			retval.session = session;
+			// Have the newly copied connection save its own view of the world.
+			final Optional<Session.State> maybeState = session.retain();
+			if(maybeState.isPresent()){
+				retval.sessionState = maybeState.get();
+			} else {
+				// Attempted to duplicate a closed session.
+				throw SQLStates.FAILED_CONNECTION.cloneAndSpecify("Attempted to duplicate a closed session");
+			}			
 			retval.reconnect(shouldRequestVersion);
 			retval.resetLocalVars();
 		}
@@ -1844,7 +1990,7 @@ public class XGConnection implements Connection
 			out.flush();
 		}
 		catch (final IOException | NullPointerException e)
-		{
+		{		
 			if (!setSchema.equals(""))
 			{
 				return setSchema;
@@ -1867,7 +2013,7 @@ public class XGConnection implements Connection
 			gsr.mergeFrom(data);
 		}
 		catch (SQLException | IOException e)
-		{
+		{			
 			if (e instanceof SQLException && !SQLStates.UNEXPECTED_EOF.equals((SQLException) e))
 			{
 				throw e;
@@ -1886,7 +2032,19 @@ public class XGConnection implements Connection
 
 		final ConfirmationResponse response = gsr.getResponse();
 		final ResponseType rType = response.getType();
-		processResponseType(rType, response);
+		try{
+			processResponseType(rType, response);
+		} catch (SQLException e){
+			if(SQLStates.SESSION_EXPIRED.equals((SQLException) e)){
+				LOGGER.log(Level.INFO, "getSchemaFromServer() received session expired. Attempting to refresh session");
+				// Refresh my session.
+				this.refreshSession();
+				// Now we should be able to re-run the command.
+				return getSchemaFromServer();
+			} else {
+				throw e;
+			}
+		}
 		LOGGER.log(Level.INFO, String.format("Got schema: %s from server", gsr.getSchema()));
 		return gsr.getSchema();
 	}
@@ -1997,7 +2155,6 @@ public class XGConnection implements Connection
 		hash += maxTempDisk == null ? 0 : maxTempDisk.hashCode();
 		hash += parallelism == null ? 0 : parallelism.hashCode();
 		hash += priority == null ? 0 : priority.hashCode();
-		hash += ssoToken.map(Object::hashCode).orElse(0);
 
 		return hash;
 	}
@@ -3047,6 +3204,8 @@ public class XGConnection implements Connection
 	{
 		// send request
 		final ClientWireProtocol.CloseConnection.Builder builder = ClientWireProtocol.CloseConnection.newBuilder();
+		boolean endSession = session.release();
+		builder.setEndSession(endSession);
 		final CloseConnection msg = builder.build();
 		final ClientWireProtocol.Request.Builder b2 = ClientWireProtocol.Request.newBuilder();
 		b2.setType(ClientWireProtocol.Request.RequestType.CLOSE_CONNECTION);
@@ -3080,6 +3239,13 @@ public class XGConnection implements Connection
 			getStandardResponse();
 		} catch (final Exception ex)
 		{
+			if(ex instanceof SQLException && SQLStates.SESSION_EXPIRED.equals((SQLException) ex)){
+				LOGGER.log(Level.INFO, "sendParameterMessage() received session expired. Attempting to refresh session");
+				// Refresh my session.
+				refreshSession();
+				// Now we should be able to re-run the command.
+				return sendParameterMessage(param);
+			}				
 			LOGGER.log(Level.WARNING, String.format("Failed sending set parameter request to the server with exception %s with message %s", ex, ex.getMessage()));
 			throw SQLStates.newGenericException(ex);
 		}
@@ -3105,8 +3271,16 @@ public class XGConnection implements Connection
 			out.flush();
 			getStandardResponse();
 		}
-		catch (final IOException e)
+		catch (final IOException | SQLException e)
 		{
+			if(e instanceof SQLException && SQLStates.SESSION_EXPIRED.equals((SQLException) e)){
+				LOGGER.log(Level.INFO, "sendSetSchema() received session expired. Attempting to refresh session");
+				// Refresh my session.
+				refreshSession();
+				// Now we should be able to re-run the command.
+				sendSetSchema(schema);
+				return;
+			}			
 			// Doesn't matter...
 			LOGGER.log(Level.WARNING, String.format("Failed sending set schema request to the server with exception %s with message %s", e.toString(), e.getMessage()));
 		}
@@ -3517,5 +3691,52 @@ public class XGConnection implements Connection
 	{
 		LOGGER.log(Level.WARNING, "setSavepoint() was called, which is not supported");
 		throw new SQLFeatureNotSupportedException();
+	}
+
+	// Requests that the server refreshes our current session.
+	public Session.State sendRefresh() throws SQLException{
+
+		LOGGER.log(Level.INFO, "Sending refresh request to server");
+		final ClientWireProtocol.ClientConnectionRefreshSession.Builder refreshMsgBuilder = ClientWireProtocol.ClientConnectionRefreshSession.newBuilder();
+		final ClientWireProtocol.ClientConnectionRefreshSession refreshMsg = refreshMsgBuilder.build();
+
+		ClientWireProtocol.Request.Builder reqBuilder = ClientWireProtocol.Request.newBuilder();
+		reqBuilder.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION_REFRESH_SESSION);
+		reqBuilder.setClientConnectionRefreshSession(refreshMsg);
+		// Finish the poll message. We can use it over and over.
+		ClientWireProtocol.ClientConnectionRefreshSessionResponse.Builder refreshResponseBuilder = ClientWireProtocol.ClientConnectionRefreshSessionResponse.newBuilder();
+		Request refreshReq = reqBuilder.build();
+		try {
+			// Send request.
+			out.write(intToBytes(refreshReq.getSerializedSize()));
+			refreshReq.writeTo(out);
+			out.flush();
+			// Receive response.
+			int length = getLength();
+			byte[] data = new byte[length];
+			readBytes(data);
+			refreshResponseBuilder.mergeFrom(data);			
+		} catch (final Exception e){
+			LOGGER.log(Level.WARNING, String.format("Exception %s occurred during sendRefresh() with message %s", e.toString(), e.getMessage()));
+			throw SQLStates.newGenericException(e);
+		}
+		ConfirmationResponse response = refreshResponseBuilder.getResponse();
+		ResponseType rType = response.getType();
+		processResponseType(rType, response);
+
+		SessionInfo sessionInfo = refreshResponseBuilder.getSessionInfo();
+		ClientWireProtocol.SecurityToken receivedSecurityToken = sessionInfo.getSecurityToken();
+		// Save the server session ID
+		LOGGER.log(Level.INFO, String.format("Connected to server session id: %s", sessionInfo.getServerSessionId()));
+		serverSessionId = sessionInfo.getServerSessionId();
+		if(this.sessionState.userAndPassword.isPresent()){
+			// Discard the security token.
+			return new Session.State(new Session.UserAndPassword(user, pwd));
+		} else {
+			return new Session.State(new Session.SecurityToken(
+				receivedSecurityToken.getData().toString(),
+				receivedSecurityToken.getSignature().toString(),
+				receivedSecurityToken.getIssuerFingerprint().toString()));
+		}
 	}
 }

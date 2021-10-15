@@ -5,6 +5,12 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[]
+== 2.36 (2021-10-14)
+
+New Features::
+
+ * Implemented refresh sessions support.
+ * Implement get server session ID.
 == 2.35 (2021-10-11)
 
 New Features::

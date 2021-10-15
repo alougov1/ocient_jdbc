@@ -38,7 +38,7 @@ message ClientConnectionSSO
 	string sessionID = 6;	
 }
 
-message ClientConnectionSSOToken
+message ClientConnectionSecurityToken
 {
 	string database = 1;
 	string clientid = 2;
@@ -73,7 +73,7 @@ message ClientConnectionSSOResponse
 	string authUrl = 3;
 }
 
-message ClientConnectionSSOTokenResponse
+message ClientConnectionSecurityTokenResponse
 {
 	ConfirmationResponse response = 1;
 	bool redirect = 2; //Redirect = true, means we are telling client to connect elsewhere
@@ -81,6 +81,7 @@ message ClientConnectionSSOTokenResponse
 	fixed32 redirectPort = 4;
 	repeated string cmdcomps = 5; //If redirect = false, this is a list of all cmdcomps
 	repeated SecondaryInterfaceList secondary = 6;
+	string serverSessionId = 7; // Different from 'sessionID' which belongs to the client.
 }
 
 message ClientConnection2
@@ -100,10 +101,38 @@ message ClientConnectionGCM2
 	bool explicitSSO = 5;
 }
 
-message ClientConnectionSSOPoll
+message ClientConnectionSSO2
 {
 	string requestId = 1;
 	bool force = 2;
+}
+
+// For Connectors v2, we should be using compact JWE's which provide integrity verifiction + encryption
+message SecurityToken 
+{
+	string data = 1; // The token payload
+	string signature = 2;
+	string issuerFingerprint = 3;
+}
+
+message SessionInfo 
+{
+	string serverSessionId = 1;                   // The server side identifier for this session.
+									 // Drivers may use this id to query session params:
+									 // 
+									 // `SELECT * FROM sys.sessions WHERE id = '$id'`
+
+	SecurityToken securityToken = 2; // The security token associated with this session
+}
+
+message ClientConnectionRefreshSession
+{
+}
+
+message ClientConnectionRefreshSessionResponse
+{
+	ConfirmationResponse response = 1;
+	SessionInfo sessionInfo = 2;
 }
 
 message SecondaryInterfaceList
@@ -119,6 +148,7 @@ message ClientConnection2Response
 	fixed32 redirectPort = 4;
 	repeated string cmdcomps = 5; //If redirect = false, this is a list of all cmdcomps
 	repeated SecondaryInterfaceList secondary = 6;
+	string serverSessionId = 7;
 }
 
 message ClientConnectionGCM2Response
@@ -129,28 +159,22 @@ message ClientConnectionGCM2Response
 	fixed32 redirectPort = 4;
 	repeated string cmdcomps = 5; //If redirect = false, this is a list of all cmdcomps
 	repeated SecondaryInterfaceList secondary = 6;
+	string serverSessionId = 7;
 }
 
-message ClientConnectionSSOPollResponse
+message ClientConnectionSSO2Response
 {
-	enum PollResponse
-	{
-		SUCCESS = 0;
-		ERROR = 1; // Check ConfirmationResponse for the SQLException
-		POLL = 2; // Poll again in poll_seconds seconds.
-	}
-
 	ConfirmationResponse response = 1;
-	PollResponse pollResponse = 2;
-	string securityToken = 3; // SSO security token usage
-	string tokenSignature = 4; // SSO security token usage
-	string issuerFingerprint = 5;	// SSO security token usage	
-	int32 pollSeconds = 6;
-	bool redirect = 7; //Redirect = true, means we are telling client to connect elsewhere
-	string redirectHost = 8;
-	fixed32 redirectPort = 9;
-	repeated string cmdcomps = 10; //If redirect = false, this is a list of all cmdcomps
-	repeated SecondaryInterfaceList secondary = 11;			
+	oneof response_oneof {
+		int32 pollingIntervalSeconds = 2; // The minimum amount of time in seconds that the Client
+		                                  // MUST wait between polling requests to the server
+		SessionInfo sessionInfo = 3;      // Session info returned on success
+	}
+	bool redirect = 4; //Redirect = true, means we are telling client to connect elsewhere
+	string redirectHost = 5;
+	fixed32 redirectPort = 6;
+	repeated string cmdcomps = 7; //If redirect = false, this is a list of all cmdcomps
+	repeated SecondaryInterfaceList secondary = 8;			
 }
 
 message GetSchema
@@ -170,6 +194,7 @@ message SetSchema
 
 message CloseConnection
 {
+	bool endSession = 1;
 }
 
 message TestConnection
@@ -509,8 +534,9 @@ message Request
 		UPDATE_CACHE = 39;
 		CLEAR_CACHE = 40;		
 		CLIENT_CONNECTION_SSO = 41;
-		CLIENT_CONNECTION_SSO_POLL = 42;
-		CLIENT_CONNECTION_SSO_TOKEN = 43;
+		CLIENT_CONNECTION_SSO2 = 42;
+		CLIENT_CONNECTION_SECURITY_TOKEN = 43;
+		CLIENT_CONNECTION_REFRESH_SESSION = 44;
     }
 
     RequestType type = 1;
@@ -558,8 +584,9 @@ message Request
 		UpdateCache update_cache = 40;
 		ClearCache clear_cache = 41;		
 		ClientConnectionSSO client_connection_sso = 42;
-		ClientConnectionSSOPoll client_connection_sso_poll = 43;
-		ClientConnectionSSOToken client_connection_sso_token = 44;
+		ClientConnectionSSO2 client_connection_sso2 = 43;
+		ClientConnectionSecurityToken client_connection_security_token = 44;
+		ClientConnectionRefreshSession client_connection_refresh_session = 45;
     }
 }
 

@@ -2,8 +2,7 @@ package com.ocient.jdbc;
 
 import java.sql.SQLException;
 
-public final class SQLStates implements Cloneable
-{
+public final class SQLStates implements Cloneable {
 	private static String NORMAL_COMPLETION = "00000";
 	private static String TRUNCATION_STATE = "01004";
 	private static String EXCESSIVE_COST_STATE = "01616";
@@ -203,9 +202,39 @@ public final class SQLStates implements Cloneable
 
 	// security related issues
 	private static int READ_TABLE_AUTH_FAILURE = -700;
-	private static int CREATE_CONNECTION_AUTH_FAILURE = -713;
-	private static int DROP_CONNECTION_AUTH_FAILURE = -714;
-	private static int NOT_AUTHORIZED_CODE = -715;
+	private static int CREATE_DATABASE_AUTH_FAILURE = -701;
+	private static int MODIFY_TABLE_AUTH_FAILURE = -702;
+	private static int CREATE_VIEW_AUTH_FAILURE = -703;
+	private static int MODIFY_DATABASE_AUTH_FAILURE = -704;
+	private static int MODIFY_VIEW_AUTH_FAILURE = -705;
+	private static int DROP_TABLE_AUTH_FAILURE = -706;
+	private static int DELETE_ROW_AUTH_FAILURE = -707;
+	private static int DROP_VIEW_AUTH_FAILURE = -708;
+	private static int DROP_DATABASE_AUTH_FAILURE = -709;
+	private static int CREATE_TABLE_AUTH_FAILURE = -710;
+	private static int CREATE_STORAGESPACE_AUTH_FAILURE = -711;
+	private static int DROP_STORAGE_SPACE_AUTH_FAILURE = -712;
+	private static int CREATE_USER_AUTH_FAILURE = -713;
+	private static int DROP_USER_AUTH_FAILURE = -714;
+	private static int CREATE_GROUP_AUTH_FAILURE = -715;
+	private static int DROP_GROUP_AUTH_FAILURE = -716;
+	private static int CREATE_CONNECTION_AUTH_FAILURE = -717;
+	private static int DROP_CONNECTION_AUTH_FAILURE = -718;
+	private static int NOT_AUTHORIZED_CODE = -719;
+	private static int MODIFY_GROUP_AUTH_FAILURE = -720;
+	private static int SSO_OIDC_INVALID_TOKEN_CODE = -721;
+	private static int SSO_OIDC_INVALID_TOKEN_ISSUER_CODE = -722;
+	private static int SSO_OIDC_INVALID_TOKEN_AUDIENCE_CODE = -723;
+	private static int SSO_OIDC_INVALID_TOKEN_CLAIM_CODE = -724;
+	private static int SSO_OIDC_INVALID_TOKEN_SIGNATURE_CODE = -725;
+	private static int SSO_OIDC_TOKEN_SIGNING_KEY_NOT_FOUND_CODE = -726;
+	private static int SSO_OIDC_EXPIRED_TOKEN_CODE = -727;
+	private static int SSO_OIDC_NETWORK_COMMUNICATIONS_ERROR_CODE = -728;
+	private static int SSO_OIDC_MAX_TOKEN_RENEWS_REACHED_CODE = -729;
+	private static int SSO_OIDC_RESPONSE_INVALID_REQUEST_PAYLOAD_CODE = -730;
+	private static int SSO_OIDC_RESPONSE_INVALID_BAD_CERT_CODE = -731;
+	private static int SSO_OIDC_RESPONSE_INVALID_INTEGRATION_CONFIGURATION_CODE = -732;
+	private static int SESSION_EXPIRED_CODE = -733;
 
 	// MLMODEL related issues
 	private static int ML_MODEL_NOT_FOUND_CODE = -800;
@@ -214,7 +243,7 @@ public final class SQLStates implements Cloneable
 	private static int NO_DROP_MLMODEL_AUTH_CODE = -803;
 	private static int UNABLE_TO_INVERT_SINGULAR_MATRIX_CODE = -804;
 	private static int ML_MODEL_ON_EMPTY_SET_CODE = -805;
-    	private static int UNABLE_TO_DECOMPOSE_SINGULAR_MATRIX_CODE = -806;
+	private static int UNABLE_TO_DECOMPOSE_SINGULAR_MATRIX_CODE = -806;
 
 	// runtime related issues
 	private static int NO_ROW_DATA_CODE = 900;
@@ -253,176 +282,384 @@ public final class SQLStates implements Cloneable
 	private static int OBJECT_NOT_FOUND_WARN_CODE = 1113; // warning
 	private static int OBJECT_ALREADY_EXISTS_WARN_CODE = 1114; // warning
 
-	public static final SQLStates INVALID_RESPONSE_TYPE = new SQLStates("Received a response from the server that was not ok, warning, or error", SYSTEM_ERROR, INVALID_RESPONSE_CODE);
-	public static final SQLStates INVALID_COLUMN_TYPE = new SQLStates("Corruption of serialized result set", SYSTEM_ERROR, INVALID_COLUMN_CODE);
-	public static final SQLStates MALFORMED_URL = new SQLStates("Malformed connection URL", UNABLE_TO_CONNECT, MALFORMED_URL_CODE);
-	public static final SQLStates FAILED_CONNECTION = new SQLStates("Connection failed", UNABLE_TO_CONNECT, FAILED_CONNECTION_CODE);
-	public static final SQLStates FAILED_HANDSHAKE = new SQLStates("The handshake between client and server failed", UNABLE_TO_CONNECT, FAILED_HANDSHAKE_CODE);
-	public static final SQLStates INVALID_ARGUMENT = new SQLStates("The argument to a client method call was invalid", CLIENT_ERROR, INVALID_ARGUMENT_CODE);
-	public static final SQLStates CALL_ON_CLOSED_OBJECT = new SQLStates("A client method was called on a closed object", CLIENT_ERROR, CALL_ON_CLOSED_OBJECT_CODE);
-	public static final SQLStates COLUMN_NOT_FOUND = new SQLStates("The reference to referenced column is not valid", COLUMN_NOT_FOUND_STATE, COLUMN_NOT_FOUND_CODE);
-	public static final SQLStates CORRELATED_SUBQUERY = new SQLStates("Correlated subqueries are not supported", COLUMN_NOT_FOUND_STATE, COLUMN_NOT_FOUND_CODE);
-	public static final SQLStates CURSOR_NOT_ON_ROW = new SQLStates("The cursor was not positioned on a valid row", INVALID_CURSOR, CURSOR_NOT_ON_ROW_CODE);
-	public static final SQLStates INVALID_DATA_TYPE_CONVERSION = new SQLStates("Unable to do the requested data type conversion", NOT_IMPLEMENTED_STATE, INVALID_DATA_TYPE_CONVERSION_CODE);
-	public static final SQLStates UNEXPECTED_EOF = new SQLStates("Unexpected EOF on network connection", UNABLE_TO_CONNECT, UNEXPECTED_EOF_CODE);
-	public static final SQLStates NETWORK_COMMS_ERROR = new SQLStates("A network communications error occurred", UNABLE_TO_CONNECT, NETWORK_COMMS_ERROR_CODE);
-	public static final SQLStates PREVIOUS_RESULT_SET_STILL_OPEN = new SQLStates("Only one result set can be open at a time on a given connection", CURSOR_ALREADY_ASSIGNED_TO_RS,
-		PREVIOUS_RESULT_SET_STILL_OPEN_CODE);
-	public static final SQLStates UNKNOWN_DATA_TYPE = new SQLStates("Unknown data type", BAD_DATA_TYPE, UNKNOWN_DATA_TYPE_CODE);
-	public static final SQLStates BAD_USER_PWD = new SQLStates("The userid/password combination was not valid", REJECTED_CONNECTION, BAD_USER_PWD_CODE);
-	public static final SQLStates OK = new SQLStates("The operation completed successfully", NORMAL_COMPLETION, NORMAL_COMPLETION_CODE);
-	public static final SQLStates NETFLOW_DEMO_RESTRICTIONS_VIOLATED = new SQLStates("The SQL statement is not supported by the netflow demo", SQL_NOT_VALID_IN_CONTEXT, SQL_NOT_VALID_IN_CONTEXT_CODE);
-	public static final SQLStates SYNTAX_ERROR = new SQLStates("There is a syntax error in your statement", SYNTAX_ERROR_STATE, SYNTAX_ERROR_CODE);
-	public static final SQLStates INTERNAL_ERROR = new SQLStates("An internal error occurred", SYSTEM_ERROR, INTERNAL_ERROR_CODE);
-	public static final SQLStates DUPLICATE_CTE_NAME = new SQLStates("There is a duplicate common table expression name", DUPLICATE_CTE_NAME_STATE, DUPLICATE_CTE_CODE);
-	public static final SQLStates SELECT_NUM_COLS_MISMATCH = new SQLStates("The number of columns does not match the SELECT statement", SELECT_NUM_COLS_MISMATCH_STATE, SELECT_NUM_COLS_MISMATCH_CODE);
-	public static final SQLStates INVALID_BY_EXPRESSION = new SQLStates("The expression in the ORDER BY or GROUP BY clause is not valid.", INVALID_BY_EXPRESSION_STATE, INVALID_BY_EXPRESSION_CODE);
-	public static final SQLStates NEGATIVE_LIMIT = new SQLStates("The value of the LIMIT clause was negative", INVALID_LIMIT_STATE, NEGATIVE_LIMIT_CODE);
-	public static final SQLStates NEGATIVE_OFFSET = new SQLStates("The value of the OFFSET clause was negative", INVALID_OFFSET_STATE, NEGATIVE_OFFSET_CODE);
-	public static final SQLStates WRONG_NUMBER_OF_FUNCTION_ARGUMENTS = new SQLStates("Wrong number of arguments in function call", WRONG_NUMBER_OF_ARGUMENTS_STATE, WRONG_NUMBER_OF_ARGUMENTS_CODE);
-	public static final SQLStates AGGREGATION_ON_CONSTANT = new SQLStates("Aggregation of a constant value is invalid", INVALID_ARGUMENT_STATE, AGGREGATION_ON_CONSTANT_CODE);
-	public static final SQLStates WRONG_FUNCTION_ARGUMENT_TYPE = new SQLStates("The data type of a function parameter is invalid", INVALID_ARGUMENT_STATE, WRONG_ARGUMENT_TYPE_CODE);
-	public static final SQLStates INVALID_COMPARISON = new SQLStates("A comparison operation is invalid", INVALID_ARGUMENT_STATE, INVALID_COMPARISON_CODE);
-	public static final SQLStates NO_SUCH_DATABASE = new SQLStates("No database with that name exists", REJECTED_CONNECTION, NO_SUCH_DATABASE_CODE);
-	public static final SQLStates STORAGESPACE_ALREADY_EXISTS = new SQLStates("A storage space with that name exists", DUPLICATE_OBJECT, STORAGESPACE_ALREADY_EXISTS_CODE);
+	public static final SQLStates INVALID_RESPONSE_TYPE = new SQLStates(
+			"Received a response from the server that was not ok, warning, or error", SYSTEM_ERROR,
+			INVALID_RESPONSE_CODE);
+	public static final SQLStates INVALID_COLUMN_TYPE = new SQLStates("Corruption of serialized result set",
+			SYSTEM_ERROR, INVALID_COLUMN_CODE);
+	public static final SQLStates MALFORMED_URL = new SQLStates("Malformed connection URL", UNABLE_TO_CONNECT,
+			MALFORMED_URL_CODE);
+	public static final SQLStates FAILED_CONNECTION = new SQLStates("Connection failed", UNABLE_TO_CONNECT,
+			FAILED_CONNECTION_CODE);
+	public static final SQLStates FAILED_HANDSHAKE = new SQLStates("The handshake between client and server failed",
+			UNABLE_TO_CONNECT, FAILED_HANDSHAKE_CODE);
+	public static final SQLStates INVALID_ARGUMENT = new SQLStates("The argument to a client method call was invalid",
+			CLIENT_ERROR, INVALID_ARGUMENT_CODE);
+	public static final SQLStates CALL_ON_CLOSED_OBJECT = new SQLStates("A client method was called on a closed object",
+			CLIENT_ERROR, CALL_ON_CLOSED_OBJECT_CODE);
+	public static final SQLStates COLUMN_NOT_FOUND = new SQLStates("The reference to referenced column is not valid",
+			COLUMN_NOT_FOUND_STATE, COLUMN_NOT_FOUND_CODE);
+	public static final SQLStates CORRELATED_SUBQUERY = new SQLStates("Correlated subqueries are not supported",
+			COLUMN_NOT_FOUND_STATE, COLUMN_NOT_FOUND_CODE);
+	public static final SQLStates CURSOR_NOT_ON_ROW = new SQLStates("The cursor was not positioned on a valid row",
+			INVALID_CURSOR, CURSOR_NOT_ON_ROW_CODE);
+	public static final SQLStates INVALID_DATA_TYPE_CONVERSION = new SQLStates(
+			"Unable to do the requested data type conversion", NOT_IMPLEMENTED_STATE,
+			INVALID_DATA_TYPE_CONVERSION_CODE);
+	public static final SQLStates UNEXPECTED_EOF = new SQLStates("Unexpected EOF on network connection",
+			UNABLE_TO_CONNECT, UNEXPECTED_EOF_CODE);
+	public static final SQLStates NETWORK_COMMS_ERROR = new SQLStates("A network communications error occurred",
+			UNABLE_TO_CONNECT, NETWORK_COMMS_ERROR_CODE);
+	public static final SQLStates PREVIOUS_RESULT_SET_STILL_OPEN = new SQLStates(
+			"Only one result set can be open at a time on a given connection", CURSOR_ALREADY_ASSIGNED_TO_RS,
+			PREVIOUS_RESULT_SET_STILL_OPEN_CODE);
+	public static final SQLStates UNKNOWN_DATA_TYPE = new SQLStates("Unknown data type", BAD_DATA_TYPE,
+			UNKNOWN_DATA_TYPE_CODE);
+	public static final SQLStates BAD_USER_PWD = new SQLStates("The userid/password combination was not valid",
+			REJECTED_CONNECTION, BAD_USER_PWD_CODE);
+	public static final SQLStates OK = new SQLStates("The operation completed successfully", NORMAL_COMPLETION,
+			NORMAL_COMPLETION_CODE);
+	public static final SQLStates NETFLOW_DEMO_RESTRICTIONS_VIOLATED = new SQLStates(
+			"The SQL statement is not supported by the netflow demo", SQL_NOT_VALID_IN_CONTEXT,
+			SQL_NOT_VALID_IN_CONTEXT_CODE);
+	public static final SQLStates SYNTAX_ERROR = new SQLStates("There is a syntax error in your statement",
+			SYNTAX_ERROR_STATE, SYNTAX_ERROR_CODE);
+	public static final SQLStates INTERNAL_ERROR = new SQLStates("An internal error occurred", SYSTEM_ERROR,
+			INTERNAL_ERROR_CODE);
+	public static final SQLStates DUPLICATE_CTE_NAME = new SQLStates(
+			"There is a duplicate common table expression name", DUPLICATE_CTE_NAME_STATE, DUPLICATE_CTE_CODE);
+	public static final SQLStates SELECT_NUM_COLS_MISMATCH = new SQLStates(
+			"The number of columns does not match the SELECT statement", SELECT_NUM_COLS_MISMATCH_STATE,
+			SELECT_NUM_COLS_MISMATCH_CODE);
+	public static final SQLStates INVALID_BY_EXPRESSION = new SQLStates(
+			"The expression in the ORDER BY or GROUP BY clause is not valid.", INVALID_BY_EXPRESSION_STATE,
+			INVALID_BY_EXPRESSION_CODE);
+	public static final SQLStates NEGATIVE_LIMIT = new SQLStates("The value of the LIMIT clause was negative",
+			INVALID_LIMIT_STATE, NEGATIVE_LIMIT_CODE);
+	public static final SQLStates NEGATIVE_OFFSET = new SQLStates("The value of the OFFSET clause was negative",
+			INVALID_OFFSET_STATE, NEGATIVE_OFFSET_CODE);
+	public static final SQLStates WRONG_NUMBER_OF_FUNCTION_ARGUMENTS = new SQLStates(
+			"Wrong number of arguments in function call", WRONG_NUMBER_OF_ARGUMENTS_STATE,
+			WRONG_NUMBER_OF_ARGUMENTS_CODE);
+	public static final SQLStates AGGREGATION_ON_CONSTANT = new SQLStates("Aggregation of a constant value is invalid",
+			INVALID_ARGUMENT_STATE, AGGREGATION_ON_CONSTANT_CODE);
+	public static final SQLStates WRONG_FUNCTION_ARGUMENT_TYPE = new SQLStates(
+			"The data type of a function parameter is invalid", INVALID_ARGUMENT_STATE, WRONG_ARGUMENT_TYPE_CODE);
+	public static final SQLStates INVALID_COMPARISON = new SQLStates("A comparison operation is invalid",
+			INVALID_ARGUMENT_STATE, INVALID_COMPARISON_CODE);
+	public static final SQLStates NO_SUCH_DATABASE = new SQLStates("No database with that name exists",
+			REJECTED_CONNECTION, NO_SUCH_DATABASE_CODE);
+	public static final SQLStates STORAGESPACE_ALREADY_EXISTS = new SQLStates("A storage space with that name exists",
+			DUPLICATE_OBJECT, STORAGESPACE_ALREADY_EXISTS_CODE);
 	public static final SQLStates AGGREGATION_NOT_ALLOWED = new SQLStates(
-		"Aggregation was used in a context where it is not allowed (perhaps a predicate in the WHERE clause that belongs in the HAVING clause)", SYNTAX_ERROR_STATE, AGGREGATION_NOT_ALLOWED_CODE);
-	public static final SQLStates AMBIGUOUS_COL = new SQLStates("A column name was ambiguous", AMBIGUOUS_COL_STATE, AMBIGUOUS_COL_CODE);
-	public static final SQLStates NO_AGG_IN_HAVING = new SQLStates("There is no aggregation in the predicate in the HAVING clause", INVALID_AGGREGATION_STATE, NO_AGG_IN_HAVING_CODE);
-	public static final SQLStates SELECT_AFTER_AGG = new SQLStates("A column reference in a SELECT clause is invalid due to aggregation", INVALID_AGGREGATION_STATE, SELECT_AFTER_AGG_CODE);
-	public static final SQLStates TABLE_NOT_FOUND = new SQLStates("The referenced table does not exist", OBJECT_NOT_FOUND_STATE, TABLE_NOT_FOUND_CODE);
-	public static final SQLStates DATABASE_ALREADY_EXISTS = new SQLStates("A database with that name exists", DUPLICATE_OBJECT, DATABASE_ALREADY_EXISTS_CODE);
-	public static final SQLStates TABLE_ALREADY_EXISTS = new SQLStates("A table with that name exists", DUPLICATE_OBJECT, TABLE_ALREADY_EXISTS_CODE);
-	public static final SQLStates VIEW_ALREADY_EXISTS = new SQLStates("A view with that name exists", DUPLICATE_OBJECT, VIEW_ALREADY_EXISTS_CODE);
-	public static final SQLStates USER_ALREADY_EXISTS = new SQLStates("A user with that name exists", DUPLICATE_OBJECT, USER_ALREADY_EXISTS_CODE);
-	public static final SQLStates CLUSTER_ALREADY_EXISTS = new SQLStates("A cluster with that name exists", DUPLICATE_OBJECT, CLUSTER_ALREADY_EXISTS_CODE);
-	public static final SQLStates GROUP_ALREADY_EXISTS = new SQLStates("A group with that name exists", DUPLICATE_OBJECT, GROUP_ALREADY_EXISTS_CODE);
-	public static final SQLStates CONNECTION_ALREADY_EXISTS = new SQLStates("The referenced connection already exists", DUPLICATE_OBJECT, CONNECTION_ALREADY_EXISTS_CODE);
-	public static final SQLStates CONNECTION_NOT_FOUND = new SQLStates("The referenced connection does not exist", OBJECT_NOT_FOUND_STATE, CONNECTION_NOT_FOUND_CODE);
-	public static final SQLStates TRANSLATION_NOT_FOUND = new SQLStates("The referenced translation does not exist", OBJECT_NOT_FOUND_STATE, TRANSLATION_NOT_FOUND_CODE);
-	public static final SQLStates TRANSLATION_ALREADY_EXISTS = new SQLStates("The referenced translation already exists", DUPLICATE_OBJECT, TRANSLATION_ALREADY_EXISTS_CODE);
-	public static final SQLStates DATABASE_NOT_FOUND = new SQLStates("The referenced database does not exist", OBJECT_NOT_FOUND_STATE, DATABASE_NOT_FOUND_CODE);
-	public static final SQLStates STORAGE_SPACE_NOT_FOUND = new SQLStates("The referenced storage space does not exist", OBJECT_NOT_FOUND_STATE, STORAGE_SPACE_NOT_FOUND_CODE);
-	public static final SQLStates VIEW_NOT_FOUND = new SQLStates("The referenced view does not exist", OBJECT_NOT_FOUND_STATE, VIEW_NOT_FOUND_CODE);
-	public static final SQLStates USER_NOT_FOUND = new SQLStates("The referenced user does not exist", OBJECT_NOT_FOUND_STATE, USER_NOT_FOUND_CODE);
-	public static final SQLStates CLUSTER_NOT_FOUND = new SQLStates("The referenced cluster does not exist", OBJECT_NOT_FOUND_STATE, CLUSTER_NOT_FOUND_CODE);
-	public static final SQLStates GROUP_NOT_FOUND = new SQLStates("The referenced group does not exist", OBJECT_NOT_FOUND_STATE, GROUP_NOT_FOUND_CODE);
-	public static final SQLStates USER_NOT_IN_GROUP = new SQLStates("The user is not in the specified group", OBJECT_NOT_FOUND_STATE, USER_NOT_IN_GROUP_CODE);
+			"Aggregation was used in a context where it is not allowed (perhaps a predicate in the WHERE clause that belongs in the HAVING clause)",
+			SYNTAX_ERROR_STATE, AGGREGATION_NOT_ALLOWED_CODE);
+	public static final SQLStates AMBIGUOUS_COL = new SQLStates("A column name was ambiguous", AMBIGUOUS_COL_STATE,
+			AMBIGUOUS_COL_CODE);
+	public static final SQLStates NO_AGG_IN_HAVING = new SQLStates(
+			"There is no aggregation in the predicate in the HAVING clause", INVALID_AGGREGATION_STATE,
+			NO_AGG_IN_HAVING_CODE);
+	public static final SQLStates SELECT_AFTER_AGG = new SQLStates(
+			"A column reference in a SELECT clause is invalid due to aggregation", INVALID_AGGREGATION_STATE,
+			SELECT_AFTER_AGG_CODE);
+	public static final SQLStates TABLE_NOT_FOUND = new SQLStates("The referenced table does not exist",
+			OBJECT_NOT_FOUND_STATE, TABLE_NOT_FOUND_CODE);
+	public static final SQLStates DATABASE_ALREADY_EXISTS = new SQLStates("A database with that name exists",
+			DUPLICATE_OBJECT, DATABASE_ALREADY_EXISTS_CODE);
+	public static final SQLStates TABLE_ALREADY_EXISTS = new SQLStates("A table with that name exists",
+			DUPLICATE_OBJECT, TABLE_ALREADY_EXISTS_CODE);
+	public static final SQLStates VIEW_ALREADY_EXISTS = new SQLStates("A view with that name exists", DUPLICATE_OBJECT,
+			VIEW_ALREADY_EXISTS_CODE);
+	public static final SQLStates USER_ALREADY_EXISTS = new SQLStates("A user with that name exists", DUPLICATE_OBJECT,
+			USER_ALREADY_EXISTS_CODE);
+	public static final SQLStates CLUSTER_ALREADY_EXISTS = new SQLStates("A cluster with that name exists",
+			DUPLICATE_OBJECT, CLUSTER_ALREADY_EXISTS_CODE);
+	public static final SQLStates GROUP_ALREADY_EXISTS = new SQLStates("A group with that name exists",
+			DUPLICATE_OBJECT, GROUP_ALREADY_EXISTS_CODE);
+	public static final SQLStates CONNECTION_ALREADY_EXISTS = new SQLStates("The referenced connection already exists",
+			DUPLICATE_OBJECT, CONNECTION_ALREADY_EXISTS_CODE);
+	public static final SQLStates CONNECTION_NOT_FOUND = new SQLStates("The referenced connection does not exist",
+			OBJECT_NOT_FOUND_STATE, CONNECTION_NOT_FOUND_CODE);
+	public static final SQLStates TRANSLATION_NOT_FOUND = new SQLStates("The referenced translation does not exist",
+			OBJECT_NOT_FOUND_STATE, TRANSLATION_NOT_FOUND_CODE);
+	public static final SQLStates TRANSLATION_ALREADY_EXISTS = new SQLStates(
+			"The referenced translation already exists", DUPLICATE_OBJECT, TRANSLATION_ALREADY_EXISTS_CODE);
+	public static final SQLStates DATABASE_NOT_FOUND = new SQLStates("The referenced database does not exist",
+			OBJECT_NOT_FOUND_STATE, DATABASE_NOT_FOUND_CODE);
+	public static final SQLStates STORAGE_SPACE_NOT_FOUND = new SQLStates("The referenced storage space does not exist",
+			OBJECT_NOT_FOUND_STATE, STORAGE_SPACE_NOT_FOUND_CODE);
+	public static final SQLStates VIEW_NOT_FOUND = new SQLStates("The referenced view does not exist",
+			OBJECT_NOT_FOUND_STATE, VIEW_NOT_FOUND_CODE);
+	public static final SQLStates USER_NOT_FOUND = new SQLStates("The referenced user does not exist",
+			OBJECT_NOT_FOUND_STATE, USER_NOT_FOUND_CODE);
+	public static final SQLStates CLUSTER_NOT_FOUND = new SQLStates("The referenced cluster does not exist",
+			OBJECT_NOT_FOUND_STATE, CLUSTER_NOT_FOUND_CODE);
+	public static final SQLStates GROUP_NOT_FOUND = new SQLStates("The referenced group does not exist",
+			OBJECT_NOT_FOUND_STATE, GROUP_NOT_FOUND_CODE);
+	public static final SQLStates USER_NOT_IN_GROUP = new SQLStates("The user is not in the specified group",
+			OBJECT_NOT_FOUND_STATE, USER_NOT_IN_GROUP_CODE);
 
-	public static final SQLStates INVALID_ORDER_BY = new SQLStates("Invalid ORDER BY clause", INVALID_ORDER_BY_STATE, INVALID_ORDER_BY_CODE);
-	public static final SQLStates LIST_TYPE_IN_SELECT_LIST = new SQLStates("A query cannot return a list type", BAD_DATA_TYPE, LIST_TYPE_IN_SELECT_LIST_CODE);
-	public static final SQLStates LIST_WITHIN_LIST = new SQLStates("Nested lists are not allowed", SYNTAX_ERROR_STATE, LIST_WITHIN_LIST_CODE);
-	public static final SQLStates INCOMPATIBLE_TYPES_IN_LIST = new SQLStates("All data types within a list must be implicitly convertible to a common data type", BAD_SCALAR_TYPE_IN_LIST,
-		INCOMPATIBLE_TYPES_IN_LIST_CODE);
-	public static final SQLStates NO_SUCH_FUNCTION = new SQLStates("Call to unknown function", INVALID_FUNCTION_USE, UNKNOWN_FUNCTION_CODE);
-	public static final SQLStates TKT_RESTRICTIONS_VIOLATED = new SQLStates("The SQL statement is not supported by the TKT engine", SQL_NOT_VALID_IN_CONTEXT, SQL_NOT_VALID_IN_CONTEXT_CODE);
-	public static final SQLStates NO_READ_AUTH = new SQLStates("The userid does not have read authority on a required table", AUTH_FAILURE, READ_TABLE_AUTH_FAILURE);
-	public static final SQLStates NO_CREATE_CONNECTION_AUTH = new SQLStates("The user does not have the authority to create a connection.", AUTH_FAILURE, CREATE_CONNECTION_AUTH_FAILURE);
-	public static final SQLStates CREATE_TASK_FAILURE = new SQLStates("Failed to create task", SYSTEM_ERROR, CREATE_TASK_FAILURE_CODE);
-	public static final SQLStates NO_DROP_CONNECTION_AUTH = new SQLStates("The user does not have the authority to drop the connection", AUTH_FAILURE, DROP_CONNECTION_AUTH_FAILURE);
-	public static final SQLStates NAKED_INTERVAL_TYPE = new SQLStates("If the result of an expression is a time interval type, it must be cast to an integral type", BAD_DATA_TYPE, NAKED_INTERVAL_TYPE_CODE);
-	public static final SQLStates NOT_A_SELECT = new SQLStates("A SELECT statement was expected, but the command received was not a SELECT statement", SQL_NOT_VALID_IN_CONTEXT, NOT_A_SELECT_CODE);
-	public static final SQLStates IS_A_SELECT = new SQLStates("A SELECT statement was found where we were not expecting a SELECT statement", SQL_NOT_VALID_IN_CONTEXT, IS_A_SELECT_CODE);
-	public static final SQLStates ML_MODEL_NOT_FOUND = new SQLStates("Could not find an MLMODEL with that name", OBJECT_NOT_FOUND_STATE, ML_MODEL_NOT_FOUND_CODE);
-	public static final SQLStates ML_MODEL_ALREADY_EXISTS = new SQLStates("An MLMODEL with that name already exists", DUPLICATE_OBJECT, ML_MODEL_ALREADY_EXISTS_CODE);
-	public static final SQLStates NULL_OUTPUT_BUFFER = new SQLStates("A null pointer was passed for an output buffer location to an ODBC API call", GENERAL_DRIVER_ERROR, NULL_OUTPUT_BUFFER_CODE);
-	public static final SQLStates NOT_IMPLEMENTED = new SQLStates("The requested function is not implemented", NOT_IMPLEMENTED_STATE, NOT_IMPLEMENTED_CODE);
-	public static final SQLStates SEQUENCE_ERROR = new SQLStates("ODBC function sequence error", SEQUENCE_ERROR_STATE, SEQUENCE_ERROR_CODE);
-	public static final SQLStates INVALID_ATTRIBUTE = new SQLStates("An invalid ODBC attribute was specified", INVALID_ATTRIBUTE_STATE, INVALID_ATTRIBUTE_CODE);
-	public static final SQLStates INVALID_INPUT = new SQLStates("Invalid input to an ODBC API call", INVALID_INPUT_STATE, INVALID_INPUT_CODE);
-	public static final SQLStates DYNAMIC_LINK_FAILURE = new SQLStates("The ODBC driver failed to load a required symbol from a shared library", GENERAL_DRIVER_ERROR, DYNAMIC_LINK_FAILURE_CODE);
-	public static final SQLStates BAD_PARAM_NUM = new SQLStates("An invalid parameter marker number was specified", BAD_PARAM_NUM_STATE, BAD_PARAM_NUM_CODE);
-	public static final SQLStates INVALID_C_DATA_TYPE = new SQLStates("An invalid C data type was specified", INVALID_C_DATA_TYPE_STATE, INVALID_C_DATA_TYPE_CODE);
-	public static final SQLStates INVALID_SQL_DATA_TYPE = new SQLStates("An invalid SQL data type was specified", INVALID_SQL_DATA_TYPE_STATE, INVALID_SQL_DATA_TYPE_CODE);
-	public static final SQLStates NO_CONNECTION = new SQLStates("No database connection exists", NO_CONNECTION_STATE, NO_CONNECTION_CODE);
-	public static final SQLStates INVALID_PARAMETER_MARKER = new SQLStates("Invalid data was detected for a parameter marker", INVALID_PARAMETER_MARKER_STATE, INVALID_PARAMETER_MARKER_CODE);
-	public static final SQLStates TRUNCATION = new SQLStates("Data was truncated while transferring data to/from the server", TRUNCATION_STATE, TRUNCATION_CODE);
-	public static final SQLStates INVALID_CURSOR_STATE = new SQLStates("The cursor was not in the necessary state for the requested operation", INVALID_CURSOR, INVALID_CURSOR_CODE);
-	public static final SQLStates INVALID_BUFFER_LENGTH = new SQLStates("An invalid buffer length was specified", INVALID_BUFFER_LENGTH_STATE, INVALID_BUFFER_LENGTH_CODE);
+	public static final SQLStates INVALID_ORDER_BY = new SQLStates("Invalid ORDER BY clause", INVALID_ORDER_BY_STATE,
+			INVALID_ORDER_BY_CODE);
+	public static final SQLStates LIST_TYPE_IN_SELECT_LIST = new SQLStates("A query cannot return a list type",
+			BAD_DATA_TYPE, LIST_TYPE_IN_SELECT_LIST_CODE);
+	public static final SQLStates LIST_WITHIN_LIST = new SQLStates("Nested lists are not allowed", SYNTAX_ERROR_STATE,
+			LIST_WITHIN_LIST_CODE);
+	public static final SQLStates INCOMPATIBLE_TYPES_IN_LIST = new SQLStates(
+			"All data types within a list must be implicitly convertible to a common data type",
+			BAD_SCALAR_TYPE_IN_LIST, INCOMPATIBLE_TYPES_IN_LIST_CODE);
+	public static final SQLStates NO_SUCH_FUNCTION = new SQLStates("Call to unknown function", INVALID_FUNCTION_USE,
+			UNKNOWN_FUNCTION_CODE);
+	public static final SQLStates TKT_RESTRICTIONS_VIOLATED = new SQLStates(
+			"The SQL statement is not supported by the TKT engine", SQL_NOT_VALID_IN_CONTEXT,
+			SQL_NOT_VALID_IN_CONTEXT_CODE);
+	public static final SQLStates NO_READ_AUTH = new SQLStates(
+			"The userid does not have read authority on a required table", AUTH_FAILURE, READ_TABLE_AUTH_FAILURE);
+
+	public static final SQLStates NO_CREATE_DATABASE_AUTH = new SQLStates(
+		"The user does not have the authority to create a database", AUTH_FAILURE, CREATE_DATABASE_AUTH_FAILURE);
+	public static final SQLStates NO_CREATE_VIEW_AUTH = new SQLStates(
+		"The user does not have the authority to create a view", AUTH_FAILURE, CREATE_VIEW_AUTH_FAILURE);
+	public static final SQLStates NO_CREATE_TABLE_AUTH = new SQLStates(
+		"The user does not have the authority to create a table", AUTH_FAILURE, CREATE_TABLE_AUTH_FAILURE);	
+	public static final SQLStates NO_CREATE_USER_AUTH = new SQLStates(
+		"The user does not have the authority to create a user", AUTH_FAILURE, CREATE_USER_AUTH_FAILURE);
+	public static final SQLStates NO_CREATE_GROUP_AUTH = new SQLStates(
+		"The user does not have the authority to create a group", AUTH_FAILURE, CREATE_GROUP_AUTH_FAILURE);
+	public static final SQLStates SSO_OIDC_INVALID_TOKEN = new SQLStates(
+		"The provided SSO OIDC token is invalid", AUTH_FAILURE, SSO_OIDC_INVALID_TOKEN_CODE);
+	public static final SQLStates SSO_OIDC_INVALID_TOKEN_ISSUER = new SQLStates(
+		"The supplied token issuer does not match the database configuration", AUTH_FAILURE, SSO_OIDC_INVALID_TOKEN_ISSUER_CODE);
+	public static final SQLStates SSO_OIDC_INVALID_TOKEN_AUDIENCE = new SQLStates(
+		"The supplied token is not the intended audience", AUTH_FAILURE, SSO_OIDC_INVALID_TOKEN_AUDIENCE_CODE);
+	public static final SQLStates SSO_OIDC_INVALID_TOKEN_CLAIM = new SQLStates(
+		"The supplied token is not the intended audience", AUTH_FAILURE, SSO_OIDC_INVALID_TOKEN_CLAIM_CODE);
+	public static final SQLStates SSO_OIDC_INVALID_TOKEN_SIGNATURE = new SQLStates(
+		"An invalid signing method (SignatureMethod) was used or the supplied token's signature is invalid", AUTH_FAILURE, SSO_OIDC_INVALID_TOKEN_SIGNATURE_CODE);
+	public static final SQLStates SSO_OIDC_TOKEN_SIGNING_KEY_NOT_FOUND = new SQLStates(
+		"The issuer did not provide a signing key for the supplied token", AUTH_FAILURE, SSO_OIDC_TOKEN_SIGNING_KEY_NOT_FOUND_CODE);
+	public static final SQLStates SSO_OIDC_EXPIRED_TOKEN = new SQLStates(
+		"The supplied token has expired", AUTH_FAILURE, SSO_OIDC_EXPIRED_TOKEN_CODE);												
+	public static final SQLStates SSO_OIDC_NETWORK_COMMUNICATIONS_ERROR = new SQLStates(
+		"Communication with the issuer failed", AUTH_FAILURE, SSO_OIDC_NETWORK_COMMUNICATIONS_ERROR_CODE);
+	public static final SQLStates SSO_OIDC_MAX_TOKEN_RENEWS_REACHED = new SQLStates(
+		"The maximum number of token refreshes has been reached", AUTH_FAILURE, SSO_OIDC_MAX_TOKEN_RENEWS_REACHED_CODE);	
+	public static final SQLStates SSO_OIDC_RESPONSE_INVALID_REQUEST_PAYLOAD = new SQLStates(
+		"During authentication, an invalid payload or an invalid federated OAuth connection string was used", AUTH_FAILURE, SSO_OIDC_RESPONSE_INVALID_REQUEST_PAYLOAD_CODE);
+	public static final SQLStates SSO_OIDC_RESPONSE_INVALID_BAD_CERT = new SQLStates(
+		"The x.509 certificate contained in the response is either malformed or does not match the expected certificate", AUTH_FAILURE, SSO_OIDC_RESPONSE_INVALID_BAD_CERT_CODE);	
+	public static final SQLStates SSO_OIDC_RESPONSE_INVALID_INTEGRATION_CONFIGURATION = new SQLStates(
+		"The IdP configuration is invalid", AUTH_FAILURE, SSO_OIDC_RESPONSE_INVALID_INTEGRATION_CONFIGURATION_CODE);	
+	public static final SQLStates SESSION_EXPIRED = new SQLStates(
+		"Session has expired. Refresh necessary.", AUTH_FAILURE, SESSION_EXPIRED_CODE);																			
+			
+	public static final SQLStates NO_CREATE_CONNECTION_AUTH = new SQLStates(
+			"The user does not have the authority to create a connection.", AUTH_FAILURE,
+			CREATE_CONNECTION_AUTH_FAILURE);
+	public static final SQLStates CREATE_TASK_FAILURE = new SQLStates("Failed to create task", SYSTEM_ERROR,
+			CREATE_TASK_FAILURE_CODE);
+	public static final SQLStates NO_DROP_CONNECTION_AUTH = new SQLStates(
+			"The user does not have the authority to drop the connection", AUTH_FAILURE, DROP_CONNECTION_AUTH_FAILURE);
+	public static final SQLStates NAKED_INTERVAL_TYPE = new SQLStates(
+			"If the result of an expression is a time interval type, it must be cast to an integral type",
+			BAD_DATA_TYPE, NAKED_INTERVAL_TYPE_CODE);
+	public static final SQLStates NOT_A_SELECT = new SQLStates(
+			"A SELECT statement was expected, but the command received was not a SELECT statement",
+			SQL_NOT_VALID_IN_CONTEXT, NOT_A_SELECT_CODE);
+	public static final SQLStates IS_A_SELECT = new SQLStates(
+			"A SELECT statement was found where we were not expecting a SELECT statement", SQL_NOT_VALID_IN_CONTEXT,
+			IS_A_SELECT_CODE);
+	public static final SQLStates ML_MODEL_NOT_FOUND = new SQLStates("Could not find an MLMODEL with that name",
+			OBJECT_NOT_FOUND_STATE, ML_MODEL_NOT_FOUND_CODE);
+	public static final SQLStates ML_MODEL_ALREADY_EXISTS = new SQLStates("An MLMODEL with that name already exists",
+			DUPLICATE_OBJECT, ML_MODEL_ALREADY_EXISTS_CODE);
+	public static final SQLStates NULL_OUTPUT_BUFFER = new SQLStates(
+			"A null pointer was passed for an output buffer location to an ODBC API call", GENERAL_DRIVER_ERROR,
+			NULL_OUTPUT_BUFFER_CODE);
+	public static final SQLStates NOT_IMPLEMENTED = new SQLStates("The requested function is not implemented",
+			NOT_IMPLEMENTED_STATE, NOT_IMPLEMENTED_CODE);
+	public static final SQLStates SEQUENCE_ERROR = new SQLStates("ODBC function sequence error", SEQUENCE_ERROR_STATE,
+			SEQUENCE_ERROR_CODE);
+	public static final SQLStates INVALID_ATTRIBUTE = new SQLStates("An invalid ODBC attribute was specified",
+			INVALID_ATTRIBUTE_STATE, INVALID_ATTRIBUTE_CODE);
+	public static final SQLStates INVALID_INPUT = new SQLStates("Invalid input to an ODBC API call",
+			INVALID_INPUT_STATE, INVALID_INPUT_CODE);
+	public static final SQLStates DYNAMIC_LINK_FAILURE = new SQLStates(
+			"The ODBC driver failed to load a required symbol from a shared library", GENERAL_DRIVER_ERROR,
+			DYNAMIC_LINK_FAILURE_CODE);
+	public static final SQLStates BAD_PARAM_NUM = new SQLStates("An invalid parameter marker number was specified",
+			BAD_PARAM_NUM_STATE, BAD_PARAM_NUM_CODE);
+	public static final SQLStates INVALID_C_DATA_TYPE = new SQLStates("An invalid C data type was specified",
+			INVALID_C_DATA_TYPE_STATE, INVALID_C_DATA_TYPE_CODE);
+	public static final SQLStates INVALID_SQL_DATA_TYPE = new SQLStates("An invalid SQL data type was specified",
+			INVALID_SQL_DATA_TYPE_STATE, INVALID_SQL_DATA_TYPE_CODE);
+	public static final SQLStates NO_CONNECTION = new SQLStates("No database connection exists", NO_CONNECTION_STATE,
+			NO_CONNECTION_CODE);
+	public static final SQLStates INVALID_PARAMETER_MARKER = new SQLStates(
+			"Invalid data was detected for a parameter marker", INVALID_PARAMETER_MARKER_STATE,
+			INVALID_PARAMETER_MARKER_CODE);
+	public static final SQLStates TRUNCATION = new SQLStates(
+			"Data was truncated while transferring data to/from the server", TRUNCATION_STATE, TRUNCATION_CODE);
+	public static final SQLStates INVALID_CURSOR_STATE = new SQLStates(
+			"The cursor was not in the necessary state for the requested operation", INVALID_CURSOR,
+			INVALID_CURSOR_CODE);
+	public static final SQLStates INVALID_BUFFER_LENGTH = new SQLStates("An invalid buffer length was specified",
+			INVALID_BUFFER_LENGTH_STATE, INVALID_BUFFER_LENGTH_CODE);
 	public static final SQLStates NO_ROW_DATA = new SQLStates("No data found", NO_ROW_DATA_STATE, NO_ROW_DATA_CODE);
-	public static final SQLStates INVALID_MATRIX_LITERAL = new SQLStates("The syntax of the matrix was invalid", SYNTAX_ERROR_STATE, INVALID_MATRIX_LITERAL_CODE);
-	public static final SQLStates WRONG_SHAPE_MATRIX_LITERAL = new SQLStates("The matrix has the wrong dimensions", SYNTAX_ERROR_STATE, WRONG_SHAPE_MATRIX_LITERAL_CODE);
-	public static final SQLStates EXCESSIVE_COST = new SQLStates("The estimated query cost exceeds limit", EXCESSIVE_COST_STATE, EXCESSIVE_COST_CODE);
-	public static final SQLStates ML_MODEL_ON_EMPTY_SET = new SQLStates("Training MLMODEL on no data", NO_ROW_DATA_STATE, ML_MODEL_ON_EMPTY_SET_CODE);
-	public static final SQLStates NO_RESULT_SET = new SQLStates("There is currently no result set", NO_CURSOR_STATE, NO_RESULT_SET_CODE);
-	public static final SQLStates MISSING_NULL_INDICATOR = new SQLStates("A null indicator pointer was required but was not provided", MISSING_NULL_INDICATOR_STATE, MISSING_NULL_INDICATOR_CODE);
-	public static final SQLStates INVALID_CONN_STR_ATTR = new SQLStates("An invalid connection string attribute was specified", INVALID_CONN_STR_ATTR_STATE, INVALID_CONN_STR_ATTR_CODE);
-	public static final SQLStates INVALID_DESCRIPTOR_INDEX = new SQLStates("An invalid descriptor record index was specified", INVALID_DESCRIPTOR_INDEX_STATE, INVALID_DESCRIPTOR_INDEX_CODE);
-	public static final SQLStates INVALID_DESCRIPTOR_INFORMATION = new SQLStates("An invalid or inconsistent descriptor field type was specified", INVALID_DESCRIPTOR_INFORMATION_STATE,
-		INVALID_DESCRIPTOR_INFORMATION_CODE);
-	public static final SQLStates INVALID_DESCRIPTOR_FIELD = new SQLStates("An invalid descriptor field was specified", INVALID_DESCRIPTOR_FIELD_STATE, INVALID_DESCRIPTOR_FIELD_CODE);
-	public static final SQLStates COPY_TARGET_IS_IRD = new SQLStates("The target handle passed to SQLCopyDesc was an IRD", COPY_TARGET_IS_IRD_STATE, COPY_TARGET_IS_IRD_CODE);
-	public static final SQLStates INVALID_IMPLICIT_DESC_HANDLE_USE = new SQLStates("Invalid use of an automatically allocated descriptor handle", INVALID_IMPLICIT_DESC_HANDLE_USE_STATE,
-		INVALID_IMPLICIT_DESC_HANDLE_USE_CODE);
-	public static final SQLStates NO_CREATE_MLMODEL_AUTH = new SQLStates("The user does not have the authority to create an MLMODEL", AUTH_FAILURE, NO_CREATE_MLMODEL_AUTH_CODE);
-	public static final SQLStates NO_DROP_MLMODEL_AUTH = new SQLStates("The user does not have the authority to drop the MLMODEL", AUTH_FAILURE, NO_DROP_MLMODEL_AUTH_CODE);
-	public static final SQLStates DIVDE_BY_ZERO = new SQLStates("Division by zero is invalid", DIVIDE_BY_ZERO_STATE, DIVIDE_BY_ZERO_CODE);
-	public static final SQLStates OUT_OF_RANGE = new SQLStates("A numeric value is out of range", OUT_OF_RANGE_STATE, NUMERIC_VALUE_OUT_OF_RANGE_CODE);
-	public static final SQLStates INVALID_FLOATING_POINT_OPERATION = new SQLStates("Invalid floating point operation", INVALID_FLOATING_POINT_OPERATION_STATE, INVALID_FLOATING_POINT_OPERATION_CODE);
-	public static final SQLStates CONFLICT = new SQLStates("The action conflicts with the current state of the database", CONFLICT_STATE, CONFLICT_CODE);
-	public static final SQLStates OPERATION_CANCELED = new SQLStates("Operation was canceled or aborted", OPERATION_CANCELED_STATE, OPERATION_CANCELED_CODE);
+	public static final SQLStates INVALID_MATRIX_LITERAL = new SQLStates("The syntax of the matrix was invalid",
+			SYNTAX_ERROR_STATE, INVALID_MATRIX_LITERAL_CODE);
+	public static final SQLStates WRONG_SHAPE_MATRIX_LITERAL = new SQLStates("The matrix has the wrong dimensions",
+			SYNTAX_ERROR_STATE, WRONG_SHAPE_MATRIX_LITERAL_CODE);
+	public static final SQLStates EXCESSIVE_COST = new SQLStates("The estimated query cost exceeds limit",
+			EXCESSIVE_COST_STATE, EXCESSIVE_COST_CODE);
+	public static final SQLStates ML_MODEL_ON_EMPTY_SET = new SQLStates("Training MLMODEL on no data",
+			NO_ROW_DATA_STATE, ML_MODEL_ON_EMPTY_SET_CODE);
+	public static final SQLStates NO_RESULT_SET = new SQLStates("There is currently no result set", NO_CURSOR_STATE,
+			NO_RESULT_SET_CODE);
+	public static final SQLStates MISSING_NULL_INDICATOR = new SQLStates(
+			"A null indicator pointer was required but was not provided", MISSING_NULL_INDICATOR_STATE,
+			MISSING_NULL_INDICATOR_CODE);
+	public static final SQLStates INVALID_CONN_STR_ATTR = new SQLStates(
+			"An invalid connection string attribute was specified", INVALID_CONN_STR_ATTR_STATE,
+			INVALID_CONN_STR_ATTR_CODE);
+	public static final SQLStates INVALID_DESCRIPTOR_INDEX = new SQLStates(
+			"An invalid descriptor record index was specified", INVALID_DESCRIPTOR_INDEX_STATE,
+			INVALID_DESCRIPTOR_INDEX_CODE);
+	public static final SQLStates INVALID_DESCRIPTOR_INFORMATION = new SQLStates(
+			"An invalid or inconsistent descriptor field type was specified", INVALID_DESCRIPTOR_INFORMATION_STATE,
+			INVALID_DESCRIPTOR_INFORMATION_CODE);
+	public static final SQLStates INVALID_DESCRIPTOR_FIELD = new SQLStates("An invalid descriptor field was specified",
+			INVALID_DESCRIPTOR_FIELD_STATE, INVALID_DESCRIPTOR_FIELD_CODE);
+	public static final SQLStates COPY_TARGET_IS_IRD = new SQLStates(
+			"The target handle passed to SQLCopyDesc was an IRD", COPY_TARGET_IS_IRD_STATE, COPY_TARGET_IS_IRD_CODE);
+	public static final SQLStates INVALID_IMPLICIT_DESC_HANDLE_USE = new SQLStates(
+			"Invalid use of an automatically allocated descriptor handle", INVALID_IMPLICIT_DESC_HANDLE_USE_STATE,
+			INVALID_IMPLICIT_DESC_HANDLE_USE_CODE);
+	public static final SQLStates NO_CREATE_MLMODEL_AUTH = new SQLStates(
+			"The user does not have the authority to create an MLMODEL", AUTH_FAILURE, NO_CREATE_MLMODEL_AUTH_CODE);
+	public static final SQLStates NO_DROP_MLMODEL_AUTH = new SQLStates(
+			"The user does not have the authority to drop the MLMODEL", AUTH_FAILURE, NO_DROP_MLMODEL_AUTH_CODE);
+	public static final SQLStates DIVDE_BY_ZERO = new SQLStates("Division by zero is invalid", DIVIDE_BY_ZERO_STATE,
+			DIVIDE_BY_ZERO_CODE);
+	public static final SQLStates OUT_OF_RANGE = new SQLStates("A numeric value is out of range", OUT_OF_RANGE_STATE,
+			NUMERIC_VALUE_OUT_OF_RANGE_CODE);
+	public static final SQLStates INVALID_FLOATING_POINT_OPERATION = new SQLStates("Invalid floating point operation",
+			INVALID_FLOATING_POINT_OPERATION_STATE, INVALID_FLOATING_POINT_OPERATION_CODE);
+	public static final SQLStates CONFLICT = new SQLStates(
+			"The action conflicts with the current state of the database", CONFLICT_STATE, CONFLICT_CODE);
+	public static final SQLStates OPERATION_CANCELED = new SQLStates("Operation was canceled or aborted",
+			OPERATION_CANCELED_STATE, OPERATION_CANCELED_CODE);
 	public static final SQLStates INVALID_QUERY_PRIORITY = new SQLStates(
-		"You do not have the authorization to submit the query, either due to requesting too high a priority or because you have no query privileges", SYNTAX_ERROR_STATE, INVALID_QUERY_PRIORITY_CODE);
-	public static final SQLStates IO_ERROR = new SQLStates("An IO error occurred", NON_DATABASE_RESOURCE_NOT_AVAILABLE_STATE, IO_ERROR_CODE);
-	public static final SQLStates INCOMPATIBLE_TYPES_IN_CASE = new SQLStates("Two incompatible data types were specified as return value in a case statement", INCOMPATIBLE_TYPES_IN_CASE_STATE,
-		INCOMPATIBLE_TYPES_IN_CASE_CODE);
-	public static final SQLStates NOT_COMPATIBLE_COLS = new SQLStates("Columns for first and second select for the UNION, EXCEPT or INTERSECT operator are not compatible.", NOT_COMPATIBLE_COLS_STATE,
-		NOT_COMPATIBLE_COLS_CODE);
-	public static final SQLStates JOIN_LEADS_TO_DUPLICATE_COL_NAME = new SQLStates("Columns must be renamed so that column names are distinct after a join", AMBIGUOUS_COL_STATE,
-		JOIN_LEADS_TO_DUPLICATE_COL_NAME_CODE);
-	public static final SQLStates SCALAR_SUBQUERY_CARDINALITY_VIOLATION = new SQLStates("A scalar subquery has too many result values", SCALAR_SUBQUERY_CARDINALITY_VIOLATION_STATE,
-		SCALAR_SUBQUERY_CARDINALITY_VIOLATION_CODE);
-	public static final SQLStates INVALID_CASE_CONDITION = new SQLStates("An expression in the case condition is not allowed", INVALID_CASE_CONDITION_STATE, INVALID_CASE_CONDITION_CODE);
-	public static final SQLStates INVALID_JOIN_CONDITION = new SQLStates("An expression in the join condition is not allowed", INVALID_JOIN_CONDITION_STATE, INVALID_JOIN_CONDITION_CODE);
-	public static final SQLStates AGGREGATION_NOT_ALLOWED_IN_WINDOW_CONSTRUCTION = new SQLStates("Aggregation is not allowed in the PARTITION BY or ORDER BY clauses of a windowed aggregate",
-		AGGREGATION_NOT_ALLOWED_IN_WINDOW_CONSTRUCTION_STATE, AGGREGATION_NOT_ALLOWED_IN_WINDOW_CONSTRUCTION_CODE);
-	public static final SQLStates EXPECTED_CONST_WINDOWED_AGGREGATE_ARGUMENT = new SQLStates("A non-constant value was found where a constant was expected in an argument to a windowed aggregate",
-		EXPECTED_CONST_WINDOWED_AGGREGATE_ARGUMENT_STATE, EXPECTED_CONST_WINDOWED_AGGREGATE_AGRUMENT_CODE);
-	public static final SQLStates BAD_RANGE_FRAME_SPECIFICATION = new SQLStates("Range-based framing does not allow the PRECEDING or FOLLOWING keywords", BAD_RANGE_FRAME_SPECIFICATION_STATE,
-		BAD_RANGE_FRAME_SPECIFICATION_CODE);
-	public static final SQLStates BAD_WINDOWED_ORDER_BY = new SQLStates("Order by with a column ordinal is not allowed in a windowed aggregate", BAD_WINDOWED_ORDER_BY_STATE, BAD_WINDOWED_ORDER_BY_CODE);
-	public static final SQLStates FRAME_WITHOUT_ORDERING = new SQLStates("A frame specification is not allowed if no ORDER BY is specified in a windowed aggregate", FRAME_WITHOUT_ORDERING_STATE,
-		FRAME_WITHOUT_ORDERING_CODE);
-	public static final SQLStates BAD_END_FRAME_BOUND = new SQLStates("UNBOUNDED PRECEDING is only allowed on the starting frame bound", BAD_END_FRAME_BOUND_STATE, BAD_END_FRAME_BOUND_CODE);
-	public static final SQLStates BAD_START_FRAME_BOUND = new SQLStates("UNBOUNDED FOLLOWING is only allowed on the ending frame bound", BAD_START_FRAME_BOUND_STATE, BAD_START_FRAME_BOUND_CODE);
-	public static final SQLStates INVALID_FRAME_BOUNDS = new SQLStates("The ending frame bound cannot be less than the starting frame bound", INVALID_FRAME_BOUNDS_STATE, INVALID_FRAME_BOUNDS_CODE);
-	public static final SQLStates FRAME_SPEC_NOT_ALLOWED = new SQLStates("No frame specification is allowed for this particular windowed aggregate", FRAME_SPEC_NOT_ALLOWED_STATE,
-		FRAME_SPEC_NOT_ALLOWED_CODE);
-	public static final SQLStates WINDOW_FUNC_EXPECTED_POSITIVE_CONSTANT = new SQLStates("A window function was expecting a positive integer argument", WINDOW_FUNC_EXPECTED_POSITIVE_CONSTANT_STATE,
-		WINDOW_FUNC_EXPECTED_POSITIVE_CONSTANT_CODE);
-	public static final SQLStates UNDEFINED_EXCEPTION = new SQLStates("Undefined exception", UNDEFINED_EXCEPTION_STATE, UNDEFINED_EXCEPTION_CODE); // used only when a give sql code is not found in
+			"You do not have the authorization to submit the query, either due to requesting too high a priority or because you have no query privileges",
+			SYNTAX_ERROR_STATE, INVALID_QUERY_PRIORITY_CODE);
+	public static final SQLStates IO_ERROR = new SQLStates("An IO error occurred",
+			NON_DATABASE_RESOURCE_NOT_AVAILABLE_STATE, IO_ERROR_CODE);
+	public static final SQLStates INCOMPATIBLE_TYPES_IN_CASE = new SQLStates(
+			"Two incompatible data types were specified as return value in a case statement",
+			INCOMPATIBLE_TYPES_IN_CASE_STATE, INCOMPATIBLE_TYPES_IN_CASE_CODE);
+	public static final SQLStates NOT_COMPATIBLE_COLS = new SQLStates(
+			"Columns for first and second select for the UNION, EXCEPT or INTERSECT operator are not compatible.",
+			NOT_COMPATIBLE_COLS_STATE, NOT_COMPATIBLE_COLS_CODE);
+	public static final SQLStates JOIN_LEADS_TO_DUPLICATE_COL_NAME = new SQLStates(
+			"Columns must be renamed so that column names are distinct after a join", AMBIGUOUS_COL_STATE,
+			JOIN_LEADS_TO_DUPLICATE_COL_NAME_CODE);
+	public static final SQLStates SCALAR_SUBQUERY_CARDINALITY_VIOLATION = new SQLStates(
+			"A scalar subquery has too many result values", SCALAR_SUBQUERY_CARDINALITY_VIOLATION_STATE,
+			SCALAR_SUBQUERY_CARDINALITY_VIOLATION_CODE);
+	public static final SQLStates INVALID_CASE_CONDITION = new SQLStates(
+			"An expression in the case condition is not allowed", INVALID_CASE_CONDITION_STATE,
+			INVALID_CASE_CONDITION_CODE);
+	public static final SQLStates INVALID_JOIN_CONDITION = new SQLStates(
+			"An expression in the join condition is not allowed", INVALID_JOIN_CONDITION_STATE,
+			INVALID_JOIN_CONDITION_CODE);
+	public static final SQLStates AGGREGATION_NOT_ALLOWED_IN_WINDOW_CONSTRUCTION = new SQLStates(
+			"Aggregation is not allowed in the PARTITION BY or ORDER BY clauses of a windowed aggregate",
+			AGGREGATION_NOT_ALLOWED_IN_WINDOW_CONSTRUCTION_STATE, AGGREGATION_NOT_ALLOWED_IN_WINDOW_CONSTRUCTION_CODE);
+	public static final SQLStates EXPECTED_CONST_WINDOWED_AGGREGATE_ARGUMENT = new SQLStates(
+			"A non-constant value was found where a constant was expected in an argument to a windowed aggregate",
+			EXPECTED_CONST_WINDOWED_AGGREGATE_ARGUMENT_STATE, EXPECTED_CONST_WINDOWED_AGGREGATE_AGRUMENT_CODE);
+	public static final SQLStates BAD_RANGE_FRAME_SPECIFICATION = new SQLStates(
+			"Range-based framing does not allow the PRECEDING or FOLLOWING keywords",
+			BAD_RANGE_FRAME_SPECIFICATION_STATE, BAD_RANGE_FRAME_SPECIFICATION_CODE);
+	public static final SQLStates BAD_WINDOWED_ORDER_BY = new SQLStates(
+			"Order by with a column ordinal is not allowed in a windowed aggregate", BAD_WINDOWED_ORDER_BY_STATE,
+			BAD_WINDOWED_ORDER_BY_CODE);
+	public static final SQLStates FRAME_WITHOUT_ORDERING = new SQLStates(
+			"A frame specification is not allowed if no ORDER BY is specified in a windowed aggregate",
+			FRAME_WITHOUT_ORDERING_STATE, FRAME_WITHOUT_ORDERING_CODE);
+	public static final SQLStates BAD_END_FRAME_BOUND = new SQLStates(
+			"UNBOUNDED PRECEDING is only allowed on the starting frame bound", BAD_END_FRAME_BOUND_STATE,
+			BAD_END_FRAME_BOUND_CODE);
+	public static final SQLStates BAD_START_FRAME_BOUND = new SQLStates(
+			"UNBOUNDED FOLLOWING is only allowed on the ending frame bound", BAD_START_FRAME_BOUND_STATE,
+			BAD_START_FRAME_BOUND_CODE);
+	public static final SQLStates INVALID_FRAME_BOUNDS = new SQLStates(
+			"The ending frame bound cannot be less than the starting frame bound", INVALID_FRAME_BOUNDS_STATE,
+			INVALID_FRAME_BOUNDS_CODE);
+	public static final SQLStates FRAME_SPEC_NOT_ALLOWED = new SQLStates(
+			"No frame specification is allowed for this particular windowed aggregate", FRAME_SPEC_NOT_ALLOWED_STATE,
+			FRAME_SPEC_NOT_ALLOWED_CODE);
+	public static final SQLStates WINDOW_FUNC_EXPECTED_POSITIVE_CONSTANT = new SQLStates(
+			"A window function was expecting a positive integer argument", WINDOW_FUNC_EXPECTED_POSITIVE_CONSTANT_STATE,
+			WINDOW_FUNC_EXPECTED_POSITIVE_CONSTANT_CODE);
+	public static final SQLStates UNDEFINED_EXCEPTION = new SQLStates("Undefined exception", UNDEFINED_EXCEPTION_STATE,
+			UNDEFINED_EXCEPTION_CODE); // used only when a give sql code is not found in
 	// SQLCodeToException map
-	public static final SQLStates MISSING_ORDER_BY = new SQLStates("The requested window function requires an ORDER BY in the OVER() clause", SYNTAX_ERROR_STATE, MISSING_ORDER_BY_CODE);
-	public static final SQLStates PLAN_COMPILATION_ERROR = new SQLStates("Plan Compilation Error", PLAN_COMPILATION_ERROR_STATE, PLAN_COMPILATION_ERROR_CODE);
-	public static final SQLStates UNABLE_TO_INVERT_SINGULAR_MATRIX = new SQLStates("Unable to invert singular matrix", SYSTEM_ERROR, UNABLE_TO_INVERT_SINGULAR_MATRIX_CODE);
-    	public static final SQLStates UNABLE_TO_DECOMPOSE_SINGULAR_MATRIX = new SQLStates("Unable to perform LUP decomposition on this singular matrix", SYSTEM_ERROR, UNABLE_TO_DECOMPOSE_SINGULAR_MATRIX_CODE);
-	public static final SQLStates TKT_LIMIT_REACHED = new SQLStates("TKT Operator reached limit", SYSTEM_ERROR, TKT_LIMIT_REACHED_CODE);
-	public static final SQLStates OUT_OF_MEMORY = new SQLStates("Out of memory", OUT_OF_MEMORY_STATE, OUT_OF_MEMORY_CODE);
-	public static final SQLStates SEGMENT_NOT_AVAILABLE = new SQLStates("Data required for query is not available", STORAGE_OR_DATABASE_RESOURCE_NOT_AVAILABLE_STATE, SEGMENT_NOT_AVAILABLE_CODE);
-	public static final SQLStates SYSTEM_INITIALIZING = new SQLStates("The system is initializing", STORAGE_OR_DATABASE_RESOURCE_NOT_AVAILABLE_STATE, SYSTEM_INITIALIZING_CODE);
-	public static final SQLStates INVALID_AGGREGATION = new SQLStates("Invalid aggregation", INVALID_AGGREGATION_STATE, INVALID_AGGREGATION_CODE);
-	public static final SQLStates ST_POINT_INVALID_CONVERSION_FROM_NULL = new SQLStates("Invalid st_point conversion from NULL", ST_POINT_INVALID_CONVERSION_FROM_NULL_STATE,
-		ST_POINT_INVALID_CONVERSION_FROM_NULL_CODE);
-	public static final SQLStates VALUE_TOO_LARGE = new SQLStates("Value larger than internal limits", VALUE_TOO_LARGE_STATE, VALUE_TOO_LARGE_CODE);
-	public static final SQLStates CASE_WITHIN_CASE = new SQLStates("A CASE expression within a CASE expression is not allowed", INVALID_CASE_CONDITION_STATE, CASE_WITHIN_CASE_CODE);
-	public static final SQLStates OUT_OF_TEMP_DISK_SPACE = new SQLStates("Out of temporary disk space", STORAGE_OR_DATABASE_RESOURCE_NOT_AVAILABLE_STATE, OUT_OF_TEMP_DISK_SPACE_CODE);
-	public static final SQLStates INVALID_NEW_USER_PWD = new SQLStates("The supplied password for the new user is invalid", SYNTAX_ERROR_STATE, INVALID_NEW_USER_PWD_CODE);
-	public static final SQLStates PRIVILEGE_ALREADY_POSSESSED = new SQLStates("The privilege target already has the privilege.", DUPLICATE_OBJECT, PRIVILEGE_ALREADY_POSSESSED_CODE);
-	public static final SQLStates PRIVILEGE_NOT_POSSESSED = new SQLStates("The privilege target does not have that privilege.", OBJECT_NOT_FOUND_STATE, PRIVILEGE_NOT_POSSESSED_CODE);
-	public static final SQLStates NO_GRANT_AUTH = new SQLStates("The user does not have the authority to grant this privilege.", AUTH_FAILURE, NO_GRANT_AUTH_CODE);
+	public static final SQLStates MISSING_ORDER_BY = new SQLStates(
+			"The requested window function requires an ORDER BY in the OVER() clause", SYNTAX_ERROR_STATE,
+			MISSING_ORDER_BY_CODE);
+	public static final SQLStates PLAN_COMPILATION_ERROR = new SQLStates("Plan Compilation Error",
+			PLAN_COMPILATION_ERROR_STATE, PLAN_COMPILATION_ERROR_CODE);
+	public static final SQLStates UNABLE_TO_INVERT_SINGULAR_MATRIX = new SQLStates("Unable to invert singular matrix",
+			SYSTEM_ERROR, UNABLE_TO_INVERT_SINGULAR_MATRIX_CODE);
+	public static final SQLStates UNABLE_TO_DECOMPOSE_SINGULAR_MATRIX = new SQLStates(
+			"Unable to perform LUP decomposition on this singular matrix", SYSTEM_ERROR,
+			UNABLE_TO_DECOMPOSE_SINGULAR_MATRIX_CODE);
+	public static final SQLStates TKT_LIMIT_REACHED = new SQLStates("TKT Operator reached limit", SYSTEM_ERROR,
+			TKT_LIMIT_REACHED_CODE);
+	public static final SQLStates OUT_OF_MEMORY = new SQLStates("Out of memory", OUT_OF_MEMORY_STATE,
+			OUT_OF_MEMORY_CODE);
+	public static final SQLStates SEGMENT_NOT_AVAILABLE = new SQLStates("Data required for query is not available",
+			STORAGE_OR_DATABASE_RESOURCE_NOT_AVAILABLE_STATE, SEGMENT_NOT_AVAILABLE_CODE);
+	public static final SQLStates SYSTEM_INITIALIZING = new SQLStates("The system is initializing",
+			STORAGE_OR_DATABASE_RESOURCE_NOT_AVAILABLE_STATE, SYSTEM_INITIALIZING_CODE);
+	public static final SQLStates INVALID_AGGREGATION = new SQLStates("Invalid aggregation", INVALID_AGGREGATION_STATE,
+			INVALID_AGGREGATION_CODE);
+	public static final SQLStates ST_POINT_INVALID_CONVERSION_FROM_NULL = new SQLStates(
+			"Invalid st_point conversion from NULL", ST_POINT_INVALID_CONVERSION_FROM_NULL_STATE,
+			ST_POINT_INVALID_CONVERSION_FROM_NULL_CODE);
+	public static final SQLStates VALUE_TOO_LARGE = new SQLStates("Value larger than internal limits",
+			VALUE_TOO_LARGE_STATE, VALUE_TOO_LARGE_CODE);
+	public static final SQLStates CASE_WITHIN_CASE = new SQLStates(
+			"A CASE expression within a CASE expression is not allowed", INVALID_CASE_CONDITION_STATE,
+			CASE_WITHIN_CASE_CODE);
+	public static final SQLStates OUT_OF_TEMP_DISK_SPACE = new SQLStates("Out of temporary disk space",
+			STORAGE_OR_DATABASE_RESOURCE_NOT_AVAILABLE_STATE, OUT_OF_TEMP_DISK_SPACE_CODE);
+	public static final SQLStates INVALID_NEW_USER_PWD = new SQLStates(
+			"The supplied password for the new user is invalid", SYNTAX_ERROR_STATE, INVALID_NEW_USER_PWD_CODE);
+	public static final SQLStates PRIVILEGE_ALREADY_POSSESSED = new SQLStates(
+			"The privilege target already has the privilege.", DUPLICATE_OBJECT, PRIVILEGE_ALREADY_POSSESSED_CODE);
+	public static final SQLStates PRIVILEGE_NOT_POSSESSED = new SQLStates(
+			"The privilege target does not have that privilege.", OBJECT_NOT_FOUND_STATE, PRIVILEGE_NOT_POSSESSED_CODE);
+	public static final SQLStates NO_GRANT_AUTH = new SQLStates(
+			"The user does not have the authority to grant this privilege.", AUTH_FAILURE, NO_GRANT_AUTH_CODE);
 
-	public static final SQLStates NODE_NOT_FOUND = new SQLStates("Node not found", OBJECT_NOT_FOUND_STATE, NODE_NOT_FOUND_CODE);
-	public static final SQLStates TASK_ALREADY_IN_PROGRESS = new SQLStates("Task already in progress", DUPLICATE_OBJECT, TASK_ALREADY_IN_PROGRESS_ERROR_CODE);
-	public static final SQLStates ID_NOT_FOUND = new SQLStates("The provided object was not found", OBJECT_NOT_FOUND_STATE, ID_NOT_FOUND_CODE);
-	public static final SQLStates ROLE_NOT_FOUND = new SQLStates("The referenced role does not exist", OBJECT_NOT_FOUND_STATE, ROLE_NOT_FOUND_CODE);
-	public static final SQLStates OBJECT_NOT_FOUND_WARN = new SQLStates("The referenced object does not exist", OBJECT_NOT_FOUND_STATE, OBJECT_NOT_FOUND_WARN_CODE);
-	public static final SQLStates OBJECT_ALREADY_EXISTS_WARN = new SQLStates("An object with that name exists", DUPLICATE_OBJECT, OBJECT_ALREADY_EXISTS_WARN_CODE);
+	public static final SQLStates NODE_NOT_FOUND = new SQLStates("Node not found", OBJECT_NOT_FOUND_STATE,
+			NODE_NOT_FOUND_CODE);
+	public static final SQLStates TASK_ALREADY_IN_PROGRESS = new SQLStates("Task already in progress", DUPLICATE_OBJECT,
+			TASK_ALREADY_IN_PROGRESS_ERROR_CODE);
+	public static final SQLStates ID_NOT_FOUND = new SQLStates("The provided object was not found",
+			OBJECT_NOT_FOUND_STATE, ID_NOT_FOUND_CODE);
+	public static final SQLStates ROLE_NOT_FOUND = new SQLStates("The referenced role does not exist",
+			OBJECT_NOT_FOUND_STATE, ROLE_NOT_FOUND_CODE);
+	public static final SQLStates OBJECT_NOT_FOUND_WARN = new SQLStates("The referenced object does not exist",
+			OBJECT_NOT_FOUND_STATE, OBJECT_NOT_FOUND_WARN_CODE);
+	public static final SQLStates OBJECT_ALREADY_EXISTS_WARN = new SQLStates("An object with that name exists",
+			DUPLICATE_OBJECT, OBJECT_ALREADY_EXISTS_WARN_CODE);
 
-	public static final SQLException newGenericException(final Exception e)
-	{
+	public static final SQLException newGenericException(final Exception e) {
 		String reason = e.getMessage();
-		if (reason == null)
-		{
+		if (reason == null) {
 			reason = "";
 		}
 
@@ -435,36 +672,30 @@ public final class SQLStates implements Cloneable
 	private final String sqlState;
 	private final int sqlCode;
 
-	private SQLStates(final String reason, final String sqlState, final int sqlCode)
-	{
+	private SQLStates(final String reason, final String sqlState, final int sqlCode) {
 		this.reason = reason;
 		this.sqlState = sqlState;
 		this.sqlCode = sqlCode;
 	}
 
 	@Override
-	public SQLException clone()
-	{
+	public SQLException clone() {
 		return new SQLException(reason, sqlState, sqlCode);
 	}
 
-	public SQLException cloneAndSpecify(final String newReason)
-	{
+	public SQLException cloneAndSpecify(final String newReason) {
 		return new SQLException(newReason, sqlState, sqlCode);
 	}
 
-	public boolean equals(final SQLException e)
-	{
+	public boolean equals(final SQLException e) {
 		return e.getErrorCode() == sqlCode;
 	}
 
-	public int getSqlCode()
-	{
+	public int getSqlCode() {
 		return sqlCode;
 	}
 
-	public String getSqlState()
-	{
+	public String getSqlState() {
 		return sqlState;
 	}
 }
