@@ -1367,7 +1367,6 @@ public class XGConnection implements Connection
 			receivedSecurityToken.getIssuerFingerprint().toString()
 		);
 		this.sessionState = this.session.currentState; // record the current state.
-		Session.SecurityToken securityToken = sessionState.securityToken.get();
 		// Save the secondary interface for reconnecting and recirecting.
 		saveSecondaryInterfaces(sso2ResponseBuilder.getCmdcompsList(), sso2ResponseBuilder.getSecondaryList());
 		// Handle redirect
@@ -2036,7 +2035,7 @@ public class XGConnection implements Connection
 		try{
 			processResponseType(rType, response);
 		} catch (SQLException e){
-			if(e instanceof SQLException && SQLStates.SESSION_EXPIRED.equals((SQLException) e)){
+			if(SQLStates.SESSION_EXPIRED.equals((SQLException) e)){
 				LOGGER.log(Level.INFO, "getSchemaFromServer() received session expired. Attempting to refresh session");
 				// Refresh my session.
 				this.refreshSession();
