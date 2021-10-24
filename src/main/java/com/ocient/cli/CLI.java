@@ -748,6 +748,16 @@ public class CLI
 		}
 	}
 
+	private static void forceRedirect()
+	{
+		if (!isConnected())
+		{
+			System.out.println("No database connection exists");
+			return;
+		}
+		((XGStatement) stmt).setForceNextRedirect();
+	}
+
 	private static void getSchema(final String cmd)
 	{
 		long start = 0;
@@ -1898,6 +1908,9 @@ public class CLI
 		else if (startsWithIgnoreCase(cmd, "FORCE EXTERNAL"))
 		{
 			forceExternal(cmd);
+		}
+		else if (startsWithIgnoreCase(cmd, "FORCE REDIRECT")){
+			forceRedirect();
 		}
 		else if (startsWithIgnoreCase(cmd, "EXPORT TABLE"))
 		{

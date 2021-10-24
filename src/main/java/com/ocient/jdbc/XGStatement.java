@@ -415,7 +415,8 @@ public class XGStatement implements Statement
 
 	private final ArrayList<SQLWarning> warnings = new ArrayList<>();
 
-	protected boolean force;
+	protected boolean force; // Whether we are blocking redirects
+	protected boolean forceNextRedirect; // Whether the next query is forced redirected. Does nothing if force = true
 
 	// the tmeout is inherited from the connection but can be updated
 	// via setQueryTimeout()
@@ -2082,6 +2083,7 @@ public class XGStatement implements Statement
 		warnings.clear();
 		force = false;
 		oneShotForce = false;
+		forceNextRedirect = false;
 		timeoutMillis = conn.getTimeoutMillis();
 		conn.reset();
 	}
@@ -2232,6 +2234,12 @@ public class XGStatement implements Statement
 					{
 						setForce.invoke(b1, true);
 						oneShotForce = false;
+					}
+					if(requestType == Request.RequestType.EXECUTE_QUERY && forceNextRedirect){
+						final Method setForceRedirect = b1.getClass().getMethod("setForceRedirect", boolean.class);
+						LOGGER.log(Level.INFO, "A redirect is being forced in execute query");
+						setForceRedirect.invoke(b1, true);
+						forceNextRedirect = false;
 					}
 				}
 			}
@@ -2744,6 +2752,10 @@ public class XGStatement implements Statement
 	public void setRunningQueryThread(final Thread t)
 	{
 		runningQueryThread.set(t);
+	}
+
+	public void setForceNextRedirect(){
+		forceNextRedirect = true;
 	}
 
 	private int setSchema(final String cmd) throws SQLException
