@@ -293,6 +293,7 @@ message ExecuteQuery
 {
 	string sql = 1;
 	bool force = 2;
+	bool forceRedirect = 3;
 }
 
 message ExecuteQueryResponse
