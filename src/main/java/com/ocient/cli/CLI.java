@@ -75,32 +75,6 @@ public class CLI
 		return new String(hexChars);
 	}
 
-	private static void cancelQuery(final String cmd)
-	{
-		long start = 0;
-		long end = 0;
-		if (!isConnected())
-		{
-			System.out.println("No database connection exists");
-			return;
-		}
-
-		try
-		{
-			start = System.currentTimeMillis();
-			stmt.execute(cmd);
-			printWarnings(stmt);
-			end = System.currentTimeMillis();
-
-			printTime(start, end);
-		}
-		catch (final Exception e)
-		{
-			System.out.println("CLI Error: " + e.getMessage());
-			lastCommandErrored = true;
-		}
-	}
-
 	private static void connectTo(final String cmd)
 	{
 		if (isConnected())
@@ -446,16 +420,11 @@ public class CLI
 		}
 	}
 
-	private static boolean isConnected()
-	{
-		if (conn != null)
-		{
-			return ((XGConnection) conn).connected();
-		}
-		return false;
-	}
+	/*
+	 * For commands which execute but does not need to print the result set.
+	 */
 
-	private static void killQuery(final String cmd)
+	private static void executeNoPrint(final String cmd)
 	{
 		long start = 0;
 		long end = 0;
@@ -479,6 +448,15 @@ public class CLI
 			System.out.println("CLI Error: " + e.getMessage());
 			lastCommandErrored = true;
 		}
+	}	
+
+	private static boolean isConnected()
+	{
+		if (conn != null)
+		{
+			return ((XGConnection) conn).connected();
+		}
+		return false;
 	}
 
 	private static void listIndexes(final String cmd)
@@ -1250,22 +1228,17 @@ public class CLI
 		{
 			trace = false;
 		}
-		else if (startsWithIgnoreCase(cmd, "SET SCHEMA"))
-		{
-			setSchema(cmd);
-		}
-		// recognize explain pipeline not as explain
-		else if (startsWithIgnoreCase(cmd, "EXPLAIN PIPELINE"))
-		{
-			executeAndPrint(cmd);
-		}
 		else if (startsWithIgnoreCase(cmd, "EXPLAIN") || startsWithIgnoreCase(cmd, "GET SCHEMA") || startsWithIgnoreCase(cmd, "GET JDBC VERSION")
 			|| startsWithIgnoreCase(cmd, "GET SERVER SESSION ID") || startsWithIgnoreCase(cmd, "LIST TABLE PRIVILEGES") || startsWithIgnoreCase(cmd, "PLAN EXECUTE")
-			|| startsWithIgnoreCase(cmd, "PLAN EXECUTE") || startsWithIgnoreCase(cmd, "PLAN EXPLAIN") || startsWithIgnoreCase(cmd, "LIST ALL QUERIES")
+			|| startsWithIgnoreCase(cmd, "PLAN EXPLAIN") || startsWithIgnoreCase(cmd, "LIST ALL QUERIES")
 			|| startsWithIgnoreCase(cmd, "LIST ALL COMPLETED QUERIES") || startsWithIgnoreCase(cmd, "EXPORT TABLE") || startsWithIgnoreCase(cmd, "EXPORT VIEW")
 			|| startsWithIgnoreCase(cmd, "EXPORT TRANSLATION") || startsWithIgnoreCase(cmd, "CHECK DATA"))
 		{
 			executeAndPrint(cmd);
+		} 
+		else if(startsWithIgnoreCase(cmd, "CANCEL") || startsWithIgnoreCase(cmd, "KILL") || startsWithIgnoreCase(cmd, "SET SCHEMA"))
+		{
+			executeNoPrint(cmd);
 		}
 		else if (startsWithIgnoreCase(cmd, "CREATE") || startsWithIgnoreCase(cmd, "DROP") || startsWithIgnoreCase(cmd, "ALTER") || startsWithIgnoreCase(cmd, "TRUNCATE")
 			|| startsWithIgnoreCase(cmd, "SET PSO") || startsWithIgnoreCase(cmd, "SET MAXROWS") || startsWithIgnoreCase(cmd, "SET MAXTIME") || startsWithIgnoreCase(cmd, "SET MAXTEMPDISK")
@@ -1305,14 +1278,6 @@ public class CLI
 		else if (startsWithIgnoreCase(cmd, "SOURCE"))
 		{
 			quit = source(cmd);
-		}
-		else if (startsWithIgnoreCase(cmd, "CANCEL"))
-		{
-			cancelQuery(cmd);
-		}
-		else if (startsWithIgnoreCase(cmd, "KILL"))
-		{
-			killQuery(cmd);
 		}
 		else if (startsWithIgnoreCase(cmd, "OUTPUT NEXT QUERY"))
 		{
@@ -1455,25 +1420,6 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("CLI Error: " + e.getMessage());
-			lastCommandErrored = true;
-		}
-	}
-
-	private static void setSchema(final String cmd)
-	{
-		if (!isConnected())
-		{
-			System.out.println("No database connection exists");
-			return;
-		}
-
-		try
-		{
-			stmt.execute(cmd);
-		}
-		catch (final Exception e)
-		{
-			System.out.println("Error: " + e.getMessage());
 			lastCommandErrored = true;
 		}
 	}
