@@ -222,18 +222,6 @@ public final class SQLStates implements Cloneable {
 	private static int DROP_CONNECTION_AUTH_FAILURE = -718;
 	private static int NOT_AUTHORIZED_CODE = -719;
 	private static int MODIFY_GROUP_AUTH_FAILURE = -720;
-	private static int SSO_OIDC_INVALID_TOKEN_CODE = -721;
-	private static int SSO_OIDC_INVALID_TOKEN_ISSUER_CODE = -722;
-	private static int SSO_OIDC_INVALID_TOKEN_AUDIENCE_CODE = -723;
-	private static int SSO_OIDC_INVALID_TOKEN_CLAIM_CODE = -724;
-	private static int SSO_OIDC_INVALID_TOKEN_SIGNATURE_CODE = -725;
-	private static int SSO_OIDC_TOKEN_SIGNING_KEY_NOT_FOUND_CODE = -726;
-	private static int SSO_OIDC_EXPIRED_TOKEN_CODE = -727;
-	private static int SSO_OIDC_NETWORK_COMMUNICATIONS_ERROR_CODE = -728;
-	private static int SSO_OIDC_MAX_TOKEN_RENEWS_REACHED_CODE = -729;
-	private static int SSO_OIDC_RESPONSE_INVALID_REQUEST_PAYLOAD_CODE = -730;
-	private static int SSO_OIDC_RESPONSE_INVALID_BAD_CERT_CODE = -731;
-	private static int SSO_OIDC_RESPONSE_INVALID_INTEGRATION_CONFIGURATION_CODE = -732;
 	private static int SESSION_EXPIRED_CODE = -733;
 
 	// MLMODEL related issues
@@ -270,6 +258,48 @@ public final class SQLStates implements Cloneable {
 	private static int PRIVILEGE_NOT_POSSESSED_CODE = -1002;
 	private static int ROLE_NOT_FOUND_CODE = -1003;
 	private static int ID_NOT_FOUND_CODE = -1004;
+
+	// Security Integration related errors
+	private static int SECURITY_INTEGRATION_DISABLED_CODE = -1200;
+	private static int SECURITY_INTEGRATION_NOT_FOUND_CODE = -1201;
+	private static int NETWORK_COMMUNICATIONS_ERROR_INVALID_CERTIFICATE_CODE = -1202;
+	private static int SSO_REQUEST_ID_NOT_FOUND_CODE = -1203;
+	private static int SESSION_DOES_NOT_EXIST_CODE = -1204;
+	private static int INVALID_SECURITY_TOKEN_CODE = -1205;
+	private static int INVALID_SECURITY_TOKEN_SIGNATURE_CODE = -1206;
+	private static int INVALID_SECURITY_TOKEN_FINGERPRINT_CODE = -1207;
+	private static int EXPIRED_SECURITY_TOKEN_CODE = -1208;
+
+	// Relevant Open ID Connect 1.0 errors defined by https://openid.net/specs/openid-connect-core-1_0.html#AuthError
+	private static int OIDC_NETWORK_COMMUNICATIONS_ERROR_CODE = -1220;
+	private static int OIDC_INVALID_REQUEST_OBJECT_CODE = -1221;
+	private static int OIDC_INVALID_RESPONSE_OBJECT_CODE = -1222;
+	private static int OIDC_INVALID_REQUEST_URI_CODE = -1223;
+	private static int OIDC_REQUEST_NOT_SUPPORTED_CODE = -1224;
+	private static int OIDC_REQUEST_URI_NOT_SUPPORTED_CODE = -1225;
+	private static int OIDC_INVALID_DISCOVERY_DOCUMENT_CODE = -1226;
+	private static int OIDC_INVALID_CONFIGURATION_CODE = -1227;
+
+	// Additional Open ID Connect errors
+	private static int OIDC_EXPIRED_TOKEN_CODE = -1228;
+	private static int OIDC_SIGNING_KEY_NOT_FOUND_CODE = -1229;
+	private static int OIDC_INVALID_SIGNING_KEY_CODE = -1230;
+	private static int OIDC_INVALID_TOKEN_CLAIM_CODE = -1231;
+	private static int OIDC_INVALID_TOKEN_ISSUER_CODE = -1232;
+	private static int OIDC_INVALID_TOKEN_AUDIENCE_CODE = -1233;
+	private static int OIDC_INVALID_TOKEN_SIGNATURE_CODE = -1234;
+	private static int OIDC_INVALID_ID_TOKEN_CODE = -1235;
+	private static int OIDC_INVALID_ACCESS_TOKEN_CODE = -1236;
+	private static int OIDC_INVALID_REFRESH_TOKEN_CODE = -1237;
+
+	// Relevant OAuth 2.0 errors defined by https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1
+	private static int OAUTH_UNAUTHORIZED_CLIENT_CODE = -1250;
+	private static int OAUTH_ACCESS_DENIED_CODE = -1251;
+	private static int OAUTH_UNSUPPORTED_RESPONSE_TYPE_CODE = -1252;
+	private static int OAUTH_INVALID_SCOPE_CODE = -1253;
+	private static int OAUTH_INVALID_REQUEST_CODE = -1254;
+	private static int OAUTH_SERVER_ERROR_CODE = -1255;
+	private static int OAUTH_TEMPORARILY_UNAVAILABLE_CODE = -1256;
 
 	// task related issues
 	private static int CREATE_TASK_FAILURE_CODE = -1005;
@@ -426,30 +456,42 @@ public final class SQLStates implements Cloneable {
 		"The user does not have the authority to create a user", AUTH_FAILURE, CREATE_USER_AUTH_FAILURE);
 	public static final SQLStates NO_CREATE_GROUP_AUTH = new SQLStates(
 		"The user does not have the authority to create a group", AUTH_FAILURE, CREATE_GROUP_AUTH_FAILURE);
-	public static final SQLStates SSO_OIDC_INVALID_TOKEN = new SQLStates(
-		"The provided SSO OIDC token is invalid", AUTH_FAILURE, SSO_OIDC_INVALID_TOKEN_CODE);
-	public static final SQLStates SSO_OIDC_INVALID_TOKEN_ISSUER = new SQLStates(
-		"The supplied token issuer does not match the database configuration", AUTH_FAILURE, SSO_OIDC_INVALID_TOKEN_ISSUER_CODE);
-	public static final SQLStates SSO_OIDC_INVALID_TOKEN_AUDIENCE = new SQLStates(
-		"The supplied token is not the intended audience", AUTH_FAILURE, SSO_OIDC_INVALID_TOKEN_AUDIENCE_CODE);
-	public static final SQLStates SSO_OIDC_INVALID_TOKEN_CLAIM = new SQLStates(
-		"The supplied token is not the intended audience", AUTH_FAILURE, SSO_OIDC_INVALID_TOKEN_CLAIM_CODE);
-	public static final SQLStates SSO_OIDC_INVALID_TOKEN_SIGNATURE = new SQLStates(
-		"An invalid signing method (SignatureMethod) was used or the supplied token's signature is invalid", AUTH_FAILURE, SSO_OIDC_INVALID_TOKEN_SIGNATURE_CODE);
-	public static final SQLStates SSO_OIDC_TOKEN_SIGNING_KEY_NOT_FOUND = new SQLStates(
-		"The issuer did not provide a signing key for the supplied token", AUTH_FAILURE, SSO_OIDC_TOKEN_SIGNING_KEY_NOT_FOUND_CODE);
-	public static final SQLStates SSO_OIDC_EXPIRED_TOKEN = new SQLStates(
-		"The supplied token has expired", AUTH_FAILURE, SSO_OIDC_EXPIRED_TOKEN_CODE);												
-	public static final SQLStates SSO_OIDC_NETWORK_COMMUNICATIONS_ERROR = new SQLStates(
-		"Communication with the issuer failed", AUTH_FAILURE, SSO_OIDC_NETWORK_COMMUNICATIONS_ERROR_CODE);
-	public static final SQLStates SSO_OIDC_MAX_TOKEN_RENEWS_REACHED = new SQLStates(
-		"The maximum number of token refreshes has been reached", AUTH_FAILURE, SSO_OIDC_MAX_TOKEN_RENEWS_REACHED_CODE);	
-	public static final SQLStates SSO_OIDC_RESPONSE_INVALID_REQUEST_PAYLOAD = new SQLStates(
-		"During authentication, an invalid payload or an invalid federated OAuth connection string was used", AUTH_FAILURE, SSO_OIDC_RESPONSE_INVALID_REQUEST_PAYLOAD_CODE);
-	public static final SQLStates SSO_OIDC_RESPONSE_INVALID_BAD_CERT = new SQLStates(
-		"The x.509 certificate contained in the response is either malformed or does not match the expected certificate", AUTH_FAILURE, SSO_OIDC_RESPONSE_INVALID_BAD_CERT_CODE);	
-	public static final SQLStates SSO_OIDC_RESPONSE_INVALID_INTEGRATION_CONFIGURATION = new SQLStates(
-		"The IdP configuration is invalid", AUTH_FAILURE, SSO_OIDC_RESPONSE_INVALID_INTEGRATION_CONFIGURATION_CODE);	
+
+	public static final SQLStates SECURITY_INTEGRATION_DISABLED = new SQLStates("The security integration is disabled", AUTH_FAILURE, SECURITY_INTEGRATION_DISABLED_CODE);
+	public static final SQLStates SECURITY_INTEGRATION_NOT_FOUND = new SQLStates("The security integration does not exist", AUTH_FAILURE, SECURITY_INTEGRATION_NOT_FOUND_CODE);
+	public static final SQLStates NETWORK_COMMUNICATIONS_ERROR_INVALID_CERTIFICATE = new SQLStates("The request failed due to an network communications error", AUTH_FAILURE, NETWORK_COMMUNICATIONS_ERROR_INVALID_CERTIFICATE_CODE);
+	public static final SQLStates SSO_REQUEST_ID_NOT_FOUND = new SQLStates("The Single Sign On request id could not be found", AUTH_FAILURE, SSO_REQUEST_ID_NOT_FOUND_CODE);
+	public static final SQLStates SESSION_DOES_NOT_EXIST = new SQLStates("No session associated with the connection exists", AUTH_FAILURE, SESSION_DOES_NOT_EXIST_CODE);
+	public static final SQLStates INVALID_SECURITY_TOKEN = new SQLStates("The supplied security token is invalid", AUTH_FAILURE, INVALID_SECURITY_TOKEN_CODE);
+	public static final SQLStates INVALID_SECURITY_TOKEN_SIGNATURE = new SQLStates("The supplied security token signature does not match the expected value", AUTH_FAILURE, INVALID_SECURITY_TOKEN_SIGNATURE_CODE);
+	public static final SQLStates INVALID_SECURITY_TOKEN_FINGERPRINT = new SQLStates("The supplied security token has a signature fingerprint from an unknown entity", AUTH_FAILURE, INVALID_SECURITY_TOKEN_FINGERPRINT_CODE);
+	public static final SQLStates EXPIRED_SECURITY_TOKEN = new SQLStates("The supplied security token has expired", AUTH_FAILURE, EXPIRED_SECURITY_TOKEN_CODE);
+	public static final SQLStates OIDC_NETWORK_COMMUNICATIONS_ERROR = new SQLStates("A network communications error occurred", AUTH_FAILURE, OIDC_NETWORK_COMMUNICATIONS_ERROR_CODE);
+	public static final SQLStates OIDC_INVALID_REQUEST_OBJECT = new SQLStates("The OpenID provider rejected the request. This indicates an internal server error", AUTH_FAILURE, OIDC_INVALID_REQUEST_OBJECT_CODE);
+	public static final SQLStates OIDC_INVALID_RESPONSE_OBJECT = new SQLStates("The OpenID provider returned an invalid response. This indicates an error with the provider", AUTH_FAILURE, OIDC_INVALID_RESPONSE_OBJECT_CODE);
+	public static final SQLStates OIDC_INVALID_REQUEST_URI = new SQLStates("The OpenID provider rejected the request for the URI. This indicates an internal server error", AUTH_FAILURE, OIDC_INVALID_REQUEST_URI_CODE);
+	public static final SQLStates OIDC_REQUEST_NOT_SUPPORTED = new SQLStates("The OpenID provider does not support the request. This indicates a provider configuration error", AUTH_FAILURE, OIDC_REQUEST_NOT_SUPPORTED_CODE);
+	public static final SQLStates OIDC_REQUEST_URI_NOT_SUPPORTED = new SQLStates("The OpenID provider does not support use of the request_uri parameter (see https://openid.net/specs/openid-connect-core-1_0.html#AuthError)", AUTH_FAILURE, OIDC_REQUEST_URI_NOT_SUPPORTED_CODE);
+	public static final SQLStates OIDC_INVALID_DISCOVERY_DOCUMENT = new SQLStates("The OpenID provider's discovery document is invalid ", AUTH_FAILURE, OIDC_INVALID_DISCOVERY_DOCUMENT_CODE);
+	public static final SQLStates OIDC_INVALID_CONFIGURATION = new SQLStates("The database's OpenID configuration is invalid ", AUTH_FAILURE, OIDC_INVALID_CONFIGURATION_CODE);
+	public static final SQLStates OIDC_EXPIRED_TOKEN = new SQLStates("The ID or Access token has expired", AUTH_FAILURE, OIDC_EXPIRED_TOKEN_CODE);
+	public static final SQLStates OIDC_SIGNING_KEY_NOT_FOUND = new SQLStates("The ID or Access token was signed by a key not known to the OpenID provider", AUTH_FAILURE, OIDC_SIGNING_KEY_NOT_FOUND_CODE);
+	public static final SQLStates OIDC_INVALID_SIGNING_KEY = new SQLStates("The signing key returned by OpenID provider is invalid", AUTH_FAILURE, OIDC_INVALID_SIGNING_KEY_CODE);
+	public static final SQLStates OIDC_INVALID_TOKEN_CLAIM = new SQLStates("The token contains an invalid valid", AUTH_FAILURE, OIDC_INVALID_TOKEN_CLAIM_CODE);
+	public static final SQLStates OIDC_INVALID_TOKEN_ISSUER = new SQLStates("The token was issued by an unknown OpenID provider", AUTH_FAILURE, OIDC_INVALID_TOKEN_ISSUER_CODE);
+	public static final SQLStates OIDC_INVALID_TOKEN_AUDIENCE = new SQLStates("The token was issued for an alternate audience", AUTH_FAILURE, OIDC_INVALID_TOKEN_AUDIENCE_CODE);
+	public static final SQLStates OIDC_INVALID_TOKEN_SIGNATURE = new SQLStates("The token signature is invalid, implying the token was manipulated en route to the database", AUTH_FAILURE, OIDC_INVALID_TOKEN_SIGNATURE_CODE);
+	public static final SQLStates OIDC_INVALID_ID_TOKEN = new SQLStates("The supplied ID token is invalid", AUTH_FAILURE, OIDC_INVALID_ID_TOKEN_CODE);
+	public static final SQLStates OIDC_INVALID_ACCESS_TOKEN = new SQLStates("The supplied Access token is invalid", AUTH_FAILURE, OIDC_INVALID_ACCESS_TOKEN_CODE);
+	public static final SQLStates OIDC_INVALID_REFRESH_TOKEN = new SQLStates("The Refresh token returned from the provider is invalid", AUTH_FAILURE, OIDC_INVALID_REFRESH_TOKEN_CODE);
+	public static final SQLStates OAUTH_UNAUTHORIZED_CLIENT = new SQLStates("The client is not authorized to use this authorization grant", AUTH_FAILURE, OAUTH_UNAUTHORIZED_CLIENT_CODE);
+	public static final SQLStates OAUTH_ACCESS_DENIED = new SQLStates("The resource owner or authorization server denied the request", AUTH_FAILURE, OAUTH_ACCESS_DENIED_CODE);
+	public static final SQLStates OAUTH_UNSUPPORTED_RESPONSE_TYPE = new SQLStates("The authorization server does not support obtaining an authorization code or token using this method", AUTH_FAILURE, OAUTH_UNSUPPORTED_RESPONSE_TYPE_CODE);
+	public static final SQLStates OAUTH_INVALID_SCOPE = new SQLStates("The requested scope is invalid, unknown, or malformed", AUTH_FAILURE, OAUTH_INVALID_SCOPE_CODE);
+	public static final SQLStates OAUTH_INVALID_REQUEST = new SQLStates("The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed", AUTH_FAILURE, OAUTH_INVALID_REQUEST_CODE);
+	public static final SQLStates OAUTH_SERVER_ERROR = new SQLStates("The authorization server encountered an unexpected condition that prevented it from fulfilling the request", AUTH_FAILURE, OAUTH_SERVER_ERROR_CODE);
+	public static final SQLStates OAUTH_TEMPORARILY_UNAVAILABLE = new SQLStates("The authorization server is currently unable to handle the request due to a temporary overloading or maintenance of the server", AUTH_FAILURE, OAUTH_TEMPORARILY_UNAVAILABLE_CODE);
+
 	public static final SQLStates SESSION_EXPIRED = new SQLStates(
 		"Session has expired. Refresh necessary.", AUTH_FAILURE, SESSION_EXPIRED_CODE);																			
 			
