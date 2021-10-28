@@ -389,7 +389,6 @@ public final class XGResultSet implements ResultSet
 			}
 			try
 			{
-				closed = true;
 				sendCloseRS();
 			}
 			catch (final Exception e)
@@ -398,7 +397,6 @@ public final class XGResultSet implements ResultSet
 				throw SQLStates.newGenericException(e);
 			}
 		}
-
 		closed = true;
 		stmt.setQueryCancelled(false);
 	}
