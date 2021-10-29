@@ -359,8 +359,6 @@ public final class XGResultSet implements ResultSet
 			return;
 		}
 
-		stmt.cancel();
-
 		/* If we got the special break, we CANNOT allow these threads to be interrupted.
 		 * If the user calls resultSet.close(), and we allow these threads to be interrupted,
 		 * the the socket on the main thread will be closed. The asynchronous fetch query
@@ -369,6 +367,7 @@ public final class XGResultSet implements ResultSet
 		 */
 		
 		if(!cacheLimitBreak.get()){
+			stmt.cancel();
 			for (final Thread t : fetchThreads)
 			{
 				t.interrupt();
@@ -388,19 +387,17 @@ public final class XGResultSet implements ResultSet
 					}
 				}
 			}
+			try
+			{
+				sendCloseRS();
+			}
+			catch (final Exception e)
+			{
+				LOGGER.log(Level.WARNING, String.format("Exception %s occurred during close() with message %s", e.toString(), e.getMessage()));
+				throw SQLStates.newGenericException(e);
+			}
 		}
-
-		try
-		{
-			closed = true;
-			sendCloseRS();
-		}
-		catch (final Exception e)
-		{
-			LOGGER.log(Level.WARNING, String.format("Exception %s occurred during close() with message %s", e.toString(), e.getMessage()));
-			throw SQLStates.newGenericException(e);
-		}
-
+		closed = true;
 		stmt.setQueryCancelled(false);
 	}
 
@@ -3921,7 +3918,6 @@ public final class XGResultSet implements ResultSet
 				return true;
 			}
 		}
-		LOGGER.log(Level.INFO, "searchDEM did not find DEM");
 		return false;
 	}
 
