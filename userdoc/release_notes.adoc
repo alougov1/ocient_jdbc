@@ -10,6 +10,7 @@ Below is the release notes for every driver version that has customer implicatio
 New Features::
 
  * Updated auth related SQLState error codes
+ * Fix handling of result set close during result set caching
 
 //tag::compact[]
 == 2.37 (2021-10-25)
