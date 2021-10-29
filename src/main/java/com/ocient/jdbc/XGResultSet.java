@@ -3918,7 +3918,6 @@ public final class XGResultSet implements ResultSet
 				return true;
 			}
 		}
-		LOGGER.log(Level.INFO, "searchDEM did not find DEM");
 		return false;
 	}
 
