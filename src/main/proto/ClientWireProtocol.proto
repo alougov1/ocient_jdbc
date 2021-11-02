@@ -135,6 +135,17 @@ message ClientConnectionRefreshSessionResponse
 	SessionInfo sessionInfo = 2;
 }
 
+message ClientConnectionRefreshToken
+{
+	SecurityToken oldSecurityToken = 1; // The token to refresh
+}
+
+message ClientConnectionRefreshTokenResponse
+{
+	ConfirmationResponse response = 1;
+	SecurityToken newSecurityToken = 2; // The returned security token.
+}
+
 message SecondaryInterfaceList
 {
 	repeated string address = 1;
@@ -538,6 +549,7 @@ message Request
 		CLIENT_CONNECTION_SSO2 = 42;
 		CLIENT_CONNECTION_SECURITY_TOKEN = 43;
 		CLIENT_CONNECTION_REFRESH_SESSION = 44;
+		CLIENT_CONNECTION_REFRESH_TOKEN = 45;
     }
 
     RequestType type = 1;
@@ -588,6 +600,7 @@ message Request
 		ClientConnectionSSO2 client_connection_sso2 = 43;
 		ClientConnectionSecurityToken client_connection_security_token = 44;
 		ClientConnectionRefreshSession client_connection_refresh_session = 45;
+		ClientConnectionRefreshToken client_connection_refresh_token = 46;
     }
 }
 

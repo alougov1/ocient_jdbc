@@ -415,7 +415,10 @@ public class XGConnection implements Connection
 		// with the thread's expectation. If the comparison fails, this indicates
 		// another thread has already performed the refresh. The calling thread's
 		// state simply needs to be updated.
-		public State refresh(final State expectedState, XGConnection conn) throws SQLException{
+		// It is possible that a session has not been established yet and the token has expired.
+		// In that case, this is called with shouldRefreshSession = false. Then we are only refreshing
+		// the token, but not establishing a session.
+		public State refresh(final State expectedState, XGConnection conn, boolean shouldRefreshSession) throws SQLException{
 			LOGGER.log(Level.INFO, "Attempting to refresh session");
 			// Acquire the refresh mutex
 			refreshMutex.lock();
@@ -431,7 +434,12 @@ public class XGConnection implements Connection
 				// else
 				// we are responsible for updating the state
 				// Importantly, we are the only thread in this critical section
-				State newState = conn.sendRefresh();
+				State newState = null;
+				if(shouldRefreshSession){
+					newState = conn.sendRefreshSession();
+				} else {
+					newState = conn.sendRefreshToken(expectedState);
+				}
 				LOGGER.log(Level.INFO, "Successfully refreshed session");
 				currentState = newState;
 				return newState;
@@ -443,7 +451,12 @@ public class XGConnection implements Connection
 
 	// Refresh the session.
 	public void refreshSession() throws SQLException{
-		this.sessionState = this.session.refresh(this.sessionState, this);
+		this.sessionState = this.session.refresh(this.sessionState, this, true);
+	}
+
+	// Refresh the token.
+	public void refreshToken() throws SQLException{
+		this.sessionState = this.session.refresh(this.sessionState, this, false);
 	}
 
 
@@ -1176,9 +1189,15 @@ public class XGConnection implements Connection
 			throw e;
 		}
 		catch (final Exception e)
-		{
-			LOGGER.log(Level.WARNING, String.format("Exception %s occurred during handshake with message %s", e.toString(), e.getMessage()));
-
+		{	
+			if(e instanceof SQLException && SQLStates.EXPIRED_SECURITY_TOKEN.equals((SQLException) e)){
+				LOGGER.log(Level.INFO, "clientHandshakeSecurityToken() received security token expired");
+				// Special case. Token expired before we managed to even start a session with it. So we need to refresh the security token.
+				this.refreshToken();
+				// Now we should try again to connect.
+				clientHandshakeSecurityToken(db, shouldRequestVersion);
+				return;
+			}			
 			try
 			{
 				sock.close();
@@ -3694,16 +3713,16 @@ public class XGConnection implements Connection
 	}
 
 	// Requests that the server refreshes our current session.
-	public Session.State sendRefresh() throws SQLException{
+	public Session.State sendRefreshSession() throws SQLException{
 
-		LOGGER.log(Level.INFO, "Sending refresh request to server");
+		LOGGER.log(Level.INFO, "Sending refresh session request to server");
 		final ClientWireProtocol.ClientConnectionRefreshSession.Builder refreshMsgBuilder = ClientWireProtocol.ClientConnectionRefreshSession.newBuilder();
 		final ClientWireProtocol.ClientConnectionRefreshSession refreshMsg = refreshMsgBuilder.build();
 
 		ClientWireProtocol.Request.Builder reqBuilder = ClientWireProtocol.Request.newBuilder();
 		reqBuilder.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION_REFRESH_SESSION);
 		reqBuilder.setClientConnectionRefreshSession(refreshMsg);
-		// Finish the poll message. We can use it over and over.
+
 		ClientWireProtocol.ClientConnectionRefreshSessionResponse.Builder refreshResponseBuilder = ClientWireProtocol.ClientConnectionRefreshSessionResponse.newBuilder();
 		Request refreshReq = reqBuilder.build();
 		try {
@@ -3717,7 +3736,7 @@ public class XGConnection implements Connection
 			readBytes(data);
 			refreshResponseBuilder.mergeFrom(data);			
 		} catch (final Exception e){
-			LOGGER.log(Level.WARNING, String.format("Exception %s occurred during sendRefresh() with message %s", e.toString(), e.getMessage()));
+			LOGGER.log(Level.WARNING, String.format("Exception %s occurred during sendRefreshSession() with message %s", e.toString(), e.getMessage()));
 			throw SQLStates.newGenericException(e);
 		}
 		ConfirmationResponse response = refreshResponseBuilder.getResponse();
@@ -3738,5 +3757,58 @@ public class XGConnection implements Connection
 				receivedSecurityToken.getSignature().toString(),
 				receivedSecurityToken.getIssuerFingerprint().toString()));
 		}
+	}
+
+	// Requests that a specific token be refreshed. In the event that the token is expired, but
+	// this connection has yet to establish a session, we cannot refresh the session. We can
+	// only refresh the token.
+	public Session.State sendRefreshToken(final Session.State oldState) throws SQLException{
+		LOGGER.log(Level.INFO, "Sending refresh token request to server");
+
+		// Set the old security token in message.
+		ClientWireProtocol.SecurityToken.Builder securityTokenMsgBuilder = ClientWireProtocol.SecurityToken.newBuilder();
+
+		Session.SecurityToken oldToken = sessionState.securityToken.get();
+		securityTokenMsgBuilder.setData(oldToken.tokenData);
+		securityTokenMsgBuilder.setSignature(oldToken.tokenSignature);
+		securityTokenMsgBuilder.setIssuerFingerprint(oldToken.issuerFingerprint);
+
+		final ClientWireProtocol.SecurityToken oldTokenMsg = securityTokenMsgBuilder.build();
+		ClientWireProtocol.ClientConnectionRefreshToken.Builder refreshMsgBuilder = ClientWireProtocol.ClientConnectionRefreshToken.newBuilder();
+		refreshMsgBuilder.setOldSecurityToken(oldTokenMsg);
+
+		final ClientWireProtocol.ClientConnectionRefreshToken refreshMsg = refreshMsgBuilder.build();
+
+		ClientWireProtocol.Request.Builder reqBuilder = ClientWireProtocol.Request.newBuilder();
+		reqBuilder.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION_REFRESH_TOKEN);
+		reqBuilder.setClientConnectionRefreshToken(refreshMsg);	
+		
+		ClientWireProtocol.ClientConnectionRefreshTokenResponse.Builder refreshResponseBuilder = ClientWireProtocol.ClientConnectionRefreshTokenResponse.newBuilder();
+		Request refreshReq = reqBuilder.build();
+		try {
+			// Send request.
+			out.write(intToBytes(refreshReq.getSerializedSize()));
+			refreshReq.writeTo(out);
+			out.flush();
+			// Receive response.
+			int length = getLength();
+			byte[] data = new byte[length];
+			readBytes(data);
+			refreshResponseBuilder.mergeFrom(data);			
+		} catch (final Exception e){
+			LOGGER.log(Level.WARNING, String.format("Exception %s occurred during sendRefreshSession() with message %s", e.toString(), e.getMessage()));
+			throw SQLStates.newGenericException(e);
+		}
+		ConfirmationResponse response = refreshResponseBuilder.getResponse();
+		ResponseType rType = response.getType();
+		processResponseType(rType, response);		
+
+		ClientWireProtocol.SecurityToken newSecurityToken = refreshResponseBuilder.getNewSecurityToken();
+		// This can only have happened in SSO flows.
+		assert(this.sessionState.securityToken.isPresent());
+		return new Session.State(new Session.SecurityToken(
+			newSecurityToken.getData().toString(),
+			newSecurityToken.getSignature().toString(),
+			newSecurityToken.getIssuerFingerprint().toString()));
 	}
 }
