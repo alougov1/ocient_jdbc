@@ -1190,9 +1190,8 @@ public class XGConnection implements Connection
 		}
 		catch (final Exception e)
 		{	
-			// TODO Timmy: Change this to the right corrected state.
-			if(e instanceof SQLException && SQLStates.SESSION_EXPIRED.equals((SQLException) e)){
-				LOGGER.log(Level.INFO, "clientHandshakeSecurityToken() received session expired. Attempting to refresh session");
+			if(e instanceof SQLException && SQLStates.EXPIRED_SECURITY_TOKEN.equals((SQLException) e)){
+				LOGGER.log(Level.INFO, "clientHandshakeSecurityToken() received security token expired");
 				// Special case. Token expired before we managed to even start a session with it. So we need to refresh the security token.
 				this.refreshToken();
 				// Now we should try again to connect.
@@ -3779,7 +3778,6 @@ public class XGConnection implements Connection
 		refreshMsgBuilder.setOldSecurityToken(oldTokenMsg);
 
 		final ClientWireProtocol.ClientConnectionRefreshToken refreshMsg = refreshMsgBuilder.build();
-		LOGGER.log(Level.INFO, String.format("Timmy debug Sending old token data %s, signature: %s, fingerprint: %s", refreshMsg.getOldSecurityToken().getData(), refreshMsg.getOldSecurityToken().getSignature(), refreshMsg.getOldSecurityToken().getIssuerFingerprint()));
 
 		ClientWireProtocol.Request.Builder reqBuilder = ClientWireProtocol.Request.newBuilder();
 		reqBuilder.setType(ClientWireProtocol.Request.RequestType.CLIENT_CONNECTION_REFRESH_TOKEN);
