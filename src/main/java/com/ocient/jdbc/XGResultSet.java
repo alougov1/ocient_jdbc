@@ -2869,7 +2869,7 @@ public final class XGResultSet implements ResultSet
 		// Check if the first byte buffer in this rs is the DEM. If it is, then the number of rows we allocate is just 1.
 		// Otherwise we allocate the number of rows in the first blob. If there is only one blob, this optimization
 		// will help a lot. Since in that case we will not resize newRs.
-		int numRowsFirstBlob = isBufferDem(firstByteBuffer) ? 0: firstByteBuffer.getInt(0);
+		int numRowsFirstBlob = isBufferDem(firstByteBuffer) ? 1: firstByteBuffer.getInt(0);
 		final ArrayList<Object> newRs = new ArrayList<>(numRowsFirstBlob);
 
 		int numCols = -1;
