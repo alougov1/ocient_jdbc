@@ -2891,7 +2891,7 @@ public final class XGResultSet implements ResultSet
 				{
 					didProcessRows = true;
 					// Process this row
-					final ArrayList<Object> alo = (numCols = -1) ? new ArrayList<>(): new ArrayList<>(numCols);
+					final ArrayList<Object> alo = (numCols == -1) ? new ArrayList<>(): new ArrayList<>(numCols);
 					final int rowLength = bb.getInt(offset);
 					final int end = offset + rowLength;
 					offset += 4;
