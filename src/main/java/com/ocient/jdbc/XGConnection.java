@@ -1530,8 +1530,8 @@ public class XGConnection implements Connection
 					sslsock.setUseClientMode(true);
 					sslsock.startHandshake();
 					sock = sslsock;
-					in = new BufferedInputStream(sock.getInputStream());
-					out = new BufferedOutputStream(sock.getOutputStream());
+					in = new BufferedInputStream(sock.getInputStream(), 66536); // 64k
+					out = new BufferedOutputStream(sock.getOutputStream(), 66536); // 64k
 					connectedIp = ip;
 					connectedPort = port;
 					break;

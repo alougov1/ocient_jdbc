@@ -2861,7 +2861,18 @@ public final class XGResultSet implements ResultSet
 		boolean done = false;
 		boolean didProcessRows = false;
 		final List<ByteString> buffers = re.getBlobsList();
-		final ArrayList<Object> newRs = new ArrayList<>();
+
+		// Get the first buffer and use that information to size the array list.
+		ByteString firstBlob = buffers.get(0);
+		final ByteBuffer firstByteBuffer = firstBlob.asReadOnlyByteBuffer();
+
+		// Check if the first byte buffer in this rs is the DEM. If it is, then the number of rows we allocate is just 1.
+		// Otherwise we allocate the number of rows in the first blob. If there is only one blob, this optimization
+		// will help a lot. Since in that case we will not resize newRs.
+		int numRowsFirstBlob = isBufferDem(firstByteBuffer) ? 1: firstByteBuffer.getInt(0);
+		final ArrayList<Object> newRs = new ArrayList<>(numRowsFirstBlob);
+
+		int numCols = -1;
 		for (final ByteString buffer : buffers)
 		{
 			final ByteBuffer bb = buffer.asReadOnlyByteBuffer();
@@ -2874,12 +2885,13 @@ public final class XGResultSet implements ResultSet
 			else
 			{
 				final int numRows = bb.getInt(0);
+				int numColumns = -1;
 				int offset = 4;
 				for (int i = 0; i < numRows; i++)
 				{
 					didProcessRows = true;
 					// Process this row
-					final ArrayList<Object> alo = new ArrayList<>();
+					final ArrayList<Object> alo = (numCols == -1) ? new ArrayList<>(): new ArrayList<>(numCols);
 					final int rowLength = bb.getInt(offset);
 					final int end = offset + rowLength;
 					offset += 4;
@@ -2894,7 +2906,8 @@ public final class XGResultSet implements ResultSet
 						alo.add(getValueFromBuffer(bb, type, mutableOffset, allowArrays));
 						offset = mutableOffset[0];
 					}
-
+					// Record the number of columns after the first row. Then we can use it to allocate ArrayList<Object> alo afterwards.
+					numCols = alo.size();
 					newRs.add(alo);
 				}
 			}
