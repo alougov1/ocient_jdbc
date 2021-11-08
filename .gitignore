@@ -13,3 +13,12 @@ bazel-bin
 bazel-ocient_jdbc
 bazel-out
 bazel-testlogs
+
+# VSCode java
+.classpath
+.project
+.settings/
+.vscode/
+
+# asdf
+.tool-versions
