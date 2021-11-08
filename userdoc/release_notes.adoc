@@ -5,6 +5,13 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[]
+== 2.41 (2021-11-07)
+
+New Features::
+
+ * Upgrade Jline version to 3.21
+
+//tag::compact[]
 == 2.40 (2021-11-03)
 
 New Features::
