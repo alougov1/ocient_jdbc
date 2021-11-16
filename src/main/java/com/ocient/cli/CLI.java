@@ -50,6 +50,8 @@ public class CLI
 	private static boolean timing = false;
 	private static boolean trace = false;
 	private static boolean performance = false;
+	private static boolean enableCliTrace = false;
+	private static boolean returnErrorCode = false;
 	private static String outputCSVFile = "";
 	private static boolean shouldAppendOutputCSVFile = false;
 	private static String db;
@@ -62,6 +64,9 @@ public class CLI
 	private static boolean lastCommandErrored = false;
 	private static final char[] hexArray = "0123456789abcdef".toCharArray();
 	private static Statement stmt;
+
+	private static int EXIT_CODE_SUCCESS = 0;
+	private static int EXIT_CODE_ERROR = 1;
 
 	private static String bytesToHex(final byte[] bytes)
 	{
@@ -777,7 +782,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("Unable to load JDBC driver!");
-			System.exit(1);
+			System.exit(EXIT_CODE_ERROR);
 		}
 
 		boolean echo = false;
@@ -851,13 +856,22 @@ public class CLI
 		{
 			while (true)
 			{
+				if(lastCommandErrored == true){
+					// If we ever error, mark that the program should indicate error on exit.
+					returnErrorCode = true;
+				}
 				// Reset this so we can run a new command.
 				lastCommandErrored = false;
 				// jline has ways to handle this, but they're underdocumented and overbuilt to
 				// the point of obscenity
 				if (!quit)
 				{
-					cmd = reader.readLine("Ocient> ") + " ";
+					if(enableCliTrace){
+						// Don't want it to print "Ocient> " which spams the output.
+						cmd = reader.readLine("") + " ";
+					} else {
+						cmd = reader.readLine("Ocient> ") + " ";
+					}
 				}
 				if (startsWithIgnoreCase(cmd, "PLAN EXECUTE INLINE"))
 				{
@@ -891,7 +905,7 @@ public class CLI
 						{
 							System.out.println();
 						}
-						return;
+						System.exit(returnErrorCode ? EXIT_CODE_ERROR : EXIT_CODE_SUCCESS);
 					}
 					if (echo)
 					{
@@ -912,8 +926,13 @@ public class CLI
 					}
 					else
 					{
-						// System.out.println("Current command text: '" + cmd + "'");
-						final String line = reader.readLine("(cont)> ") + " ";
+						String line = null;
+						if(enableCliTrace){
+							// Don't want it to print "(cont)> " which spams the output.
+							line = reader.readLine("") + " ";							
+						} else {
+							line = reader.readLine("(cont)> ") + " ";
+						}
 						if (scrubCmd)
 						{
 							cmd += scrubCommand(line);
@@ -937,7 +956,7 @@ public class CLI
 		}
 		catch (final UserInterruptException | EndOfFileException e)
 		{
-			return;
+			System.exit(returnErrorCode ? EXIT_CODE_ERROR : EXIT_CODE_SUCCESS);
 		}
 	}
 
@@ -1191,7 +1210,9 @@ public class CLI
 	private static boolean processCommand(final String cmd)
 	{
 		boolean quit = false;
-		// System.out.println("processCommand(" + cmd + ")");
+		if(enableCliTrace){
+			System.out.println("processCommand: " + cmd);
+		}
 		if (cmd.equals(""))
 		{
 			return quit;
@@ -1297,6 +1318,9 @@ public class CLI
 		else if (startsWithIgnoreCase(cmd, "SET TIMEOUT"))
 		{
 			setQueryTimeout(cmd);
+		}
+		else if(startsWithIgnoreCase(cmd, "CLI TRACE")){
+			cliTrace(cmd);
 		}
 		else
 		{
@@ -1424,6 +1448,17 @@ public class CLI
 		}
 	}
 
+	private static void cliTrace(final String cmd){
+		final String option = cmd.substring("CLI TRACE".length()).trim();
+		if(option.equalsIgnoreCase("OFF")){
+			enableCliTrace = false;
+		} else if(option.equalsIgnoreCase("ON")){
+			enableCliTrace = true;
+		} else {
+			System.out.println("Invalid option specified for 'SET CLI LOGGING'. Must be 'ON' or 'OFF'");
+		}
+	}
+
 	private static boolean source(final String cmd)
 	{
 
@@ -1509,7 +1544,7 @@ public class CLI
 			while (true)
 			{
 				if(lastCommandErrored){
-					System.out.println("Source command encountered a command which erroed. Stopping");
+					System.out.println("Source command encountered a command which errored. Stopping");
 					return quit;
 				}
 				// jline has ways to handle this, but they're underdocumented and overbuilt to
