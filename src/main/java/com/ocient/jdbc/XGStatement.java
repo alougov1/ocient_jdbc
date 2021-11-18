@@ -2300,6 +2300,7 @@ public class XGStatement implements Statement
 			}
 			catch (SQLException | NullPointerException | IOException e)
 			{
+				LOGGER.log(Level.WARNING, String.format("sendAndReceive caught exception with message: %s", e.toString()));
 				if(e instanceof SQLException && SQLStates.SESSION_EXPIRED.equals((SQLException) e)){
 					LOGGER.log(Level.INFO, "sendAndReceive() received session expired. Attempting to refresh session");
 					// Refresh my session.

@@ -5,6 +5,15 @@ All our jdbc drivers are located {drivers_repo}[here].
 Below is the release notes for every driver version that has customer implication.
 
 //tag::compact[]
+
+== 2.42 (2021-11-18)
+
+New Features::
+
+ * Changed connections to utilize keep alive probes in order to detect dead connections.
+
+//tag::compact[]
+
 == 2.41 (2021-11-07)
 
 New Features::

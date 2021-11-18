@@ -67,6 +67,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509TrustManager;
+import jdk.net.ExtendedSocketOptions;
 
 import com.google.protobuf.ByteString;
 import com.ocient.jdbc.proto.ClientWireProtocol;
@@ -1507,6 +1508,13 @@ public class XGConnection implements Connection
 					sock = new Socket();
 					sock.setReceiveBufferSize(4194304);
 					sock.setSendBufferSize(4194304);
+					// the number of seconds of idle time before keep-alive initiates a probe
+					sock.setOption(ExtendedSocketOptions.TCP_KEEPIDLE, 10);
+					// the maximum number of keep-alive probes to be sent
+					sock.setOption(ExtendedSocketOptions.TCP_KEEPCOUNT, 2);
+					// the number of seconds to wait before retransmitting a keep-alive probe
+					sock.setOption(ExtendedSocketOptions.TCP_KEEPINTERVAL, 3);
+					sock.setKeepAlive(true);
 					sock.connect(new InetSocketAddress(ip, port), networkTimeout);
 					in = new BufferedInputStream(sock.getInputStream());
 					out = new BufferedOutputStream(sock.getOutputStream());
@@ -1524,10 +1532,18 @@ public class XGConnection implements Connection
 
 					sc.init(null, tms, null);
 					final SSLSocketFactory sslsocketfactory = sc.getSocketFactory();
-					final SSLSocket sslsock = (SSLSocket) sslsocketfactory.createSocket(ip, port);
+					final SSLSocket sslsock = (SSLSocket) sslsocketfactory.createSocket();
 					sslsock.setReceiveBufferSize(4194304);
 					sslsock.setSendBufferSize(4194304);
 					sslsock.setUseClientMode(true);
+					// the number of seconds of idle time before keep-alive initiates a probe
+					sslsock.setOption(ExtendedSocketOptions.TCP_KEEPIDLE, 10);
+					// the maximum number of keep-alive probes to be sent
+					sslsock.setOption(ExtendedSocketOptions.TCP_KEEPCOUNT, 2);
+					// the number of seconds to wait before retransmitting a keep-alive probe
+					sslsock.setOption(ExtendedSocketOptions.TCP_KEEPINTERVAL, 3);
+					sslsock.setKeepAlive(true);
+					sslsock.connect(new InetSocketAddress(ip, port), networkTimeout);
 					sslsock.startHandshake();
 					sock = sslsock;
 					in = new BufferedInputStream(sock.getInputStream(), 66536); // 64k
