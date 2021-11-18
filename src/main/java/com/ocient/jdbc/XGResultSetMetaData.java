@@ -26,6 +26,18 @@ public class XGResultSetMetaData implements ResultSetMetaData
 		setCaseInsensitiveCols2Pos();
 	}
 
+	public Map<String, Integer> getCols2Pos(){
+		return cols2Pos;
+	}
+
+	public TreeMap<Integer, String> getPos2Cols(){
+		return pos2Cols;
+	} 
+
+	public Map<String, String> getCols2Types(){
+		return cols2Types;
+	}
+
 	@Override
 	public String getCatalogName(final int column) throws SQLException
 	{

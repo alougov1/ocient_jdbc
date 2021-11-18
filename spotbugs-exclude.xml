@@ -45,6 +45,12 @@
     </Match>
     <!--We do intend to take user input.-->
     <Match>
+        <Class name="com.ocient.cli.extract.RecordExtractorFactory" />
+        <Method name="create" />
+        <Bug pattern="PATH_TRAVERSAL_OUT" />
+    </Match>    
+    <!--We do intend to take user input.-->
+    <Match>
         <Class name="com.ocient.cli.CLI" />
         <Method name="outputGeospatial" />
         <Bug pattern="PATH_TRAVERSAL_IN" />

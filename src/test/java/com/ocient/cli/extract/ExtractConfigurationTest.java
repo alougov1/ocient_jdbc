@@ -3,7 +3,6 @@ package com.ocient.cli.extract;
 import com.ocient.cli.extract.ExtractConfiguration;
 import com.ocient.cli.ParseException;
 
-import org.apache.commons.configuration2.ex.ConversionException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import junitparams.JUnitParamsRunner;
@@ -62,7 +61,7 @@ public class ExtractConfigurationTest
         assertEquals(config.getFileType(), ExtractConfiguration.FileType.DELIMITED); // Case insensitive
         assertEquals(config.getFilePrefix(), "somePrefix-");
         assertEquals(config.getFileExtension(), ".tsv");
-        assertEquals(config.getMaxRowsPerFile(), 100);
+        assertEquals(config.getMaxRowsPerFile(), Integer.valueOf(100));
         assertEquals(config.getCompression(), ExtractConfiguration.Compression.GZIP); // Case insensitive
         assertEquals(config.getBucket(), "fakeBucket");
         assertEquals(config.getAwsKeyId(), "fakeId");

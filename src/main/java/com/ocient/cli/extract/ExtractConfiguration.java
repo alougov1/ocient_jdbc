@@ -2,8 +2,6 @@ package com.ocient.cli.extract;
 
 import java.util.Properties;
 import java.util.stream.Collectors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.configuration2.Configuration;
@@ -31,12 +29,11 @@ public class ExtractConfiguration
             fileType = FileType.valueOf(config.getString(FILE_TYPE, DEFAULT_FILE_TYPE).toUpperCase());
             // To achieve case insensitivity for compression
             compression = Compression.valueOf(config.getString(COMPRESSION, DEFAULT_COMPRESSION).toUpperCase());            
-            maxRowsPerFile = config.getInt(MAX_ROWS_PER_FILE, DEFAULT_MAX_ROWS_PER_FILE);
+            maxRowsPerFile = config.getInteger(MAX_ROWS_PER_FILE, DEFAULT_MAX_ROWS_PER_FILE);
             skipHeader = config.getBoolean(SKIP_HEADER, DEFAULT_SKIP_HEADER);
         } 
         catch (NullPointerException | IllegalArgumentException | ConversionException ex)
         {
-            LOGGER.log(Level.WARNING, "Caught exception in ExtractConfiguration constructor with message: %s", ex.getMessage());
             throw new ParseException(ex.getMessage(), ex);
         }
         filePrefix = config.getString(FILE_PREFIX, DEFAULT_FILE_PREFIX);
@@ -82,7 +79,7 @@ public class ExtractConfiguration
     public static final String DEFAULT_FILE_EXTENSION = ".csv";
 
     public static final String MAX_ROWS_PER_FILE = "max_rows_per_file";
-    public static final int DEFAULT_MAX_ROWS_PER_FILE = 0;
+    public static final Integer DEFAULT_MAX_ROWS_PER_FILE = null;
 
     public static final String COMPRESSION = "compression";
     public static final String DEFAULT_COMPRESSION = Compression.NONE.toString();
@@ -120,7 +117,7 @@ public class ExtractConfiguration
     //  Extension to append to each file prefix after the file number.
     private final String fileExtension;
     // If non-zero, the MAX_ROWS_PER_FILE modifier splits the results into files with maximum MAX_ROWS_PER_FILE in each file.
-    private final int maxRowsPerFile;
+    private final Integer maxRowsPerFile;
     // Compression type to use
     private final Compression compression;
     // S3 bucket to use. Only relevant when locationType is S3.
@@ -137,8 +134,6 @@ public class ExtractConfiguration
     private final boolean skipHeader;
     // Format string to use for writing NULL values to the output files.
     private final String nullFormat;
-
-    private static final Logger LOGGER = Logger.getLogger("com.ocient.cli.extract");
     
     // Getters for all configurations.
     public LocationType getLocationType()
@@ -161,7 +156,7 @@ public class ExtractConfiguration
         return fileExtension;
     }
 
-    public int getMaxRowsPerFile()
+    public Integer getMaxRowsPerFile()
     {
         return maxRowsPerFile;
     }
@@ -226,7 +221,7 @@ public class ExtractConfiguration
     // Future validation logic can be added here as necessary.
     private void validateConfiguration() throws ParseException
     {
-        if(maxRowsPerFile < 0)
+        if(maxRowsPerFile != null && maxRowsPerFile <= 0)
         {
             throw new ParseException(String.format("A non negative number is necessary for max rows per file. Specified: %d.", maxRowsPerFile));
         }
@@ -236,7 +231,7 @@ public class ExtractConfiguration
         }
         if(locationType != LocationType.S3 && bucket != null)
         {
-            LOGGER.log(Level.WARNING, String.format("Location type was not S3 (was %s) and a bucket (%s) was specified. Bucket will be ignored.", locationType.name(), bucket));
+            System.out.println(String.format("Location type was not S3 (was %s) and a bucket (%s) was specified. Bucket will be ignored.", locationType.name(), bucket));
         }
     }
 }
