@@ -6,6 +6,14 @@ Below is the release notes for every driver version that has customer implicatio
 
 //tag::compact[]
 
+== 2.43 (2021-11-22)
+
+New Features::
+
+ * Change driver to not rely on the pom/MANIFEST for the driver version. Move the version into JDBCDriver
+
+//tag::compact[]
+
 == 2.42 (2021-11-18)
 
 New Features::

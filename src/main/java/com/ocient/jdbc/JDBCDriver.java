@@ -14,12 +14,13 @@ import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.ocient.jdbc.OcientJDBCVersion;
 
 public class JDBCDriver implements Driver
 {
 
 	private static String version = "7.0.1";
-	private String clientVersion = getClass().getPackage().getImplementationVersion();
+	private String clientVersion = OcientJDBCVersion.VERSION;
 	private static final Logger LOGGER = Logger.getLogger("com.ocient.jdbc");
 	private static String logFileName;
 	private static FileHandler logHandler;
