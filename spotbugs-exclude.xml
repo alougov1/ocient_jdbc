@@ -107,5 +107,18 @@
         <Method name="isSockConnected" />
         <Bug pattern="UNENCRYPTED_SOCKET" />
     </Match>
+    <!--This is worried about us storing a reference rather than a copy. But we are just writing it out, so its fine.-->
+    <Match>
+        <Class name="com.ocient.cli.extract.wrappers.Base64ByteArrayWrapper" />
+        <Bug pattern="EI_EXPOSE_REP2" />
+    </Match>
+    <Match>
+        <Class name="com.ocient.cli.extract.wrappers.UTF8ByteArrayWrapper" />
+        <Bug pattern="EI_EXPOSE_REP2" />
+    </Match>
+    <Match>
+        <Class name="com.ocient.cli.extract.wrappers.HexadecimalByteArrayWrapper" />
+        <Bug pattern="EI_EXPOSE_REP2" />
+    </Match>     
 
 </FindBugsFilter>

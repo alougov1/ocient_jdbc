@@ -45,6 +45,7 @@ import com.ocient.cli.extract.ResultSetExtractor;
 import com.ocient.jdbc.XGConnection;
 import com.ocient.jdbc.XGDatabaseMetaData;
 import com.ocient.jdbc.XGStatement;
+import com.ocient.jdbc.XGByteArrayHelper;
 import com.ocient.jdbc.proto.ClientWireProtocol.SysQueriesRow;
 import com.ocient.jdbc.XGRegexUtils;
 
@@ -70,19 +71,7 @@ public class CLI
 	private static Statement stmt;
 
 	private static int EXIT_CODE_SUCCESS = 0;
-	private static int EXIT_CODE_ERROR = 1;
-
-	private static String bytesToHex(final byte[] bytes)
-	{
-		final char[] hexChars = new char[bytes.length * 2];
-		for (int j = 0; j < bytes.length; j++)
-		{
-			final int v = bytes[j] & 0xFF;
-			hexChars[j * 2] = hexArray[v >>> 4];
-			hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-		}
-		return new String(hexChars);
-	}
+	private static int EXIT_CODE_ERROR = 1;	
 
 	private static void connectTo(final String cmd)
 	{
@@ -1033,7 +1022,7 @@ public class CLI
 					}
 					else if (o instanceof byte[])
 					{
-						valueString = "0x" + bytesToHex((byte[]) o);
+						valueString = "0x" + XGByteArrayHelper.bytesToHex((byte[]) o);
 					}
 					else if (o != null)
 					{
@@ -1143,7 +1132,7 @@ public class CLI
 					}
 					else if (o instanceof byte[])
 					{
-						o = "0x" + bytesToHex((byte[]) o);
+						o = "0x" + XGByteArrayHelper.bytesToHex((byte[]) o);
 					}
 					line.append(o);
 					line.append(" ");

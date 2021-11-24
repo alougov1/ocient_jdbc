@@ -6,6 +6,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+import com.ocient.cli.extract.wrappers.ByteArrayWrapperFactory;
 import com.univocity.parsers.csv.CsvWriter;
 
 /*!
@@ -82,8 +83,7 @@ public class ResultSetExtractor{
             if(resultSet.wasNull()){
                 element = extractConfig.getNullFormat();
             } else if (element instanceof byte[]){
-                // TODO: Handle byte arrays with a wrapper.
-                element = "TODO byte array";
+                element = ByteArrayWrapperFactory.getWrapper((byte[]) element, extractConfig.getBinaryFormat());                
             }
             rowElements[i - 1] = element;
         }

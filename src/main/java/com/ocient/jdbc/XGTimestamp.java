@@ -14,6 +14,18 @@ public class XGTimestamp extends Timestamp
 	/** */
 	private static final long serialVersionUID = -8251859415809458619L;
 
+	private static ThreadLocal<SimpleDateFormat> threadLocalSDF = new ThreadLocal<SimpleDateFormat>(){
+		@Override protected SimpleDateFormat initialValue(){
+			SimpleDateFormat newSDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			newSDF.setTimeZone(TimeZone.getTimeZone("UTC"));
+			final GregorianCalendar cal = new GregorianCalendar();
+			cal.setGregorianChange(new java.util.Date(Long.MIN_VALUE));
+			cal.setTimeZone(TimeZone.getTimeZone("UTC"));
+			newSDF.setCalendar(cal);
+			return newSDF;
+		}
+	};
+
 	public static Timestamp from(final Instant instant)
 	{
 		final XGTimestamp retval = new XGTimestamp(instant.toEpochMilli());
@@ -272,12 +284,6 @@ public class XGTimestamp extends Timestamp
 	@Override
 	public String toString()
 	{
-		final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-		final GregorianCalendar cal = new GregorianCalendar();
-		cal.setGregorianChange(new java.util.Date(Long.MIN_VALUE));
-		cal.setTimeZone(TimeZone.getTimeZone("UTC"));
-		sdf.setCalendar(cal);
-		return sdf.format(this) + "." + String.format("%09d", getNanos());
+		return threadLocalSDF.get().format(this) + "." + String.format("%09d", getNanos());
 	}
 }

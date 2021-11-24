@@ -38,6 +38,7 @@ public class ExtractConfiguration
             encoding = Optional.ofNullable(config.getString(ENCODING)).map(Charset::forName).orElse(DEFAULT_ENCODING);
             escape = config.get(Character.class, ESCAPE, DEFAULT_ESCAPE);
             fieldOptionallyEnclosedBy = config.get(Character.class, FIELD_OPTIONALLY_ENCLOSED_BY, DEFAULT_FIELD_OPTIONALL_ENCLOSED_BY);
+            binaryFormat = BinaryFormat.valueOf(config.getString(BINARY_FORMAT, DEFAULT_BINARY_FORMAT).toUpperCase());
         } 
         catch (NullPointerException | IllegalArgumentException | ConversionException ex)
         {
@@ -70,6 +71,14 @@ public class ExtractConfiguration
     {
         NONE,
         GZIP;
+    }
+
+    // These are the formats supported by snowflake.
+    public enum BinaryFormat
+    {
+        HEXADECIMAL,
+        UTF8,
+        BASE64,
     }
 
     // Defaults for all options and expected paths in the property map.
@@ -120,6 +129,8 @@ public class ExtractConfiguration
     public static final String FIELD_OPTIONALLY_ENCLOSED_BY = "field_optionally_enclosed_by";
     public static final char DEFAULT_FIELD_OPTIONALL_ENCLOSED_BY = '\"';
 
+    public static final String BINARY_FORMAT = "binary_format";
+    public static final String DEFAULT_BINARY_FORMAT = BinaryFormat.HEXADECIMAL.toString();
 
     // Only required configuration. Local or S3
     private final LocationType locationType;
@@ -156,6 +167,8 @@ public class ExtractConfiguration
     private final char escape;
     // Character used to enclose strings.
     private final char fieldOptionallyEnclosedBy;
+    // The format with which to encode binary data.
+    private final BinaryFormat binaryFormat;
     
     // Getters for all configurations.
     public LocationType getLocationType()
@@ -236,6 +249,11 @@ public class ExtractConfiguration
     public char getFieldOptionallyEnclosedBy()
     {
         return fieldOptionallyEnclosedBy;
+    }
+            
+    public BinaryFormat getBinaryFormat()
+    {
+        return binaryFormat;
     }
 
     private static ImmutableConfiguration createConfig(final Properties properties) 

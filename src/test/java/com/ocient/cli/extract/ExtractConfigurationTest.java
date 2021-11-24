@@ -39,6 +39,7 @@ public class ExtractConfigurationTest
         assertEquals(config.getEncoding(), ExtractConfiguration.DEFAULT_ENCODING);
         assertEquals(config.getEscape(), ExtractConfiguration.DEFAULT_ESCAPE);
         assertEquals(config.getFieldOptionallyEnclosedBy(), ExtractConfiguration.DEFAULT_FIELD_OPTIONALL_ENCLOSED_BY);
+        assertEquals(config.getBinaryFormat(), ExtractConfiguration.BinaryFormat.HEXADECIMAL);
     }
 
     @Test
@@ -61,6 +62,7 @@ public class ExtractConfigurationTest
         prop.setProperty("encoding", "UTF-16");
         prop.setProperty("escape", "+");
         prop.setProperty("field_optionally_enclosed_by", "|");
+        prop.setProperty("binary_format", "UTF8");
         // Build config
         ExtractConfiguration config = new ExtractConfiguration(prop);
         // Assert the non defaults are set correctly.
@@ -80,6 +82,7 @@ public class ExtractConfigurationTest
         assertEquals(config.getEncoding(), Charset.forName("UTF-16"));
         assertEquals(config.getEscape(), '+');
         assertEquals(config.getFieldOptionallyEnclosedBy(), '|');
+        assertEquals(config.getBinaryFormat(), ExtractConfiguration.BinaryFormat.UTF8);;
     }
 
     // These should throw an illegal argument exception because they fail to convert to our specified enums.
@@ -91,6 +94,7 @@ public class ExtractConfigurationTest
         "max_rows_per_file, -1", // A negative number
         "max_rows_per_file, NotANumber", // Not a number
         "encoding, badEncoding", // Bad encoding name
+        "binary_format, a_bad_format", // Not a valid format
     })
     public void invalidInputs(String configKey, String configValue)
     {

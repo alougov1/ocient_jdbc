@@ -104,6 +104,9 @@ public class RecordExtractorFactoryTest {
         "escape, \"",
         "field_optionally_enclosed_by, \'",
         "field_optionally_enclosed_by, \"",
+        "binary_format, UTF8",
+        "binary_format, HEXADECIMAL",
+        "binary_format, BASE64"
     }) // These parameters are tested one at a time. Separately.
     public void variousExtracts(String configKey, String configValue){
         // Set the property we are testing.
@@ -214,7 +217,7 @@ public class RecordExtractorFactoryTest {
     }
 
     // Utility for making a fake result set.
-    // Schema is char, int, int, char. The fourth column will be all nulls
+    // Schema is char, int, int, char, binary. The fourth column will be all nulls
     private XGResultSet makeFakeResultSet(int numRows){
 
         final ArrayList<Object> rows = new ArrayList<>();
@@ -226,6 +229,7 @@ public class RecordExtractorFactoryTest {
             row.add(i + 5);
             row.add(null);
             row.add(new String("row \" with \"\" . ,qu,otes and other , \\things")); // add a string with quotes and other characters.
+            row.add("deadbeef".getBytes(Charset.defaultCharset())); // This tests the byte array wrapper.
             rows.add(row);
         }
         return new XGResultSet(makeFakeConnection(), rows, null);
@@ -254,6 +258,7 @@ public class RecordExtractorFactoryTest {
         cols2Types.put("col2", "INT");
         cols2Types.put("col3", "CHAR");
         cols2Types.put("col4", "CHAR");
+        cols2Types.put("col4", "BINARY");
 
         return new XGResultSetMetaData(cols2Pos, pos2Cols, cols2Types);
     }
