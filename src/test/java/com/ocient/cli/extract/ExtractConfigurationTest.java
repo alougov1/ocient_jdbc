@@ -9,6 +9,7 @@ import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import static org.junit.Assert.assertEquals;
 
+import java.nio.charset.Charset;
 import java.util.Properties;
 
 @RunWith(JUnitParamsRunner.class)
@@ -35,6 +36,9 @@ public class ExtractConfigurationTest
         assertEquals(config.getFieldDelimiter(), ExtractConfiguration.DEFAULT_FIELD_DELIMITER);
         assertEquals(config.getSkipHeader(), ExtractConfiguration.DEFAULT_SKIP_HEADER);
         assertEquals(config.getNullFormat(), ExtractConfiguration.DEFAULT_NULL_FORMAT);
+        assertEquals(config.getEncoding(), ExtractConfiguration.DEFAULT_ENCODING);
+        assertEquals(config.getEscape(), ExtractConfiguration.DEFAULT_ESCAPE);
+        assertEquals(config.getFieldOptionallyEnclosedBy(), ExtractConfiguration.DEFAULT_FIELD_OPTIONALL_ENCLOSED_BY);
     }
 
     @Test
@@ -54,6 +58,9 @@ public class ExtractConfigurationTest
         prop.setProperty("field_delimiter", "\t");
         prop.setProperty("skip_header", "true");
         prop.setProperty("null_format", "NULL");
+        prop.setProperty("encoding", "UTF-16");
+        prop.setProperty("escape", "+");
+        prop.setProperty("field_optionally_enclosed_by", "|");
         // Build config
         ExtractConfiguration config = new ExtractConfiguration(prop);
         // Assert the non defaults are set correctly.
@@ -69,7 +76,10 @@ public class ExtractConfigurationTest
         assertEquals(config.getRecordDelimiter(), " ");
         assertEquals(config.getFieldDelimiter(), "\t");
         assertEquals(config.getSkipHeader(), true);
-        assertEquals(config.getNullFormat(), "NULL");        
+        assertEquals(config.getNullFormat(), "NULL");
+        assertEquals(config.getEncoding(), Charset.forName("UTF-16"));
+        assertEquals(config.getEscape(), Character.valueOf('+'));
+        assertEquals(config.getFieldOptionallyEnclosedBy(), Character.valueOf('|'));
     }
 
     // These should throw an illegal argument exception because they fail to convert to our specified enums.
@@ -80,6 +90,7 @@ public class ExtractConfigurationTest
         "compression, random", // Not either None or GZIP
         "max_rows_per_file, -1", // A negative number
         "max_rows_per_file, NotANumber", // Not a number
+        "encoding, badEncoding", // Bad encoding name
     })
     public void invalidInputs(String configKey, String configValue)
     {

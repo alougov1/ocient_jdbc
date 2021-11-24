@@ -1,7 +1,9 @@
 package com.ocient.cli.extract;
 
+import java.nio.charset.Charset;
 import java.util.Properties;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.configuration2.Configuration;
@@ -22,7 +24,8 @@ public class ExtractConfiguration
         notNull(properties, "ExtractConfiguration received null properties object");
         final ImmutableConfiguration config = createConfig(properties);
 
-        try{
+        try
+        {
             // Only location type is required.
             locationType = LocationType.valueOf(notNull(config.getString(LOCATION_TYPE), "Location type is a required configuration option").toUpperCase());
             // To achieve case insensitivity for file type
@@ -31,6 +34,10 @@ public class ExtractConfiguration
             compression = Compression.valueOf(config.getString(COMPRESSION, DEFAULT_COMPRESSION).toUpperCase());            
             maxRowsPerFile = config.getInteger(MAX_ROWS_PER_FILE, DEFAULT_MAX_ROWS_PER_FILE);
             skipHeader = config.getBoolean(SKIP_HEADER, DEFAULT_SKIP_HEADER);
+            // This Charset.forName will throw illegalArgumentException if name is not valid.
+            encoding = Optional.ofNullable(config.getString(ENCODING)).map(Charset::forName).orElse(DEFAULT_ENCODING);
+            escape = config.get(Character.class, ESCAPE, DEFAULT_ESCAPE);
+            fieldOptionallyEnclosedBy = config.get(Character.class, FIELD_OPTIONALLY_ENCLOSED_BY, DEFAULT_FIELD_OPTIONALL_ENCLOSED_BY);
         } 
         catch (NullPointerException | IllegalArgumentException | ConversionException ex)
         {
@@ -44,7 +51,6 @@ public class ExtractConfiguration
         recordDelimiter = config.getString(RECORD_DELIMITER, DEFAULT_RECORD_DELIMITER);
         fieldDelimiter = config.getString(FIELD_DELIMITER, DEFAULT_FIELD_DELIMITER);
         nullFormat = config.getString(NULL_FORMAT, DEFAULT_NULL_FORMAT);
-
         // Validate the configurations.
         validateConfiguration();
     }
@@ -105,6 +111,16 @@ public class ExtractConfiguration
     public static final String NULL_FORMAT = "null_format";
     public static final String DEFAULT_NULL_FORMAT = "";
 
+    public static final String ENCODING = "encoding";
+    public static final Charset DEFAULT_ENCODING = Charset.defaultCharset(); 
+
+    public static final String ESCAPE = "escape";
+    public static final Character DEFAULT_ESCAPE = '\\';
+
+    public static final String FIELD_OPTIONALLY_ENCLOSED_BY = "field_optionally_enclosed_by";
+    public static final Character DEFAULT_FIELD_OPTIONALL_ENCLOSED_BY = '\"';
+
+
     // Only required configuration. Local or S3
     private final LocationType locationType;
 
@@ -134,6 +150,12 @@ public class ExtractConfiguration
     private final boolean skipHeader;
     // Format string to use for writing NULL values to the output files.
     private final String nullFormat;
+    // Encoding to use when writing out bytes.
+    private final Charset encoding;
+    // Character used to escape quotes.
+    private final Character escape;
+    // Character used to enclose strings.
+    private final Character fieldOptionallyEnclosedBy;
     
     // Getters for all configurations.
     public LocationType getLocationType()
@@ -199,6 +221,21 @@ public class ExtractConfiguration
     public String getNullFormat()
     {
         return nullFormat;
+    }
+
+    public Charset getEncoding()
+    {
+        return encoding;
+    }
+    
+    public Character getEscape()
+    {
+        return escape;
+    }
+
+    public Character getFieldOptionallyEnclosedBy()
+    {
+        return fieldOptionallyEnclosedBy;
     }
 
     private static ImmutableConfiguration createConfig(final Properties properties) 

@@ -93,6 +93,17 @@ public class RecordExtractorFactoryTest {
         "null_format, NULL",
         "null_format, NONE",
         "null_format, \" \"",
+        "encoding, UTF-8",
+        "encoding, UTF-16BE",
+        "encoding, UTF-16LE",
+        "encoding, UTF-16",
+        "encoding, US-ASCII",
+        "encoding, ISO-8859-1",
+        "escape, \\", // Use backslash to escape
+        "escape, +",
+        "escape, \"",
+        "field_optionally_enclosed_by, \'",
+        "field_optionally_enclosed_by, \"",
     }) // These parameters are tested one at a time. Separately.
     public void variousExtracts(String configKey, String configValue){
         // Set the property we are testing.
@@ -179,10 +190,12 @@ public class RecordExtractorFactoryTest {
         CsvParserSettings settings = new CsvParserSettings();
         settings.getFormat().setDelimiter(extractConfig.getFieldDelimiter());
         settings.getFormat().setLineSeparator(extractConfig.getRecordDelimiter());
+        settings.getFormat().setQuote(extractConfig.getFieldOptionallyEnclosedBy());
+        settings.getFormat().setQuoteEscape(extractConfig.getEscape());
 
         Reader inputReader = null;
         try {
-            inputReader = new InputStreamReader(new FileInputStream(new File(fileToRead)), Charset.defaultCharset());
+            inputReader = new InputStreamReader(new FileInputStream(new File(fileToRead)), extractConfig.getEncoding());
         } catch (FileNotFoundException ex) {
             LOGGER.log(Level.WARNING, String.format("Failed to find file: %s", fileToRead));
             fail(ex.getMessage());
@@ -212,6 +225,7 @@ public class RecordExtractorFactoryTest {
             row.add(i);
             row.add(i + 5);
             row.add(null);
+            row.add(new String("row \" with \"\" . ,qu,otes and other , \\things")); // add a string with quotes and other characters.
             rows.add(row);
         }
         return new XGResultSet(makeFakeConnection(), rows, null);
@@ -229,14 +243,17 @@ public class RecordExtractorFactoryTest {
         cols2Pos.put("col1", 1);
         cols2Pos.put("col2", 2);
         cols2Pos.put("col3", 3);
+        cols2Pos.put("col4", 4);
         pos2Cols.put(0, "col0");
         pos2Cols.put(1, "col1");
         pos2Cols.put(2, "col2");
         pos2Cols.put(3, "col3");
+        pos2Cols.put(4, "col4");
         cols2Types.put("col0", "CHAR");
         cols2Types.put("col1", "INT");
         cols2Types.put("col2", "INT");
         cols2Types.put("col3", "CHAR");
+        cols2Types.put("col4", "CHAR");
 
         return new XGResultSetMetaData(cols2Pos, pos2Cols, cols2Types);
     }

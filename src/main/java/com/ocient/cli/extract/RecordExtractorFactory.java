@@ -46,7 +46,8 @@ public class RecordExtractorFactory {
             }
             throw ex;
         }
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, Charset.defaultCharset());
+        // Generate the output stream writer with the proper encoding.
+        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, extractConfig.getEncoding());
         BufferedWriter bufferedWriter = new BufferedWriter(outputStreamWriter);
 
         // Apply appropriate settings to our file format.
@@ -56,7 +57,10 @@ public class RecordExtractorFactory {
         format.setDelimiter(extractConfig.getFieldDelimiter());
         // Delimiter between records. Default: '\n'
         format.setLineSeparator(extractConfig.getRecordDelimiter());
-
+        // Set the quote character
+        format.setQuote(extractConfig.getFieldOptionallyEnclosedBy());
+        // Set the quote escape character.
+        format.setQuoteEscape(extractConfig.getEscape());
         return new CsvWriter(bufferedWriter, settings);
     }
 
