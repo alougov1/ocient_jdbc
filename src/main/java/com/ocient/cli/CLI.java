@@ -38,6 +38,10 @@ import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
+import com.ocient.cli.extract.ExtractSyntaxParser;
+import com.ocient.cli.extract.ExtractSyntaxParser.ParseResult;
+import com.ocient.cli.extract.ExtractConfiguration;
+import com.ocient.cli.extract.ResultSetExtractor;
 import com.ocient.jdbc.XGConnection;
 import com.ocient.jdbc.XGDatabaseMetaData;
 import com.ocient.jdbc.XGStatement;
@@ -1225,6 +1229,9 @@ public class CLI
 		{
 			select(cmd);
 		}
+		else if (startsWithIgnoreCase(cmd, "EXTRACT TO")) {
+			extractTo(cmd);
+		}		
 		else if (cmd.equalsIgnoreCase("TIMING ON"))
 		{
 			timing = true;
@@ -1423,6 +1430,80 @@ public class CLI
 			lastCommandErrored = true;
 		}
 	}
+
+	public static void extractTo(final String cmd)
+	{
+		long start = System.currentTimeMillis();
+		ParseResult parseResult = null;
+		lastCommandErrored = true;
+		try
+		{
+			parseResult = ExtractSyntaxParser.parse(cmd);
+		} 
+		catch (ParseException e)
+		{
+			System.out.println(String.format("Extract syntax parsing failed with: %s", e.getMessage()));
+			return;
+		}
+		ResultSetExtractor rsExtractor = null;
+		try
+		{	
+			// Build the extractor
+			ExtractConfiguration config = new ExtractConfiguration(parseResult.getConfig());
+			rsExtractor = new ResultSetExtractor(config);
+		} 
+		catch (ParseException e)
+		{
+			System.out.println(String.format("Configuration failed build with message: %s", e.getMessage()));
+			return;
+		}
+		// Now run the query.
+		ResultSet resultSet = null;
+		ResultSetMetaData rsMetaData = null;
+		try 
+		{
+			resultSet = stmt.executeQuery(parseResult.getQuery());
+			rsMetaData = resultSet.getMetaData();
+		}
+		catch (SQLException e)
+		{
+			System.out.println(String.format("Failed to run query for extraction with message: %s", e.getMessage()));
+			try
+			{
+				if (resultSet != null)
+				{
+					resultSet.close();
+				}
+			}
+			catch (final SQLException f)
+			{
+				System.out.println("Failed closing result set");
+			}
+			return;
+		}
+		// Try extract
+		try
+		{
+			rsExtractor.extract(resultSet, rsMetaData);
+		} 
+		catch (IllegalStateException | IllegalArgumentException | IOException | SQLException e)
+		{
+			System.out.println(String.format("Extraction failed with message: %s", e.getMessage()));
+		}
+		// Close result set.
+		try
+		{
+			resultSet.close();
+		}
+		catch (SQLException e)
+		{
+			System.out.println("Failed closing result set");
+		}
+		long end = System.currentTimeMillis();
+		printTime(start, end);
+		lastCommandErrored = false;
+
+	}	
 
 	private static void setQueryTimeout(final String cmd)
 	{
