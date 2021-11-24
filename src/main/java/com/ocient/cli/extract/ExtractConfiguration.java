@@ -115,10 +115,10 @@ public class ExtractConfiguration
     public static final Charset DEFAULT_ENCODING = Charset.defaultCharset(); 
 
     public static final String ESCAPE = "escape";
-    public static final Character DEFAULT_ESCAPE = '\\';
+    public static final char DEFAULT_ESCAPE = '\\';
 
     public static final String FIELD_OPTIONALLY_ENCLOSED_BY = "field_optionally_enclosed_by";
-    public static final Character DEFAULT_FIELD_OPTIONALL_ENCLOSED_BY = '\"';
+    public static final char DEFAULT_FIELD_OPTIONALL_ENCLOSED_BY = '\"';
 
 
     // Only required configuration. Local or S3
@@ -153,9 +153,9 @@ public class ExtractConfiguration
     // Encoding to use when writing out bytes.
     private final Charset encoding;
     // Character used to escape quotes.
-    private final Character escape;
+    private final char escape;
     // Character used to enclose strings.
-    private final Character fieldOptionallyEnclosedBy;
+    private final char fieldOptionallyEnclosedBy;
     
     // Getters for all configurations.
     public LocationType getLocationType()
@@ -228,12 +228,12 @@ public class ExtractConfiguration
         return encoding;
     }
     
-    public Character getEscape()
+    public char getEscape()
     {
         return escape;
     }
 
-    public Character getFieldOptionallyEnclosedBy()
+    public char getFieldOptionallyEnclosedBy()
     {
         return fieldOptionallyEnclosedBy;
     }

@@ -23,7 +23,7 @@ public class ExtractSyntaxParser
     private static String UNQUOTED_GROUP = "unquoted";
 
     // Courtesy of https://stackoverflow.com/questions/1757065/java-splitting-a-comma-separated-string-but-ignoring-commas-in-quotes?rq=1
-    private static String TOKEN_SPLITTER_STRING = new String(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+    private static String TOKEN_SPLITTER_STRING = ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
 
     private static final Pattern EXTRACT_PATTERN = Pattern.compile(
         "^EXTRACT\\s+TO\\s+(?<" + TYPE_GROUP +

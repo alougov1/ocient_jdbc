@@ -78,8 +78,8 @@ public class ExtractConfigurationTest
         assertEquals(config.getSkipHeader(), true);
         assertEquals(config.getNullFormat(), "NULL");
         assertEquals(config.getEncoding(), Charset.forName("UTF-16"));
-        assertEquals(config.getEscape(), Character.valueOf('+'));
-        assertEquals(config.getFieldOptionallyEnclosedBy(), Character.valueOf('|'));
+        assertEquals(config.getEscape(), '+');
+        assertEquals(config.getFieldOptionallyEnclosedBy(), '|');
     }
 
     // These should throw an illegal argument exception because they fail to convert to our specified enums.
