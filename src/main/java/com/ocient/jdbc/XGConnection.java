@@ -1547,11 +1547,7 @@ public class XGConnection implements Connection
 					sslsock.setSendBufferSize(4194304);
 					sslsock.setUseClientMode(true);
 					// Try to configure the socket options.
-<<<<<<< 5b6fef6ccff9656dad6fd2d433efa781af55b5ca
 					tryConfigureSocketOptions(sslsock);
-=======
-					tryConfigureSocketOptions(sock);
->>>>>>> wrap invalid socket options in try catch block
 					sslsock.connect(new InetSocketAddress(ip, port), networkTimeout);
 					sslsock.startHandshake();
 					sock = sslsock;
