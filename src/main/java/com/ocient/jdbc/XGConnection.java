@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketOption;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
@@ -309,6 +311,15 @@ public class XGConnection implements Connection
 	protected int secondaryIndex = -1;
 	protected int networkTimeout = 10000;
 	protected Tls tls;
+
+	// The socket options we want to apply to our sockets.
+	private static Map<SocketOption<Integer>, Integer> socketOptions = new HashMap<>();
+	
+	static { 
+		socketOptions.put(ExtendedSocketOptions.TCP_KEEPIDLE, 10);
+		socketOptions.put(ExtendedSocketOptions.TCP_KEEPCOUNT, 2);
+		socketOptions.put(ExtendedSocketOptions.TCP_KEEPINTERVAL, 3);
+	}
 
 	// The timer is initially null, created when the first query timeout is set and
 	// destroyed on close()
@@ -1508,13 +1519,8 @@ public class XGConnection implements Connection
 					sock = new Socket();
 					sock.setReceiveBufferSize(4194304);
 					sock.setSendBufferSize(4194304);
-					// the number of seconds of idle time before keep-alive initiates a probe
-					sock.setOption(ExtendedSocketOptions.TCP_KEEPIDLE, 10);
-					// the maximum number of keep-alive probes to be sent
-					sock.setOption(ExtendedSocketOptions.TCP_KEEPCOUNT, 2);
-					// the number of seconds to wait before retransmitting a keep-alive probe
-					sock.setOption(ExtendedSocketOptions.TCP_KEEPINTERVAL, 3);
-					sock.setKeepAlive(true);
+					// Try to configure the socket options.
+					tryConfigureSocketOptions(sock);
 					sock.connect(new InetSocketAddress(ip, port), networkTimeout);
 					in = new BufferedInputStream(sock.getInputStream());
 					out = new BufferedOutputStream(sock.getOutputStream());
@@ -1536,13 +1542,8 @@ public class XGConnection implements Connection
 					sslsock.setReceiveBufferSize(4194304);
 					sslsock.setSendBufferSize(4194304);
 					sslsock.setUseClientMode(true);
-					// the number of seconds of idle time before keep-alive initiates a probe
-					sslsock.setOption(ExtendedSocketOptions.TCP_KEEPIDLE, 10);
-					// the maximum number of keep-alive probes to be sent
-					sslsock.setOption(ExtendedSocketOptions.TCP_KEEPCOUNT, 2);
-					// the number of seconds to wait before retransmitting a keep-alive probe
-					sslsock.setOption(ExtendedSocketOptions.TCP_KEEPINTERVAL, 3);
-					sslsock.setKeepAlive(true);
+					// Try to configure the socket options.
+					tryConfigureSocketOptions(sock);
 					sslsock.connect(new InetSocketAddress(ip, port), networkTimeout);
 					sslsock.startHandshake();
 					sock = sslsock;
@@ -1590,6 +1591,21 @@ public class XGConnection implements Connection
 			{
 			}
 			throw e;
+		}
+	}
+
+	private void tryConfigureSocketOptions(Socket sock){
+		for(Map.Entry<SocketOption<Integer>, Integer> entry: socketOptions.entrySet()){
+			try {
+				sock.setOption(entry.getKey(), entry.getValue());
+			} catch (IOException | UnsupportedOperationException | IllegalArgumentException | SecurityException ex) {
+				LOGGER.log(Level.WARNING, String.format("Failed setting socket option with message %s."), ex.getMessage());
+			}
+		}
+		try{
+			sock.setKeepAlive(true);
+		} catch (SocketException ex){
+			LOGGER.log(Level.WARNING, String.format("Failed to set socket keep alive with message %s."), ex.getMessage());
 		}
 	}
 

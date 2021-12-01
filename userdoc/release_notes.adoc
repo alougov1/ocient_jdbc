@@ -6,6 +6,14 @@ Below is the release notes for every driver version that has customer implicatio
 
 //tag::compact[]
 
+== 2.44 (2021-12-1)
+
+New Features::
+
+ * Wrap invalid socket options in try catch block and swallow exceptions. For compatability with Java versions that are older.
+
+//tag::compact[]
+
 == 2.43 (2021-11-22)
 
 New Features::
@@ -21,7 +29,6 @@ New Features::
  * Changed connections to utilize keep alive probes in order to detect dead connections.
 
 //tag::compact[]
-
 == 2.41 (2021-11-07)
 
 New Features::
