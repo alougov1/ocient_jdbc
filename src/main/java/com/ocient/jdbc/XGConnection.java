@@ -9,6 +9,10 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketOption;
+<<<<<<< 5b6fef6ccff9656dad6fd2d433efa781af55b5ca
+=======
+import java.net.SocketOptions;
+>>>>>>> wrap invalid socket options in try catch block
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
@@ -311,6 +315,15 @@ public class XGConnection implements Connection
 	protected int secondaryIndex = -1;
 	protected int networkTimeout = 10000;
 	protected Tls tls;
+
+	// The socket options we want to apply to our sockets.
+	private static Map<SocketOption<Integer>, Integer> socketOptions = new HashMap<>();
+	
+	static { 
+		socketOptions.put(ExtendedSocketOptions.TCP_KEEPIDLE, 10);
+		socketOptions.put(ExtendedSocketOptions.TCP_KEEPCOUNT, 2);
+		socketOptions.put(ExtendedSocketOptions.TCP_KEEPINTERVAL, 3);
+	}
 
 	// The timer is initially null, created when the first query timeout is set and
 	// destroyed on close()
@@ -1534,7 +1547,11 @@ public class XGConnection implements Connection
 					sslsock.setSendBufferSize(4194304);
 					sslsock.setUseClientMode(true);
 					// Try to configure the socket options.
+<<<<<<< 5b6fef6ccff9656dad6fd2d433efa781af55b5ca
 					tryConfigureSocketOptions(sslsock);
+=======
+					tryConfigureSocketOptions(sock);
+>>>>>>> wrap invalid socket options in try catch block
 					sslsock.connect(new InetSocketAddress(ip, port), networkTimeout);
 					sslsock.startHandshake();
 					sock = sslsock;
