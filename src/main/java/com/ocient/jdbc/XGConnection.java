@@ -9,10 +9,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketOption;
-<<<<<<< 5b6fef6ccff9656dad6fd2d433efa781af55b5ca
-=======
-import java.net.SocketOptions;
->>>>>>> wrap invalid socket options in try catch block
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
