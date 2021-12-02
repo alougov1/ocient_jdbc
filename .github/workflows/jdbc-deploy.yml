@@ -9,7 +9,6 @@ jobs:
   report:
     name: "Run report"
     runs-on: [self-hosted]
-    needs: build-push
     container:
       # Could be using github.repository_owner here, but ghcr is case-picky
       image: ghcr.io/xeograph/xgjdbc-deploy:latest

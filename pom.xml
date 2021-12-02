@@ -41,9 +41,9 @@
   <properties>
     <asciidoctor-maven-plugin.version>2.1.0</asciidoctor-maven-plugin.version>
     <asciidoctorj.pdf.version>1.6.0</asciidoctorj.pdf.version>
+    <findsecbugs-plugin.version>1.10.1</findsecbugs-plugin.version>
     <protoc>${project.basedir}/bazel-protoc.sh</protoc>
     <spotbugs-maven-plugin.version>4.2.0</spotbugs-maven-plugin.version>
-    <findsecbugs-plugin.version>1.10.1</findsecbugs-plugin.version>
   </properties>
   <dependencies>
     <dependency>
@@ -81,74 +81,74 @@
       <artifactId>jline-terminal-jansi</artifactId>
       <version>3.21.0</version>
     </dependency>
-		<dependency>
-			<groupId>org.openjump</groupId>
-			<artifactId>openjump-core</artifactId>
-			<version>20210701-r4865-SNAPSHOT</version>
-			<scope>system</scope>
+    <dependency>
+      <groupId>org.locationtech.jts</groupId>
+      <artifactId>jts-core</artifactId>
+      <version>1.18.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.openjump</groupId>
+      <artifactId>openjump-core</artifactId>
+      <version>20210701-r4865-SNAPSHOT</version>
+      <scope>system</scope>
       <systemPath>${pom.basedir}/lib/OpenJUMP-20210701-r4865-nolang.jar</systemPath>
-		</dependency>
-		<dependency>
-			<groupId>org.locationtech.jts</groupId>
-			<artifactId>jts-core</artifactId>
-			<version>1.18.0</version>
-			<scope>provided</scope>
-		</dependency>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>templating-maven-plugin</artifactId>
-				<version>1.0.0</version>
-				<executions>
-					<execution>
-						<id>filtering-java-templates</id>
-						<goals>
-							<goal>filter-sources</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>    
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>templating-maven-plugin</artifactId>
+        <version>1.0.0</version>
+        <executions>
+          <execution>
+            <id>filtering-java-templates</id>
+            <goals>
+              <goal>filter-sources</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.asciidoctor</groupId>
         <artifactId>asciidoctor-maven-plugin</artifactId>
         <version>${asciidoctor-maven-plugin.version}</version>
-        <dependencies>
-            <dependency>
-                <groupId>org.asciidoctor</groupId>
-                <artifactId>asciidoctorj-pdf</artifactId>
-                <version>${asciidoctorj.pdf.version}</version>
-            </dependency>
-        </dependencies>        
         <executions>
-          <execution> 
-              <id>build-html-release-notes</id>
-              <phase>generate-resources</phase>
-              <goals>
-                  <goal>process-asciidoc</goal>
-              </goals>
-              <configuration>
-                  <backend>html</backend>
-                  <attributes>
-                      <source-highlighter>coderay</source-highlighter>
-                  </attributes>
-              </configuration>
+          <execution>
+            <id>build-html-release-notes</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>process-asciidoc</goal>
+            </goals>
+            <configuration>
+              <backend>html</backend>
+              <attributes>
+                <source-highlighter>coderay</source-highlighter>
+              </attributes>
+            </configuration>
           </execution>
           <execution>
-              <id>build-pdf-release-notes</id>
-              <phase>generate-resources</phase>
-              <goals>
-                  <goal>process-asciidoc</goal>
-              </goals>
-              <configuration>
-                  <backend>pdf</backend>
-                  <attributes>
-                      <source-highlighter>coderay</source-highlighter>
-                  </attributes>
-              </configuration>
+            <id>build-pdf-release-notes</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>process-asciidoc</goal>
+            </goals>
+            <configuration>
+              <backend>pdf</backend>
+              <attributes>
+                <source-highlighter>coderay</source-highlighter>
+              </attributes>
+            </configuration>
           </execution>
-        </executions>        
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.asciidoctor</groupId>
+            <artifactId>asciidoctorj-pdf</artifactId>
+            <version>${asciidoctorj.pdf.version}</version>
+          </dependency>
+        </dependencies>
         <configuration>
           <sourceDirectory>userdoc</sourceDirectory>
           <enableVerbose>true</enableVerbose>
@@ -158,7 +158,7 @@
             </failIf>
           </logHandler>
         </configuration>
-      </plugin>    
+      </plugin>
       <plugin>
         <groupId>com.github.ekryd.sortpom</groupId>
         <artifactId>sortpom-maven-plugin</artifactId>
@@ -221,6 +221,14 @@
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
         <version>${spotbugs-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
         <configuration>
           <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
           <plugins>
@@ -231,14 +239,6 @@
             </plugin>
           </plugins>
         </configuration>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <!-- Note this signing should appear before the gpg signing-->
@@ -358,11 +358,10 @@
         </configuration>
       </plugin>
       <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>versions-maven-plugin</artifactId>
-          <version>2.7</version>
-          <configuration>
-          </configuration>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+        <version>2.7</version>
+        <configuration></configuration>
       </plugin>
     </plugins>
   </build>
