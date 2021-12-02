@@ -7,9 +7,18 @@ tmp/
 scripts/*.test
 scripts/*/*.test
 target/
+.m2
 
 # Bazel stuff
 bazel-bin
 bazel-ocient_jdbc
 bazel-out
 bazel-testlogs
+
+# deployment keys
+codesignstore.jks
+deploy_settings.xml
+private.key
+codesignstore.pwd
+ssh.pwd
+mavenGlobalSettings.xml
