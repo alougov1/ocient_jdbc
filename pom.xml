@@ -282,6 +282,10 @@
         <configuration>
           <!--Additional builds settings configured in settings.xml at https://gitlab.com/ocient/ocient_jdbc/-/settings/ci_cd-->
           <keyname>Ocient</keyname>
+          <gpgArguments>
+            <arg>--pinentry-mode</arg>
+            <arg>loopback</arg>
+          </gpgArguments>
         </configuration>
       </plugin>
       <plugin>
