@@ -30,7 +30,7 @@ with open('mavenGlobalSettings.xml', 'w') as f:
 
 ssh_pwd = ""
 with open("ssh.pwd", 'r') as f:
-    ssh_pwd = f.read()
+    ssh_pwd = f.read().strip()
 
 tree = ET.parse("pom.xml")
 version_elt = tree.getroot().find("{http://maven.apache.org/POM/4.0.0}version")
@@ -44,7 +44,7 @@ print(f"Deploying version: {JDBC_VERSION}")
 JAR_FILE = f"target/ocient-jdbc4-{JDBC_VERSION}-jar-with-dependencies.jar"
 
 # Add the gpg key
-proc = subprocess.run("gpg --pinentry-mode loopback --passphrase xeograph --import private.key", shell=True)
+proc = subprocess.run(f"gpg --pinentry-mode loopback --passphrase {ssh_pwd} --import private.key", shell=True)
 if proc.returncode != 2:
     print("Failed to add gpg key")
 
