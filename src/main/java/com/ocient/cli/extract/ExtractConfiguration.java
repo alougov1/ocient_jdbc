@@ -12,6 +12,7 @@ import org.apache.commons.configuration2.ImmutableConfiguration;
 import org.apache.commons.configuration2.MapConfiguration;
 import org.apache.commons.configuration2.ex.ConversionException;
 
+import software.amazon.awssdk.regions.Region;
 import static org.apache.commons.lang3.Validate.notNull;
 
 import com.ocient.cli.ParseException;
@@ -34,6 +35,7 @@ public class ExtractConfiguration
             compression = Compression.valueOf(config.getString(COMPRESSION, DEFAULT_COMPRESSION).toUpperCase());            
             maxRowsPerFile = config.getInteger(MAX_ROWS_PER_FILE, DEFAULT_MAX_ROWS_PER_FILE);
             skipHeader = config.getBoolean(SKIP_HEADER, DEFAULT_SKIP_HEADER);
+            pathStyleAccess = config.getBoolean(PATH_STYLE_ACCESS, DEFAULT_PATH_STYLE_ACCESS);
             // This Charset.forName will throw illegalArgumentException if name is not valid.
             encoding = Optional.ofNullable(config.getString(ENCODING)).map(Charset::forName).orElse(DEFAULT_ENCODING);
             escape = config.get(Character.class, ESCAPE, DEFAULT_ESCAPE);
@@ -47,6 +49,8 @@ public class ExtractConfiguration
         filePrefix = config.getString(FILE_PREFIX, DEFAULT_FILE_PREFIX);
         fileExtension = config.getString(FILE_EXTENSION, DEFAULT_FILE_EXTENSION);
         bucket = config.getString(BUCKET, DEFAULT_BUCKET);
+        region = config.getString(REGION, DEFAULT_REGION);
+        endpoint = config.getString(ENDPOINT, DEFAULT_ENDPOINT);
         awsKeyId = config.getString(AWS_KEY_ID, DEFAULT_AWS_KEY_ID);
         awsKeySecret = config.getString(AWS_SECRET_KEY, DEFAULT_AWS_SECRET_KEY);
         recordDelimiter = config.getString(RECORD_DELIMITER, DEFAULT_RECORD_DELIMITER);
@@ -102,6 +106,12 @@ public class ExtractConfiguration
     public static final String BUCKET = "bucket";
     public static final String DEFAULT_BUCKET = null;
 
+    public static final String REGION = "region";
+    public static final String DEFAULT_REGION = Region.US_EAST_2.toString();
+
+    public static final String ENDPOINT = "endpoint";
+    public static final String DEFAULT_ENDPOINT = null;
+
     public static final String AWS_KEY_ID = "aws_key_id";
     public static final String DEFAULT_AWS_KEY_ID = "";
 
@@ -116,6 +126,9 @@ public class ExtractConfiguration
 
     public static final String SKIP_HEADER = "skip_header";
     public static final boolean DEFAULT_SKIP_HEADER = false;
+
+    public static final String PATH_STYLE_ACCESS = "path_style_access";
+    public static final boolean DEFAULT_PATH_STYLE_ACCESS = false;
 
     public static final String NULL_FORMAT = "null_format";
     public static final String DEFAULT_NULL_FORMAT = "";
@@ -149,6 +162,10 @@ public class ExtractConfiguration
     private final Compression compression;
     // S3 bucket to use. Only relevant when locationType is S3.
     private final String bucket;
+    // S3 region to use. Only relevant when locationType is S3.
+    private final String region;    
+    // S3 endpoint to use. Only relevant when locationType is S3.
+    private final String endpoint;    
     // AWS key ID. If empty, the CLI will use the Java AWS SDK default credentials provider chain.
     private final String awsKeyId;
     // AWS secret key. If empty, the CLI will use the Java AWS SDK default credentials provider chain.
@@ -159,6 +176,8 @@ public class ExtractConfiguration
     private final String fieldDelimiter;
     // If false, write a header with column names into each file. If true, skip the header.
     private final boolean skipHeader;
+    // Indicates whether path style access will be used for writing to S3.
+    private final boolean pathStyleAccess;
     // Format string to use for writing NULL values to the output files.
     private final String nullFormat;
     // Encoding to use when writing out bytes.
@@ -206,6 +225,16 @@ public class ExtractConfiguration
         return bucket;
     }
 
+    public String getRegion()
+    {
+        return region;
+    }
+
+    public String getEndpoint()
+    {
+        return endpoint;
+    }
+
     public String getAwsKeyId()
     {
         return awsKeyId;
@@ -229,6 +258,11 @@ public class ExtractConfiguration
     public boolean getSkipHeader()
     {
         return skipHeader;
+    }
+
+    public boolean getPathStyleAccess()
+    {
+        return pathStyleAccess;
     }
 
     public String getNullFormat()
@@ -280,9 +314,12 @@ public class ExtractConfiguration
         {
             throw new ParseException(String.format("A non negative number is necessary for max rows per file. Specified: %d.", maxRowsPerFile));
         }
-        if(locationType == LocationType.S3 && bucket == null)
+        if(locationType == LocationType.S3 && (bucket == null || endpoint == null))
         {
-            throw new ParseException("S3 specified but no bucket provided");
+            throw new ParseException("When using S3, bucket and endpoint must be specified");
+        }
+        if((!awsKeyId.equals("") && awsKeySecret.equals("")) || awsKeyId.equals("") && !awsKeySecret.equals("")){
+            throw new ParseException("When specifying either aws_key_id or aws_secret_key, both must be specified");
         }
         if(locationType != LocationType.S3 && bucket != null)
         {

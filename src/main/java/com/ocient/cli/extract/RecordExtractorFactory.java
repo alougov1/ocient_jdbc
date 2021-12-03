@@ -5,12 +5,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
+import java.net.URI;
 import java.util.zip.GZIPOutputStream;
 
 import com.univocity.parsers.csv.CsvFormat;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
+
+import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
 
 /*!
  * The record extractor factory is responsible for creating RecordExtractors by layering the extraction stages 
@@ -35,7 +45,13 @@ public class RecordExtractorFactory {
         // Todo: Extract phase 2. Handle writing to S3. This means using S3OutputStream instead of FileOutputStream
         OutputStream outputStream = null;
         try {
-            outputStream = new FileOutputStream(fileName);
+            if(extractConfig.getLocationType() == ExtractConfiguration.LocationType.S3){
+                // S3
+                outputStream = makeS3OutputStream(fileName);
+            } else {
+                // Local
+                outputStream = new FileOutputStream(fileName);
+            }
             // Add a compression component if necessary.
             if(extractConfig.getCompression() == ExtractConfiguration.Compression.GZIP){
                 outputStream = new GZIPOutputStream(outputStream);
@@ -78,6 +94,45 @@ public class RecordExtractorFactory {
         } catch (IOException ex){
             System.out.println("Error: In handling exception, failed to close outputstream");
         }
+    }
+
+    private S3OutputStream makeS3OutputStream(final String fileName) throws IOException{
+
+        AwsCredentialsProvider credentialProvider = resolveCredentials();
+        // Build the client.
+        try {
+            S3Client s3Client = S3Client.builder().
+            region(Region.of(extractConfig.getRegion()))
+            .serviceConfiguration(
+                S3Configuration.builder()
+                    .pathStyleAccessEnabled(extractConfig.getPathStyleAccess())
+                    .build())
+            .endpointOverride(URI.create(extractConfig.getEndpoint()))
+            .credentialsProvider(credentialProvider)
+            .build();
+            return new S3OutputStream(s3Client, extractConfig.getBucket(), fileName);
+        } catch (IllegalArgumentException ex){
+            // Illegal argument exception is thrown by URI.create.
+            throw new IOException(ex.getMessage());
+        }
+    }
+
+    // If credentials are specified by the user, then use those.
+    // If not, then fall back to searching for credentials with default provider chain.
+    // If no credentials are found, then fall back to using anonymous crendentials
+    // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/AnonymousAWSCredentials.html
+    private AwsCredentialsProvider resolveCredentials(){
+        if(!extractConfig.getAwsKeyId().equals("")){
+            // Extract configuration enforces that both of these are specified together.
+            return StaticCredentialsProvider.create(AwsBasicCredentials.create(extractConfig.getAwsKeyId(), extractConfig.getAwsKeySecret()));
+        }
+        try{
+            return DefaultCredentialsProvider.create();
+        } catch (SdkClientException ex){
+            // Failed to locate any credentials. Fall back to using anonymous
+            return AnonymousCredentialsProvider.create();
+        }
+        
     }
 
     private ExtractConfiguration extractConfig;

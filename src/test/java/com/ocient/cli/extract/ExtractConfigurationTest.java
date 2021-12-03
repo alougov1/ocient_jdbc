@@ -30,11 +30,14 @@ public class ExtractConfigurationTest
         assertEquals(config.getMaxRowsPerFile(), ExtractConfiguration.DEFAULT_MAX_ROWS_PER_FILE);
         assertEquals(config.getCompression(), ExtractConfiguration.Compression.NONE);
         assertEquals(config.getBucket(), ExtractConfiguration.DEFAULT_BUCKET);
+        assertEquals(config.getEndpoint(), ExtractConfiguration.DEFAULT_ENDPOINT);
+        assertEquals(config.getRegion(), ExtractConfiguration.DEFAULT_REGION);
         assertEquals(config.getAwsKeyId(), ExtractConfiguration.DEFAULT_AWS_KEY_ID);
         assertEquals(config.getAwsKeySecret(), ExtractConfiguration.DEFAULT_AWS_SECRET_KEY);
         assertEquals(config.getRecordDelimiter(), ExtractConfiguration.DEFAULT_RECORD_DELIMITER);
         assertEquals(config.getFieldDelimiter(), ExtractConfiguration.DEFAULT_FIELD_DELIMITER);
         assertEquals(config.getSkipHeader(), ExtractConfiguration.DEFAULT_SKIP_HEADER);
+        assertEquals(config.getPathStyleAccess(), ExtractConfiguration.DEFAULT_PATH_STYLE_ACCESS);
         assertEquals(config.getNullFormat(), ExtractConfiguration.DEFAULT_NULL_FORMAT);
         assertEquals(config.getEncoding(), ExtractConfiguration.DEFAULT_ENCODING);
         assertEquals(config.getEscape(), ExtractConfiguration.DEFAULT_ESCAPE);
@@ -53,11 +56,14 @@ public class ExtractConfigurationTest
         prop.setProperty("max_rows_per_file", "100");
         prop.setProperty("compression", "gzip");
         prop.setProperty("bucket", "fakeBucket");
+        prop.setProperty("endpoint", "fakeEndpoint");
+        prop.setProperty("region", "fakeRegion");
         prop.setProperty("aws_key_id", "fakeId");
         prop.setProperty("aws_secret_key", "fakeSecret");
         prop.setProperty("record_delimiter", " ");
         prop.setProperty("field_delimiter", "\t");
         prop.setProperty("skip_header", "true");
+        prop.setProperty("path_style_access", "true");
         prop.setProperty("null_format", "NULL");
         prop.setProperty("encoding", "UTF-16");
         prop.setProperty("escape", "+");
@@ -73,11 +79,14 @@ public class ExtractConfigurationTest
         assertEquals(config.getMaxRowsPerFile(), Integer.valueOf(100));
         assertEquals(config.getCompression(), ExtractConfiguration.Compression.GZIP); // Case insensitive
         assertEquals(config.getBucket(), "fakeBucket");
+        assertEquals(config.getRegion(), "fakeRegion");
+        assertEquals(config.getEndpoint(), "fakeEndpoint");
         assertEquals(config.getAwsKeyId(), "fakeId");
         assertEquals(config.getAwsKeySecret(), "fakeSecret");
         assertEquals(config.getRecordDelimiter(), " ");
         assertEquals(config.getFieldDelimiter(), "\t");
         assertEquals(config.getSkipHeader(), true);
+        assertEquals(config.getPathStyleAccess(), true);
         assertEquals(config.getNullFormat(), "NULL");
         assertEquals(config.getEncoding(), Charset.forName("UTF-16"));
         assertEquals(config.getEscape(), '+');
