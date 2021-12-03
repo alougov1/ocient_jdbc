@@ -312,15 +312,6 @@ public class XGConnection implements Connection
 	protected int networkTimeout = 10000;
 	protected Tls tls;
 
-	// The socket options we want to apply to our sockets.
-	private static Map<SocketOption<Integer>, Integer> socketOptions = new HashMap<>();
-	
-	static { 
-		socketOptions.put(ExtendedSocketOptions.TCP_KEEPIDLE, 10);
-		socketOptions.put(ExtendedSocketOptions.TCP_KEEPCOUNT, 2);
-		socketOptions.put(ExtendedSocketOptions.TCP_KEEPINTERVAL, 3);
-	}
-
 	// The timer is initially null, created when the first query timeout is set and
 	// destroyed on close()
 	private final AtomicReference<Timer> timer = new AtomicReference<>();
@@ -1543,7 +1534,7 @@ public class XGConnection implements Connection
 					sslsock.setSendBufferSize(4194304);
 					sslsock.setUseClientMode(true);
 					// Try to configure the socket options.
-					tryConfigureSocketOptions(sock);
+					tryConfigureSocketOptions(sslsock);
 					sslsock.connect(new InetSocketAddress(ip, port), networkTimeout);
 					sslsock.startHandshake();
 					sock = sslsock;
@@ -1594,18 +1585,30 @@ public class XGConnection implements Connection
 		}
 	}
 
+	// Absolutely disgusting code. I hate that we are trying to catch throwable.
+	// However, the differences between java versions make the failures of this unpredictable.
+	// Sometimes its an exception or an error. I will try to handle the specific exception 
+	// and then the throwable.
 	private void tryConfigureSocketOptions(Socket sock){
-		for(Map.Entry<SocketOption<Integer>, Integer> entry: socketOptions.entrySet()){
-			try {
-				sock.setOption(entry.getKey(), entry.getValue());
-			} catch (IOException | UnsupportedOperationException | IllegalArgumentException | SecurityException ex) {
-				LOGGER.log(Level.WARNING, String.format("Failed setting socket option with message %s."), ex.getMessage());
-			}
+
+		try {
+			// If one fails, they will likely all fail since the problem with this is that these were added in java 11,
+			// but backported to java 8, but only some versions of java 8.
+			sock.setOption(ExtendedSocketOptions.TCP_KEEPIDLE, 10);
+			sock.setOption(ExtendedSocketOptions.TCP_KEEPCOUNT, 2);
+			sock.setOption(ExtendedSocketOptions.TCP_KEEPINTERVAL, 3);
+		} catch (Exception ex) {
+			LOGGER.log(Level.WARNING, String.format("Caught exception when trying to setOption with message: %s", ex.getMessage()));
+		} catch (Throwable throwable){
+			LOGGER.log(Level.WARNING, String.format("Caught Throwable when trying to setOption with message: %s", throwable.getMessage()));
 		}
+
 		try{
 			sock.setKeepAlive(true);
 		} catch (SocketException ex){
-			LOGGER.log(Level.WARNING, String.format("Failed to set socket keep alive with message %s."), ex.getMessage());
+			LOGGER.log(Level.WARNING, String.format("Caught SocketException when trying setKeepAlive with message %s.", ex.getMessage()));
+		} catch(Throwable throwable){
+			LOGGER.log(Level.WARNING, String.format("Caught Throwable when trying to setKeepAlive with message: %s", throwable.getMessage()));
 		}
 	}
 

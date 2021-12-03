@@ -6,6 +6,14 @@ Below is the release notes for every driver version that has customer implicatio
 
 //tag::compact[]
 
+== 2.45 (2021-12-2)
+
+New Features::
+
+ * Swallow runtime error as well when trying to set socket options.
+
+//tag::compact[]
+
 == 2.44 (2021-12-1)
 
 New Features::
