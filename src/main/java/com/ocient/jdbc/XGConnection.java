@@ -312,15 +312,6 @@ public class XGConnection implements Connection
 	protected int networkTimeout = 10000;
 	protected Tls tls;
 
-	// The socket options we want to apply to our sockets.
-	private static Map<SocketOption<Integer>, Integer> socketOptions = new HashMap<>();
-	
-	static { 
-		socketOptions.put(ExtendedSocketOptions.TCP_KEEPIDLE, 10);
-		socketOptions.put(ExtendedSocketOptions.TCP_KEEPCOUNT, 2);
-		socketOptions.put(ExtendedSocketOptions.TCP_KEEPINTERVAL, 3);
-	}
-
 	// The timer is initially null, created when the first query timeout is set and
 	// destroyed on close()
 	private final AtomicReference<Timer> timer = new AtomicReference<>();
