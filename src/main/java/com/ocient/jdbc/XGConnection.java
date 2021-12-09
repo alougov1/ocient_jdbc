@@ -1661,13 +1661,15 @@ public class XGConnection implements Connection
 			// Pass on the session manager. By reference
 			retval.session = session;
 			// Have the newly copied connection save its own view of the world.
-			final Optional<Session.State> maybeState = session.retain();
-			if(maybeState.isPresent()){
-				retval.sessionState = maybeState.get();
-			} else {
-				// Attempted to duplicate a closed session.
-				throw SQLStates.FAILED_CONNECTION.cloneAndSpecify("Attempted to duplicate a closed session");
-			}			
+			if(session != null){
+				final Optional<Session.State> maybeState = session.retain();
+				if(maybeState.isPresent()){
+					retval.sessionState = maybeState.get();
+				} else {
+					// Attempted to duplicate a closed session.
+					throw SQLStates.FAILED_CONNECTION.cloneAndSpecify("Attempted to duplicate a closed session");
+				}	
+			}
 			retval.reconnect(shouldRequestVersion);
 			retval.resetLocalVars();
 		}

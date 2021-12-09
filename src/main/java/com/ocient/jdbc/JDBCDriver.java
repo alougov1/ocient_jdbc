@@ -265,16 +265,22 @@ public class JDBCDriver implements Driver
 					// If we've already seen this connection, don't do the connect
 					conn = new XGConnection(user, pwd, addr.getHostAddress(), portNum, url, database, version, clientVersion, force, tls, properties);
 					boolean doConnect = false;
+					if (properties.containsKey("defaultSchema") && properties.get("defaultSchema") != null){
+						String userDefaultSchema = properties.getProperty("defaultSchema");
+						conn.setSchemaLocal(userDefaultSchema);
+						conn.defaultSchema = userDefaultSchema;
+					} else {
+						conn.setSchemaLocal(user);
+						conn.defaultSchema = user;
+					}
 					synchronized (seenConnections)
 					{
 						if (!seenConnections.containsKey(conn))
 						{
-							LOGGER.log(Level.INFO, "Driver generated a new connection");
+							LOGGER.log(Level.INFO, "Driver returning a new connection");
 							doConnect = true;
 						} else {
-							LOGGER.log(Level.INFO, "Driver retrieved a cached connection");
-							conn.defaultSchema = seenConnections.get(conn).setSchema;
-							conn.setSchemaLocal(seenConnections.get(conn).getSchemaLocal());
+							LOGGER.log(Level.INFO, "Driver returning a cached connection");
 							conn.setServerVersion(seenConnections.get(conn).getServerVersion());
 						}
 					}
@@ -283,17 +289,6 @@ public class JDBCDriver implements Driver
 					{
 						LOGGER.log(Level.INFO, "About to attempt connection");
 						conn.connect();
-						if (properties.containsKey("defaultSchema") && properties.get("defaultSchema") != null)
-						{
-							String userDefaultSchema = properties.getProperty("defaultSchema");
-							conn.setSchema(userDefaultSchema);
-							conn.defaultSchema = userDefaultSchema;
-						}
-						else
-						{
-							conn.setSchema = conn.getSchema();
-							conn.defaultSchema = conn.setSchema;
-						}
 						LOGGER.log(Level.INFO, "Successfully connected");
 						connected = true;
 						synchronized (seenConnections)
