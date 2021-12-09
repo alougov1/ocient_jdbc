@@ -216,6 +216,8 @@ public final class XGResultSet implements ResultSet
 	// Whether we hit the first cache break and need to do an asynchronous fetch until resultSet is finished.
 	private final AtomicBoolean cacheLimitBreak = new AtomicBoolean(false);
 	private SQLException cacheLimitException;
+	// Number of client threads used to fetch results from the server.
+	private int numClientThreads = 1;
 
 	public XGResultSet(final XGConnection conn, final ArrayList<Object> rs, final XGStatement stmt)
 	{
@@ -251,6 +253,7 @@ public final class XGResultSet implements ResultSet
 		this.conn = conn;
 		this.fetchSize = fetchSize;
 		this.stmt = stmt;
+		this.numClientThreads = numClientThreads;
 		requestMetaData();
 		Thread t = new Thread(new XGResultSetThread());
 		fetchThreads.add(t);
@@ -265,6 +268,10 @@ public final class XGResultSet implements ResultSet
 		{
 			thr.start();
 		}
+	}
+
+	public int getNumClientThreads(){
+		return numClientThreads;
 	}
 
 	@Override

@@ -36,6 +36,7 @@ public class ExtractConfiguration
             maxRowsPerFile = config.getInteger(MAX_ROWS_PER_FILE, DEFAULT_MAX_ROWS_PER_FILE);
             skipHeader = config.getBoolean(SKIP_HEADER, DEFAULT_SKIP_HEADER);
             pathStyleAccess = config.getBoolean(PATH_STYLE_ACCESS, DEFAULT_PATH_STYLE_ACCESS);
+            multiThreadingAllowed = config.getBoolean(MULTITHREADING_ALLOWED, DEFAULT_MULTITHREADING_ALLOWED);
             // This Charset.forName will throw illegalArgumentException if name is not valid.
             encoding = Optional.ofNullable(config.getString(ENCODING)).map(Charset::forName).orElse(DEFAULT_ENCODING);
             escape = config.get(Character.class, ESCAPE, DEFAULT_ESCAPE);
@@ -130,6 +131,9 @@ public class ExtractConfiguration
     public static final String PATH_STYLE_ACCESS = "path_style_access";
     public static final boolean DEFAULT_PATH_STYLE_ACCESS = false;
 
+    public static final String MULTITHREADING_ALLOWED = "allow_multithreading";
+    public static final boolean DEFAULT_MULTITHREADING_ALLOWED = false;
+
     public static final String NULL_FORMAT = "null_format";
     public static final String DEFAULT_NULL_FORMAT = "";
 
@@ -178,6 +182,8 @@ public class ExtractConfiguration
     private final boolean skipHeader;
     // Indicates whether path style access will be used for writing to S3.
     private final boolean pathStyleAccess;
+    // Indicates whether multithreaded writing will be allowed.
+    private final boolean multiThreadingAllowed;
     // Format string to use for writing NULL values to the output files.
     private final String nullFormat;
     // Encoding to use when writing out bytes.
@@ -263,6 +269,11 @@ public class ExtractConfiguration
     public boolean getPathStyleAccess()
     {
         return pathStyleAccess;
+    }
+
+    public boolean isMultiThreadingAllowed()
+    {
+        return multiThreadingAllowed;
     }
 
     public String getNullFormat()

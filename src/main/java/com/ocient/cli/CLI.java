@@ -39,15 +39,18 @@ import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
 import com.ocient.cli.extract.ExtractSyntaxParser;
+import com.ocient.cli.extract.MultiThreadedResultSetExtractor;
+import com.ocient.cli.extract.ResultSetExtractor;
 import com.ocient.cli.extract.ExtractSyntaxParser.ParseResult;
 import com.ocient.cli.extract.ExtractConfiguration;
-import com.ocient.cli.extract.ResultSetExtractor;
+import com.ocient.cli.extract.SingleThreadedResultSetExtractor;
 import com.ocient.jdbc.XGConnection;
 import com.ocient.jdbc.XGDatabaseMetaData;
 import com.ocient.jdbc.XGStatement;
 import com.ocient.jdbc.XGByteArrayHelper;
 import com.ocient.jdbc.proto.ClientWireProtocol.SysQueriesRow;
 import com.ocient.jdbc.XGRegexUtils;
+import com.ocient.jdbc.XGResultSet;
 
 public class CLI
 {
@@ -1434,17 +1437,13 @@ public class CLI
 			System.out.println(String.format("Extract syntax parsing failed with: %s", e.getMessage()));
 			return;
 		}
-		ResultSetExtractor rsExtractor = null;
-		try
-		{	
-			// Build the extractor
-			ExtractConfiguration config = new ExtractConfiguration(parseResult.getConfig());
-			rsExtractor = new ResultSetExtractor(config);
-		} 
-		catch (ParseException e)
-		{
+		ExtractConfiguration config = null;
+		try{
+			// Build the config
+			config = new ExtractConfiguration(parseResult.getConfig());
+		} catch (ParseException e){
 			System.out.println(String.format("Configuration failed build with message: %s", e.getMessage()));
-			return;
+			return;			
 		}
 		// Now run the query.
 		ResultSet resultSet = null;
@@ -1454,7 +1453,7 @@ public class CLI
 			resultSet = stmt.executeQuery(parseResult.getQuery());
 			rsMetaData = resultSet.getMetaData();
 		}
-		catch (SQLException e)
+		catch (NullPointerException | SQLException e)
 		{
 			System.out.println(String.format("Failed to run query for extraction with message: %s", e.getMessage()));
 			try
@@ -1471,6 +1470,19 @@ public class CLI
 			return;
 		}
 		// Try extract
+		ResultSetExtractor rsExtractor = null;
+		try
+		{	
+			// Build the extractor
+			boolean useMultiThreadedResultSetExtractor = config.isMultiThreadingAllowed() && ((XGResultSet) resultSet).getNumClientThreads() > 1;
+			rsExtractor = useMultiThreadedResultSetExtractor ? new MultiThreadedResultSetExtractor(config) : new SingleThreadedResultSetExtractor(config);
+			
+		} 
+		catch (ParseException e)
+		{
+			System.out.println(String.format("Failed to build extractor with message: %s", e.getMessage()));
+			return;
+		}		
 		try
 		{
 			rsExtractor.extract(resultSet, rsMetaData);

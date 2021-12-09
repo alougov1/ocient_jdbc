@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.URI;
 import java.util.zip.GZIPOutputStream;
 
@@ -28,18 +29,24 @@ import software.amazon.awssdk.services.s3.S3Configuration;
  * This file index is used to create the file name for the extractor.
  */
 public class RecordExtractorFactory {
+
+    private ExtractConfiguration extractConfig;
+    private boolean isMultiThreaded;    
+
     // Create the record extractor factory from the supplied config
-    RecordExtractorFactory(ExtractConfiguration config){
-        extractConfig = config;
+    RecordExtractorFactory(ExtractConfiguration config, boolean isMultiThreaded){
+        this.extractConfig = config;
+        this.isMultiThreaded = isMultiThreaded;
     }
 
     // Create a record extractor for a single file of extraction.
     // The factory will use the fileIndex and supplied config to 
     // determine the name of the file. 
-    CsvWriter create(int fileIndex) throws IOException{
+    // threadNumber is used only if this is a multiThreaded extract.
+    CsvWriter create(int fileIndex, int threadNumber) throws IOException{
 
         // Calculate the name of the output file.
-        String fileName = resolveFileName(fileIndex);
+        String fileName = resolveFileName(fileIndex, threadNumber);
 
         // Construct our write pipeline. 
         // Todo: Extract phase 2. Handle writing to S3. This means using S3OutputStream instead of FileOutputStream
@@ -63,8 +70,11 @@ public class RecordExtractorFactory {
             throw ex;
         }
         // Generate the output stream writer with the proper encoding.
-        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, extractConfig.getEncoding());
-        BufferedWriter bufferedWriter = new BufferedWriter(outputStreamWriter);
+        Writer writer = new OutputStreamWriter(outputStream, extractConfig.getEncoding());
+        // If we are extracting locally, then add a buffered writer.
+        if(extractConfig.getLocationType() == ExtractConfiguration.LocationType.LOCAL){
+            writer = new BufferedWriter(writer);
+        }
 
         // Apply appropriate settings to our file format.
         CsvWriterSettings settings = new CsvWriterSettings();
@@ -77,12 +87,17 @@ public class RecordExtractorFactory {
         format.setQuote(extractConfig.getFieldOptionallyEnclosedBy());
         // Set the quote escape character.
         format.setQuoteEscape(extractConfig.getEscape());
-        return new CsvWriter(bufferedWriter, settings);
+        return new CsvWriter(writer, settings);
     }
 
     // Simple utility function to help resolve the file name.
-    private String resolveFileName(int fileIndex){
-        String newFileName = extractConfig.getFilePrefix() + String.valueOf(fileIndex) + extractConfig.getFileExtension();
+    private String resolveFileName(int fileIndex, int threadNumber){
+
+        String newFileName = extractConfig.getFilePrefix();
+        if(isMultiThreaded){
+            newFileName += String.valueOf(threadNumber) + "_";
+        }
+        newFileName += String.valueOf(fileIndex) + extractConfig.getFileExtension();
         // Either None or Gzip. Add ".gz" if necessary.
         return extractConfig.getCompression() == ExtractConfiguration.Compression.GZIP ? newFileName + ".gz" : newFileName;
     }
@@ -134,7 +149,5 @@ public class RecordExtractorFactory {
         }
         
     }
-
-    private ExtractConfiguration extractConfig;
 }
 
