@@ -1330,7 +1330,7 @@ public class CLI
 		return quit;
 	}
 
-	public static String scrubCommand(final String cmd)
+	private static String scrubCommand(final String cmd)
 	{
 		final StringBuilder out = new StringBuilder(cmd.length());
 		int i = 0;
