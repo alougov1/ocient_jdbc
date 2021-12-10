@@ -2,6 +2,9 @@ package com.ocient.cli.extract;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,6 +15,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,6 +40,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -121,19 +127,11 @@ public class RecordExtractorFactoryTest {
         // Extract
         extractResultSet(config, rs, rsMetaData);
 
-        int rsNumCols = 0;
-        try {
-            rsNumCols = rsMetaData.getColumnCount();
-        } catch (SQLException ex){
-            // Should never happen since this is all fake.
-            LOGGER.log(Level.WARNING, "Failed to get number of result set column");
-            fail(ex.getMessage());
-        }        
         // There should only be 1 file.
         int numFilesProduced = testFolder.getRoot().listFiles().length;
         assertEquals(numFilesProduced, 1);
-        String fileName = resolveFileNames(config, 0);
-        validateFile(config, fileName, DEFAULT_ROWS_IN_RS, rsNumCols);
+        String fileName = resolveFileNames(config, 0, 0);
+        validateFile(config, fileName, DEFAULT_ROWS_IN_RS, getNumColsFromMeta(rsMetaData));
 
     }
 
@@ -169,9 +167,67 @@ public class RecordExtractorFactoryTest {
         assertEquals(expectedNumber, numFilesProduced);
     }
 
+    // Test for multi threaded extract. Tries various combinations of number of rows,
+    // threads, and max rows settings.
+    // Ensures that each file is created and each file has the correct number of rows.
+    @Test
+    @Parameters({
+        "100, 10, 2",
+        "1700, 4, 56",
+        "0, 1, 17",
+        "97, 5, 12",
+        "1,1,1",
+        "1000, 4, 50",
+        "1000, 23, 18",
+        "12, 5, 6",
+        "20, 7, 3"
+    })
+    public void multiThreadedExtract(int numRows, int numThreads, int maxRows) throws SQLException, InterruptedException {
+        properties.setProperty("allow_multithreading", "true");
+        properties.setProperty("max_rows_per_file", String.valueOf(maxRows));
+        // Make config
+        ExtractConfiguration config = new ExtractConfiguration(properties);
+        // Make a mock result set
+        XGResultSet rs = makeFakeMockResultSet(numRows, numThreads);
+        XGResultSetMetaData rsMetaData = makeFakeMetaData();
+        
+        rs.setCols2Pos(rsMetaData.getCols2Pos());
+        rs.setPos2Cols(rsMetaData.getPos2Cols());
+        rs.setCols2Types(rsMetaData.getCols2Types());
+        // Extract
+        extractResultSet(config, rs, rsMetaData);
+
+        int numCols = getNumColsFromMeta(rsMetaData);
+        for(int threadNumber = 0; threadNumber < numThreads; ++threadNumber){
+
+            int remainderForThreads = numRows % numThreads;
+            int rowsForThisThread = (remainderForThreads > threadNumber) ? (numRows / numThreads) + 1 : (numRows / numThreads);
+            int numFilesForThisThread = Math.max((int) Math.ceil((double) rowsForThisThread / maxRows), 1);
+
+            for(int fileNumber = 0; fileNumber < numFilesForThisThread; fileNumber++){
+                String fileName = resolveFileNames(config, fileNumber, threadNumber);
+                int remainderForFile = rowsForThisThread % maxRows;
+                int rowsForThisFile = 0;
+                if(remainderForFile == 0){
+                    // If this is an even distribution of rows, then each file will have max rows. Unless it was 0 rows to begin with.
+                    rowsForThisFile = (rowsForThisThread == 0) ? 0 : maxRows;
+                } else {
+                    // Is this the last file? if it is, then it will have the remainder. Otherwise it will have maxrows number of files.
+                    rowsForThisFile = (fileNumber == numFilesForThisThread - 1) ? remainderForFile : maxRows;
+                }
+                validateFile(config, fileName, rowsForThisFile, numCols);
+            }
+        }
+    }
+
     private void extractResultSet(ExtractConfiguration config, XGResultSet resultSet, XGResultSetMetaData rsMetaData){
 
-        ResultSetExtractor rsExtractor = new ResultSetExtractor(config);
+        ResultSetExtractor rsExtractor = null;
+        if(config.isMultiThreadingAllowed()){
+            rsExtractor = new MultiThreadedResultSetExtractor(config);
+        } else {
+            rsExtractor = new SingleThreadedResultSetExtractor(config);
+        }
         try {
             rsExtractor.extract(resultSet, rsMetaData);
         } catch (final SQLException | IOException ex) {
@@ -235,7 +291,32 @@ public class RecordExtractorFactoryTest {
         return new XGResultSet(makeFakeConnection(), rows, null);
     }
 
+    // Utility for making a fake MOCK result set.
+    // Each row will be exactly the same.
+    private XGResultSet makeFakeMockResultSet(int numRows, int numThreads) throws SQLException{
+
+        XGResultSet fakeMockResultSet = mock(XGResultSet.class);
+        // For the first numRows times, this will return true. Then it will return false.
+        when(fakeMockResultSet.next()).thenAnswer(new Answer() {
+            private int count = 0;
+
+            public Object answer(InvocationOnMock invocation){
+                if(count++ == numRows){
+                    return false;
+                }
+                return true;
+            }
+        });
+        // Each cell will just be this string.
+        when(fakeMockResultSet.getObject(anyInt())).thenReturn("TestString");
+        // Have the result set return numThreads threads when asked.
+        when(fakeMockResultSet.getNumClientThreads()).thenReturn(numThreads);
+        return fakeMockResultSet;
+    }
+
     // Utility function for generating some fake metadata.
+    // We use this for our fake mock result set too, which actually has 5 columns of CHARS,
+    // but that doesn't matter here because the extract tool doesn't actually use the types of the metadata.
     private XGResultSetMetaData makeFakeMetaData(){
 
         // These names are bad, but they follow the driver's current naming scheme.
@@ -314,9 +395,25 @@ public class RecordExtractorFactoryTest {
     }
 
     // A utility function for calculating the output file names
-    private String resolveFileNames(ExtractConfiguration extractConfig, int fileNumber){
-        String newName = extractConfig.getFilePrefix() + String.valueOf(fileNumber) + extractConfig.getFileExtension();
+    private String resolveFileNames(ExtractConfiguration extractConfig, int fileNumber, int threadNumber){
+        String newName = extractConfig.getFilePrefix();
+        // For the purposes of these tests, if we are allowing multithreading that means we are multithreading.
+        if(extractConfig.isMultiThreadingAllowed()){
+            newName += String.valueOf(threadNumber) + "_";
+        }
+        newName += String.valueOf(fileNumber) + extractConfig.getFileExtension();
         return extractConfig.getCompression() == ExtractConfiguration.Compression.GZIP ? newName + ".gz" : newName;
     }
 
+    private int getNumColsFromMeta(ResultSetMetaData rsMetaData){
+        int rsNumCols = 0;
+        try {
+            rsNumCols = rsMetaData.getColumnCount();
+        } catch (SQLException ex){
+            // Should never happen since this is all fake.
+            LOGGER.log(Level.WARNING, "Failed to get number of result set column");
+            fail(ex.getMessage());
+        }     
+        return rsNumCols;        
+    }
 }

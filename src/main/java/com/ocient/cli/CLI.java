@@ -39,15 +39,18 @@ import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
 import com.ocient.cli.extract.ExtractSyntaxParser;
+import com.ocient.cli.extract.MultiThreadedResultSetExtractor;
+import com.ocient.cli.extract.ResultSetExtractor;
 import com.ocient.cli.extract.ExtractSyntaxParser.ParseResult;
 import com.ocient.cli.extract.ExtractConfiguration;
-import com.ocient.cli.extract.ResultSetExtractor;
+import com.ocient.cli.extract.SingleThreadedResultSetExtractor;
 import com.ocient.jdbc.XGConnection;
 import com.ocient.jdbc.XGDatabaseMetaData;
 import com.ocient.jdbc.XGStatement;
 import com.ocient.jdbc.XGByteArrayHelper;
 import com.ocient.jdbc.proto.ClientWireProtocol.SysQueriesRow;
 import com.ocient.jdbc.XGRegexUtils;
+import com.ocient.jdbc.XGResultSet;
 
 public class CLI
 {
@@ -66,6 +69,7 @@ public class CLI
 
 	private static char quote = '\0';
 	private static boolean comment = false;
+	private static boolean inActiveEscape = false;
 	private static boolean lastCommandErrored = false;
 	private static final char[] hexArray = "0123456789abcdef".toCharArray();
 	private static Statement stmt;
@@ -1326,7 +1330,7 @@ public class CLI
 		return quit;
 	}
 
-	private static String scrubCommand(final String cmd)
+	public static String scrubCommand(final String cmd)
 	{
 		final StringBuilder out = new StringBuilder(cmd.length());
 		int i = 0;
@@ -1336,6 +1340,7 @@ public class CLI
 			final char c = cmd.charAt(i);
 			if (!comment)
 			{
+				// Check for the start of comments
 				if (quote == '\0' && i + 1 != length)
 				{
 					if (c == '-' && cmd.charAt(i + 1) == '-')
@@ -1349,10 +1354,14 @@ public class CLI
 						continue;
 					}
 				}
-				if ((c == '\'' || c == '"') && (quote == '\0' || quote == c)) // char is an active quote
+				// Check for the start of a quote or the ending of a current quote.
+				if ((c == '\'' || c == '"') && (quote == '\0' || quote == c) && !inActiveEscape) // char is an active quote
 				{
 					quote = quote == '\0' ? c : '\0';
 				}
+				// If the current character is a backslash and not already in an active escape,
+				// then we are entering an active escape. Otherwise, we leave activeEscape.
+				inActiveEscape = c == '\\' && !inActiveEscape ? true : false;
 				out.append(c);
 			}
 			else if (i + 1 != length && c == '*' && cmd.charAt(i + 1) == '/')
@@ -1434,17 +1443,13 @@ public class CLI
 			System.out.println(String.format("Extract syntax parsing failed with: %s", e.getMessage()));
 			return;
 		}
-		ResultSetExtractor rsExtractor = null;
-		try
-		{	
-			// Build the extractor
-			ExtractConfiguration config = new ExtractConfiguration(parseResult.getConfig());
-			rsExtractor = new ResultSetExtractor(config);
-		} 
-		catch (ParseException e)
-		{
+		ExtractConfiguration config = null;
+		try{
+			// Build the config
+			config = new ExtractConfiguration(parseResult.getConfig());
+		} catch (ParseException e){
 			System.out.println(String.format("Configuration failed build with message: %s", e.getMessage()));
-			return;
+			return;			
 		}
 		// Now run the query.
 		ResultSet resultSet = null;
@@ -1454,7 +1459,7 @@ public class CLI
 			resultSet = stmt.executeQuery(parseResult.getQuery());
 			rsMetaData = resultSet.getMetaData();
 		}
-		catch (SQLException e)
+		catch (NullPointerException | SQLException e)
 		{
 			System.out.println(String.format("Failed to run query for extraction with message: %s", e.getMessage()));
 			try
@@ -1471,6 +1476,19 @@ public class CLI
 			return;
 		}
 		// Try extract
+		ResultSetExtractor rsExtractor = null;
+		try
+		{	
+			// Build the extractor
+			boolean useMultiThreadedResultSetExtractor = config.isMultiThreadingAllowed() && ((XGResultSet) resultSet).getNumClientThreads() > 1;
+			rsExtractor = useMultiThreadedResultSetExtractor ? new MultiThreadedResultSetExtractor(config) : new SingleThreadedResultSetExtractor(config);
+			
+		} 
+		catch (ParseException e)
+		{
+			System.out.println(String.format("Failed to build extractor with message: %s", e.getMessage()));
+			return;
+		}		
 		try
 		{
 			rsExtractor.extract(resultSet, rsMetaData);
