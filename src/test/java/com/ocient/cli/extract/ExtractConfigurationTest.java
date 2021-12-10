@@ -38,7 +38,6 @@ public class ExtractConfigurationTest
         assertEquals(config.getFieldDelimiter(), ExtractConfiguration.DEFAULT_FIELD_DELIMITER);
         assertEquals(config.getSkipHeader(), ExtractConfiguration.DEFAULT_SKIP_HEADER);
         assertEquals(config.getPathStyleAccess(), ExtractConfiguration.DEFAULT_PATH_STYLE_ACCESS);
-        assertEquals(config.isMultiThreadingAllowed(), ExtractConfiguration.DEFAULT_MULTITHREADING_ALLOWED);
         assertEquals(config.getNullFormat(), ExtractConfiguration.DEFAULT_NULL_FORMAT);
         assertEquals(config.getEncoding(), ExtractConfiguration.DEFAULT_ENCODING);
         assertEquals(config.getEscape(), ExtractConfiguration.DEFAULT_ESCAPE);
@@ -65,7 +64,6 @@ public class ExtractConfigurationTest
         prop.setProperty("field_delimiter", "\t");
         prop.setProperty("skip_header", "true");
         prop.setProperty("path_style_access", "true");
-        prop.setProperty("allow_multithreading", "true");
         prop.setProperty("null_format", "NULL");
         prop.setProperty("encoding", "UTF-16");
         prop.setProperty("escape", "+");
@@ -89,7 +87,6 @@ public class ExtractConfigurationTest
         assertEquals(config.getFieldDelimiter(), "\t");
         assertEquals(config.getSkipHeader(), true);
         assertEquals(config.getPathStyleAccess(), true);
-        assertEquals(config.isMultiThreadingAllowed(), true);
         assertEquals(config.getNullFormat(), "NULL");
         assertEquals(config.getEncoding(), Charset.forName("UTF-16"));
         assertEquals(config.getEscape(), '+');
