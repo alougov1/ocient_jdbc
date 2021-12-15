@@ -4,6 +4,11 @@ import com.ocient.cli.ParseException;
 import com.ocient.cli.extract.ExtractSyntaxParser.ParseResult;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -11,6 +16,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
+@RunWith(JUnitParamsRunner.class)
 public class ExtractSyntaxParserTest
 {
     final private static String QUERY = "SELECT * FROM db";
@@ -215,5 +221,17 @@ public class ExtractSyntaxParserTest
     public void missingType()
     {
         ExtractSyntaxParser.parse("EXTRACT TO AS SELECT * FROM table");
+    }
+
+    @Test(expected = ParseException.class)
+    @Parameters({
+        "field_delimiter=abc\\,\\,record_delimiter=def", // Double comma
+        "\\,field_delimiter=abc", // Leading comma
+        "field_delimiter=\"abc", //Unclosed quote
+    })
+    public void badOptions(String badOption)
+    {
+        String extractCommand = String.format("EXTRACT TO local OPTIONS(%s) AS %s", badOption, QUERY);
+        ExtractSyntaxParser.parse(extractCommand);
     }
 }            
