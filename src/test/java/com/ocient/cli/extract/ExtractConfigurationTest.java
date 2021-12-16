@@ -1,6 +1,5 @@
 package com.ocient.cli.extract;
 
-import com.ocient.cli.extract.ExtractConfiguration;
 import com.ocient.cli.ParseException;
 
 import org.junit.Test;
@@ -39,6 +38,7 @@ public class ExtractConfigurationTest
         assertEquals(config.getSkipHeader(), ExtractConfiguration.DEFAULT_SKIP_HEADER);
         assertEquals(config.getPathStyleAccess(), ExtractConfiguration.DEFAULT_PATH_STYLE_ACCESS);
         assertEquals(config.isMultiThreadingAllowed(), ExtractConfiguration.DEFAULT_MULTITHREADING_ALLOWED);
+        assertEquals(config.getNumExtractThreads(), ExtractConfiguration.DEFAULT_NUM_EXTRACT_THREADS);
         assertEquals(config.getNullFormat(), ExtractConfiguration.DEFAULT_NULL_FORMAT);
         assertEquals(config.getEncoding(), ExtractConfiguration.DEFAULT_ENCODING);
         assertEquals(config.getEscape(), ExtractConfiguration.DEFAULT_ESCAPE);
@@ -66,6 +66,7 @@ public class ExtractConfigurationTest
         prop.setProperty("skip_header", "true");
         prop.setProperty("path_style_access", "true");
         prop.setProperty("allow_multithreading", "true");
+        prop.setProperty("num_extract_threads", "17");
         prop.setProperty("null_format", "NULL");
         prop.setProperty("encoding", "UTF-16");
         prop.setProperty("escape", "+");
@@ -90,6 +91,7 @@ public class ExtractConfigurationTest
         assertEquals(config.getSkipHeader(), true);
         assertEquals(config.getPathStyleAccess(), true);
         assertEquals(config.isMultiThreadingAllowed(), true);
+        assertEquals(config.getNumExtractThreads(), 17);
         assertEquals(config.getNullFormat(), "NULL");
         assertEquals(config.getEncoding(), Charset.forName("UTF-16"));
         assertEquals(config.getEscape(), '+');
@@ -125,6 +127,18 @@ public class ExtractConfigurationTest
         // Location type is required to test the other configs.
         properties.setProperty("location_type", "s3");
         ExtractConfiguration config = new ExtractConfiguration(properties);        
+    }
+
+    // Settings multithreading to true but using 1 thread should throw
+    @Test(expected = ParseException.class)
+    public void badNumThreads()
+    {
+        Properties properties = new Properties();
+        // Location type is required to test the other configs.
+        properties.setProperty("location_type", "s3");
+        properties.setProperty("allow_multithreading", "true");
+        properties.setProperty("num_extract_threads", "1");
+        ExtractConfiguration config = new ExtractConfiguration(properties);          
     }
 
     // Test shouldn't throw, but will log a warning.

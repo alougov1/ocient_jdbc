@@ -37,6 +37,7 @@ public class ExtractConfiguration
             skipHeader = config.getBoolean(SKIP_HEADER, DEFAULT_SKIP_HEADER);
             pathStyleAccess = config.getBoolean(PATH_STYLE_ACCESS, DEFAULT_PATH_STYLE_ACCESS);
             multiThreadingAllowed = config.getBoolean(MULTITHREADING_ALLOWED, DEFAULT_MULTITHREADING_ALLOWED);
+            numExtractThreads = config.getInt(NUM_EXTRACT_THREADS, DEFAULT_NUM_EXTRACT_THREADS);
             // This Charset.forName will throw illegalArgumentException if name is not valid.
             encoding = Optional.ofNullable(config.getString(ENCODING)).map(Charset::forName).orElse(DEFAULT_ENCODING);
             escape = config.get(Character.class, ESCAPE, DEFAULT_ESCAPE);
@@ -134,6 +135,9 @@ public class ExtractConfiguration
     public static final String MULTITHREADING_ALLOWED = "allow_multithreading";
     public static final boolean DEFAULT_MULTITHREADING_ALLOWED = false;
 
+    public static final String NUM_EXTRACT_THREADS = "num_extract_threads";
+    public static final int DEFAULT_NUM_EXTRACT_THREADS = 4;
+
     public static final String NULL_FORMAT = "null_format";
     public static final String DEFAULT_NULL_FORMAT = "";
 
@@ -184,6 +188,8 @@ public class ExtractConfiguration
     private final boolean pathStyleAccess;
     // Indicates whether multithreaded writing will be allowed.
     private final boolean multiThreadingAllowed;
+    // Number of threads used for extracting if multiThreadingAllowed is set to true.
+    private final int numExtractThreads;
     // Format string to use for writing NULL values to the output files.
     private final String nullFormat;
     // Encoding to use when writing out bytes.
@@ -276,6 +282,11 @@ public class ExtractConfiguration
         return multiThreadingAllowed;
     }
 
+    public int getNumExtractThreads()
+    {
+        return numExtractThreads;
+    }
+
     public String getNullFormat()
     {
         return nullFormat;
@@ -331,6 +342,9 @@ public class ExtractConfiguration
         }
         if((!awsKeyId.equals("") && awsKeySecret.equals("")) || awsKeyId.equals("") && !awsKeySecret.equals("")){
             throw new ParseException("When specifying either aws_key_id or aws_secret_key, both must be specified");
+        }
+        if(multiThreadingAllowed && numExtractThreads <= 1){
+            throw new ParseException("Multithreading is enabled but the number of threads is set to 1 or less. Either disable multithreaded extract or increase the number of threads");
         }
         if(locationType != LocationType.S3 && bucket != null)
         {

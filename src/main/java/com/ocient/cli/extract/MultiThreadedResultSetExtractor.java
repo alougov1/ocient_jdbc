@@ -31,7 +31,7 @@ public class MultiThreadedResultSetExtractor extends ResultSetExtractor{
     @Override
     public void extract(final ResultSet resultSet, final ResultSetMetaData resultSetMetaData) throws IllegalStateException, IOException, SQLException{
 
-        int numClientThreads = ((XGResultSet) resultSet).getNumClientThreads();
+        int numClientThreads = extractConfig.getNumExtractThreads();
         // Parse header for result set.
         parseHeader(resultSetMetaData);
 

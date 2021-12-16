@@ -1480,7 +1480,7 @@ public class CLI
 		try
 		{	
 			// Build the extractor
-			boolean useMultiThreadedResultSetExtractor = config.isMultiThreadingAllowed() && ((XGResultSet) resultSet).getNumClientThreads() > 1;
+			boolean useMultiThreadedResultSetExtractor = config.isMultiThreadingAllowed();
 			rsExtractor = useMultiThreadedResultSetExtractor ? new MultiThreadedResultSetExtractor(config) : new SingleThreadedResultSetExtractor(config);
 			
 		} 

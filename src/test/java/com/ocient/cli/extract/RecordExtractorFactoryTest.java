@@ -174,9 +174,7 @@ public class RecordExtractorFactoryTest {
     @Parameters({
         "100, 10, 2",
         "1700, 4, 56",
-        "0, 1, 17",
         "97, 5, 12",
-        "1,1,1",
         "1000, 4, 50",
         "1000, 23, 18",
         "12, 5, 6",
@@ -185,10 +183,11 @@ public class RecordExtractorFactoryTest {
     public void multiThreadedExtract(int numRows, int numThreads, int maxRows) throws SQLException, InterruptedException {
         properties.setProperty("allow_multithreading", "true");
         properties.setProperty("max_rows_per_file", String.valueOf(maxRows));
+        properties.setProperty("num_extract_threads", String.valueOf(numThreads));
         // Make config
         ExtractConfiguration config = new ExtractConfiguration(properties);
         // Make a mock result set
-        XGResultSet rs = makeFakeMockResultSet(numRows, numThreads);
+        XGResultSet rs = makeFakeMockResultSet(numRows);
         XGResultSetMetaData rsMetaData = makeFakeMetaData();
         
         rs.setCols2Pos(rsMetaData.getCols2Pos());
@@ -293,7 +292,7 @@ public class RecordExtractorFactoryTest {
 
     // Utility for making a fake MOCK result set.
     // Each row will be exactly the same.
-    private XGResultSet makeFakeMockResultSet(int numRows, int numThreads) throws SQLException{
+    private XGResultSet makeFakeMockResultSet(int numRows) throws SQLException{
 
         XGResultSet fakeMockResultSet = mock(XGResultSet.class);
         // For the first numRows times, this will return true. Then it will return false.
@@ -310,7 +309,6 @@ public class RecordExtractorFactoryTest {
         // Each cell will just be this string.
         when(fakeMockResultSet.getObject(anyInt())).thenReturn("TestString");
         // Have the result set return numThreads threads when asked.
-        when(fakeMockResultSet.getNumClientThreads()).thenReturn(numThreads);
         return fakeMockResultSet;
     }
 

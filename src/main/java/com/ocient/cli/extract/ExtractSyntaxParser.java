@@ -10,6 +10,8 @@ import java.util.Map;
 
 import com.ocient.cli.ParseException;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 /**
  * A utility class for parsing the "EXTRACT TO" syntax into its
  * configuration and query components
@@ -128,7 +130,8 @@ public class ExtractSyntaxParser
 
             String key = tokenMatcher.group(ARG_GROUP);
             String val = (tokenMatcher.group(UNQUOTED_GROUP) != null) ? tokenMatcher.group(UNQUOTED_GROUP) : tokenMatcher.group(QUOTED_GROUP);
-            String maybePrevVal = keyValuePairs.put(key, val);
+            // Unescape for special character
+            String maybePrevVal = keyValuePairs.put(key, StringEscapeUtils.unescapeJava(val));
             if(maybePrevVal != null){
                 throw new ParseException(String.format("Duplicate value detected for key: %s which was: %s", key, maybePrevVal));
             }
