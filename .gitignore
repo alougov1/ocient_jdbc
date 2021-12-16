@@ -7,6 +7,7 @@ tmp/
 scripts/*.test
 scripts/*/*.test
 target/
+.m2
 
 # Bazel stuff
 bazel-bin
@@ -22,3 +23,10 @@ bazel-testlogs
 
 # asdf
 .tool-versions
+# deployment keys
+codesignstore.jks
+deploy_settings.xml
+private.key
+codesignstore.pwd
+ssh.pwd
+mavenGlobalSettings.xml

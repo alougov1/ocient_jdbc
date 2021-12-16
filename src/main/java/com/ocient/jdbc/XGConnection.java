@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketOption;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
@@ -1508,13 +1510,8 @@ public class XGConnection implements Connection
 					sock = new Socket();
 					sock.setReceiveBufferSize(4194304);
 					sock.setSendBufferSize(4194304);
-					// the number of seconds of idle time before keep-alive initiates a probe
-					sock.setOption(ExtendedSocketOptions.TCP_KEEPIDLE, 10);
-					// the maximum number of keep-alive probes to be sent
-					sock.setOption(ExtendedSocketOptions.TCP_KEEPCOUNT, 2);
-					// the number of seconds to wait before retransmitting a keep-alive probe
-					sock.setOption(ExtendedSocketOptions.TCP_KEEPINTERVAL, 3);
-					sock.setKeepAlive(true);
+					// Try to configure the socket options.
+					tryConfigureSocketOptions(sock);
 					sock.connect(new InetSocketAddress(ip, port), networkTimeout);
 					in = new BufferedInputStream(sock.getInputStream());
 					out = new BufferedOutputStream(sock.getOutputStream());
@@ -1536,13 +1533,8 @@ public class XGConnection implements Connection
 					sslsock.setReceiveBufferSize(4194304);
 					sslsock.setSendBufferSize(4194304);
 					sslsock.setUseClientMode(true);
-					// the number of seconds of idle time before keep-alive initiates a probe
-					sslsock.setOption(ExtendedSocketOptions.TCP_KEEPIDLE, 10);
-					// the maximum number of keep-alive probes to be sent
-					sslsock.setOption(ExtendedSocketOptions.TCP_KEEPCOUNT, 2);
-					// the number of seconds to wait before retransmitting a keep-alive probe
-					sslsock.setOption(ExtendedSocketOptions.TCP_KEEPINTERVAL, 3);
-					sslsock.setKeepAlive(true);
+					// Try to configure the socket options.
+					tryConfigureSocketOptions(sslsock);
 					sslsock.connect(new InetSocketAddress(ip, port), networkTimeout);
 					sslsock.startHandshake();
 					sock = sslsock;
@@ -1590,6 +1582,33 @@ public class XGConnection implements Connection
 			{
 			}
 			throw e;
+		}
+	}
+
+	// Absolutely disgusting code. I hate that we are trying to catch throwable.
+	// However, the differences between java versions make the failures of this unpredictable.
+	// Sometimes its an exception or an error. I will try to handle the specific exception 
+	// and then the throwable.
+	private void tryConfigureSocketOptions(Socket sock){
+
+		try {
+			// If one fails, they will likely all fail since the problem with this is that these were added in java 11,
+			// but backported to java 8, but only some versions of java 8.
+			sock.setOption(ExtendedSocketOptions.TCP_KEEPIDLE, 10);
+			sock.setOption(ExtendedSocketOptions.TCP_KEEPCOUNT, 2);
+			sock.setOption(ExtendedSocketOptions.TCP_KEEPINTERVAL, 3);
+		} catch (Exception ex) {
+			LOGGER.log(Level.WARNING, String.format("Caught exception when trying to setOption with message: %s", ex.getMessage()));
+		} catch (Throwable throwable){
+			LOGGER.log(Level.WARNING, String.format("Caught Throwable when trying to setOption with message: %s", throwable.getMessage()));
+		}
+
+		try{
+			sock.setKeepAlive(true);
+		} catch (SocketException ex){
+			LOGGER.log(Level.WARNING, String.format("Caught SocketException when trying setKeepAlive with message %s.", ex.getMessage()));
+		} catch(Throwable throwable){
+			LOGGER.log(Level.WARNING, String.format("Caught Throwable when trying to setKeepAlive with message: %s", throwable.getMessage()));
 		}
 	}
 
@@ -1642,13 +1661,15 @@ public class XGConnection implements Connection
 			// Pass on the session manager. By reference
 			retval.session = session;
 			// Have the newly copied connection save its own view of the world.
-			final Optional<Session.State> maybeState = session.retain();
-			if(maybeState.isPresent()){
-				retval.sessionState = maybeState.get();
-			} else {
-				// Attempted to duplicate a closed session.
-				throw SQLStates.FAILED_CONNECTION.cloneAndSpecify("Attempted to duplicate a closed session");
-			}			
+			if(session != null){
+				final Optional<Session.State> maybeState = session.retain();
+				if(maybeState.isPresent()){
+					retval.sessionState = maybeState.get();
+				} else {
+					// Attempted to duplicate a closed session.
+					throw SQLStates.FAILED_CONNECTION.cloneAndSpecify("Attempted to duplicate a closed session");
+				}	
+			}
 			retval.reconnect(shouldRequestVersion);
 			retval.resetLocalVars();
 		}
