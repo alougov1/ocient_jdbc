@@ -15,6 +15,14 @@ bazel-ocient_jdbc
 bazel-out
 bazel-testlogs
 
+# VSCode java
+.classpath
+.project
+.settings/
+.vscode/
+
+# asdf
+.tool-versions
 # deployment keys
 codesignstore.jks
 deploy_settings.xml

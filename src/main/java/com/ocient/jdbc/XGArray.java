@@ -1,5 +1,7 @@
 package com.ocient.jdbc;
 
+import com.ocient.jdbc.XGByteArrayHelper;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -12,19 +14,6 @@ import java.util.TreeMap;
 
 public class XGArray implements java.sql.Array
 {
-	private static final char[] hexArray = "0123456789abcdef".toCharArray();
-
-	private static String bytesToHex(final byte[] bytes)
-	{
-		final char[] hexChars = new char[bytes.length * 2];
-		for (int j = 0; j < bytes.length; j++)
-		{
-			final int v = bytes[j] & 0xFF;
-			hexChars[j * 2] = hexArray[v >>> 4];
-			hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-		}
-		return new String(hexChars);
-	}
 
 	private final byte type;
 	private Object[] array;
@@ -238,7 +227,7 @@ public class XGArray implements java.sql.Array
 				}
 				else if (getBaseType() == java.sql.Types.BINARY || getBaseType() == java.sql.Types.VARBINARY)
 				{
-					str.append("0x" + bytesToHex((byte[]) o));
+					str.append("0x" + XGByteArrayHelper.bytesToHex((byte[]) o));
 				}
 				else
 				{
@@ -260,7 +249,7 @@ public class XGArray implements java.sql.Array
 				}
 				else if (getBaseType() == java.sql.Types.BINARY || getBaseType() == java.sql.Types.VARBINARY)
 				{
-					str.append("0x" + bytesToHex((byte[]) o));
+					str.append("0x" + XGByteArrayHelper.bytesToHex((byte[]) o));
 				}
 				else
 				{

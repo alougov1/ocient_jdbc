@@ -38,11 +38,19 @@ import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
+import com.ocient.cli.extract.ExtractSyntaxParser;
+import com.ocient.cli.extract.MultiThreadedResultSetExtractor;
+import com.ocient.cli.extract.ResultSetExtractor;
+import com.ocient.cli.extract.ExtractSyntaxParser.ParseResult;
+import com.ocient.cli.extract.ExtractConfiguration;
+import com.ocient.cli.extract.SingleThreadedResultSetExtractor;
 import com.ocient.jdbc.XGConnection;
 import com.ocient.jdbc.XGDatabaseMetaData;
 import com.ocient.jdbc.XGStatement;
+import com.ocient.jdbc.XGByteArrayHelper;
 import com.ocient.jdbc.proto.ClientWireProtocol.SysQueriesRow;
 import com.ocient.jdbc.XGRegexUtils;
+import com.ocient.jdbc.XGResultSet;
 
 public class CLI
 {
@@ -50,6 +58,8 @@ public class CLI
 	private static boolean timing = false;
 	private static boolean trace = false;
 	private static boolean performance = false;
+	private static boolean enableCliTrace = false;
+	private static boolean returnErrorCode = false;
 	private static String outputCSVFile = "";
 	private static boolean shouldAppendOutputCSVFile = false;
 	private static String db;
@@ -59,21 +69,13 @@ public class CLI
 
 	private static char quote = '\0';
 	private static boolean comment = false;
+	private static boolean inActiveEscape = false;
 	private static boolean lastCommandErrored = false;
 	private static final char[] hexArray = "0123456789abcdef".toCharArray();
 	private static Statement stmt;
 
-	private static String bytesToHex(final byte[] bytes)
-	{
-		final char[] hexChars = new char[bytes.length * 2];
-		for (int j = 0; j < bytes.length; j++)
-		{
-			final int v = bytes[j] & 0xFF;
-			hexChars[j * 2] = hexArray[v >>> 4];
-			hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-		}
-		return new String(hexChars);
-	}
+	private static int EXIT_CODE_SUCCESS = 0;
+	private static int EXIT_CODE_ERROR = 1;	
 
 	private static void connectTo(final String cmd)
 	{
@@ -777,7 +779,7 @@ public class CLI
 		catch (final Exception e)
 		{
 			System.out.println("Unable to load JDBC driver!");
-			System.exit(1);
+			System.exit(EXIT_CODE_ERROR);
 		}
 
 		boolean echo = false;
@@ -851,13 +853,22 @@ public class CLI
 		{
 			while (true)
 			{
+				if(lastCommandErrored == true){
+					// If we ever error, mark that the program should indicate error on exit.
+					returnErrorCode = true;
+				}
 				// Reset this so we can run a new command.
 				lastCommandErrored = false;
 				// jline has ways to handle this, but they're underdocumented and overbuilt to
 				// the point of obscenity
 				if (!quit)
 				{
-					cmd = reader.readLine("Ocient> ") + " ";
+					if(enableCliTrace){
+						// Don't want it to print "Ocient> " which spams the output.
+						cmd = reader.readLine("") + " ";
+					} else {
+						cmd = reader.readLine("Ocient> ") + " ";
+					}
 				}
 				if (startsWithIgnoreCase(cmd, "PLAN EXECUTE INLINE"))
 				{
@@ -891,7 +902,7 @@ public class CLI
 						{
 							System.out.println();
 						}
-						return;
+						System.exit(returnErrorCode ? EXIT_CODE_ERROR : EXIT_CODE_SUCCESS);
 					}
 					if (echo)
 					{
@@ -912,8 +923,13 @@ public class CLI
 					}
 					else
 					{
-						// System.out.println("Current command text: '" + cmd + "'");
-						final String line = reader.readLine("(cont)> ") + " ";
+						String line = null;
+						if(enableCliTrace){
+							// Don't want it to print "(cont)> " which spams the output.
+							line = reader.readLine("") + " ";							
+						} else {
+							line = reader.readLine("(cont)> ") + " ";
+						}
 						if (scrubCmd)
 						{
 							cmd += scrubCommand(line);
@@ -937,7 +953,7 @@ public class CLI
 		}
 		catch (final UserInterruptException | EndOfFileException e)
 		{
-			return;
+			System.exit(returnErrorCode ? EXIT_CODE_ERROR : EXIT_CODE_SUCCESS);
 		}
 	}
 
@@ -1010,7 +1026,7 @@ public class CLI
 					}
 					else if (o instanceof byte[])
 					{
-						valueString = "0x" + bytesToHex((byte[]) o);
+						valueString = "0x" + XGByteArrayHelper.bytesToHex((byte[]) o);
 					}
 					else if (o != null)
 					{
@@ -1120,7 +1136,7 @@ public class CLI
 					}
 					else if (o instanceof byte[])
 					{
-						o = "0x" + bytesToHex((byte[]) o);
+						o = "0x" + XGByteArrayHelper.bytesToHex((byte[]) o);
 					}
 					line.append(o);
 					line.append(" ");
@@ -1191,7 +1207,9 @@ public class CLI
 	private static boolean processCommand(final String cmd)
 	{
 		boolean quit = false;
-		// System.out.println("processCommand(" + cmd + ")");
+		if(enableCliTrace){
+			System.out.println("processCommand: " + cmd);
+		}
 		if (cmd.equals(""))
 		{
 			return quit;
@@ -1204,6 +1222,9 @@ public class CLI
 		{
 			select(cmd);
 		}
+		else if (startsWithIgnoreCase(cmd, "EXTRACT TO")) {
+			extractTo(cmd);
+		}		
 		else if (cmd.equalsIgnoreCase("TIMING ON"))
 		{
 			timing = true;
@@ -1298,6 +1319,9 @@ public class CLI
 		{
 			setQueryTimeout(cmd);
 		}
+		else if(startsWithIgnoreCase(cmd, "CLI TRACE")){
+			cliTrace(cmd);
+		}
 		else
 		{
 			System.out.println("Invalid command: " + cmd);
@@ -1306,7 +1330,7 @@ public class CLI
 		return quit;
 	}
 
-	private static String scrubCommand(final String cmd)
+	public static String scrubCommand(final String cmd)
 	{
 		final StringBuilder out = new StringBuilder(cmd.length());
 		int i = 0;
@@ -1316,6 +1340,7 @@ public class CLI
 			final char c = cmd.charAt(i);
 			if (!comment)
 			{
+				// Check for the start of comments
 				if (quote == '\0' && i + 1 != length)
 				{
 					if (c == '-' && cmd.charAt(i + 1) == '-')
@@ -1329,10 +1354,14 @@ public class CLI
 						continue;
 					}
 				}
-				if ((c == '\'' || c == '"') && (quote == '\0' || quote == c)) // char is an active quote
+				// Check for the start of a quote or the ending of a current quote.
+				if ((c == '\'' || c == '"') && (quote == '\0' || quote == c) && !inActiveEscape) // char is an active quote
 				{
 					quote = quote == '\0' ? c : '\0';
 				}
+				// If the current character is a backslash and not already in an active escape,
+				// then we are entering an active escape. Otherwise, we leave activeEscape.
+				inActiveEscape = c == '\\' && !inActiveEscape;
 				out.append(c);
 			}
 			else if (i + 1 != length && c == '*' && cmd.charAt(i + 1) == '/')
@@ -1400,6 +1429,89 @@ public class CLI
 		}
 	}
 
+	public static void extractTo(final String cmd)
+	{
+		long start = System.currentTimeMillis();
+		ParseResult parseResult = null;
+		lastCommandErrored = true;
+		try
+		{
+			parseResult = ExtractSyntaxParser.parse(cmd);
+		} 
+		catch (ParseException e)
+		{
+			System.out.println(String.format("Extract syntax parsing failed with: %s", e.getMessage()));
+			return;
+		}
+		ExtractConfiguration config = null;
+		try{
+			// Build the config
+			config = new ExtractConfiguration(parseResult.getConfig());
+		} catch (ParseException e){
+			System.out.println(String.format("Configuration failed build with message: %s", e.getMessage()));
+			return;			
+		}
+		// Now run the query.
+		ResultSet resultSet = null;
+		ResultSetMetaData rsMetaData = null;
+		try 
+		{
+			resultSet = stmt.executeQuery(parseResult.getQuery());
+			rsMetaData = resultSet.getMetaData();
+		}
+		catch (NullPointerException | SQLException e)
+		{
+			System.out.println(String.format("Failed to run query for extraction with message: %s", e.getMessage()));
+			try
+			{
+				if (resultSet != null)
+				{
+					resultSet.close();
+				}
+			}
+			catch (final SQLException f)
+			{
+				System.out.println("Failed closing result set");
+			}
+			return;
+		}
+		// Try extract
+		ResultSetExtractor rsExtractor = null;
+		try
+		{	
+			// Build the extractor
+			boolean useMultiThreadedResultSetExtractor = config.isMultiThreadingAllowed();
+			rsExtractor = useMultiThreadedResultSetExtractor ? new MultiThreadedResultSetExtractor(config) : new SingleThreadedResultSetExtractor(config);
+			
+		} 
+		catch (ParseException e)
+		{
+			System.out.println(String.format("Failed to build extractor with message: %s", e.getMessage()));
+			return;
+		}		
+		try
+		{
+			rsExtractor.extract(resultSet, rsMetaData);
+		} 
+		catch (IllegalStateException | IllegalArgumentException | IOException | SQLException e)
+		{
+			System.out.println(String.format("Extraction failed with message: %s", e.getMessage()));
+		}
+		// Close result set.
+		try
+		{
+			resultSet.close();
+		}
+		catch (SQLException e)
+		{
+			System.out.println("Failed closing result set");
+		}
+		long end = System.currentTimeMillis();
+		printTime(start, end);
+		lastCommandErrored = false;
+
+	}	
+
 	private static void setQueryTimeout(final String cmd)
 	{
 		long start = 0;
@@ -1421,6 +1533,17 @@ public class CLI
 		{
 			System.out.println("CLI Error: " + e.getMessage());
 			lastCommandErrored = true;
+		}
+	}
+
+	private static void cliTrace(final String cmd){
+		final String option = cmd.substring("CLI TRACE".length()).trim();
+		if(option.equalsIgnoreCase("OFF")){
+			enableCliTrace = false;
+		} else if(option.equalsIgnoreCase("ON")){
+			enableCliTrace = true;
+		} else {
+			System.out.println("Invalid option specified for 'SET CLI LOGGING'. Must be 'ON' or 'OFF'");
 		}
 	}
 
@@ -1509,7 +1632,7 @@ public class CLI
 			while (true)
 			{
 				if(lastCommandErrored){
-					System.out.println("Source command encountered a command which erroed. Stopping");
+					System.out.println("Source command encountered a command which errored. Stopping");
 					return quit;
 				}
 				// jline has ways to handle this, but they're underdocumented and overbuilt to

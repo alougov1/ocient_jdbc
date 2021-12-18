@@ -14,6 +14,18 @@ public class XGTime extends Time
 	/** */
 	private static final long serialVersionUID = -6636929210798184587L;
 
+	private static ThreadLocal<SimpleDateFormat> threadLocalSDF = new ThreadLocal<SimpleDateFormat>(){
+		@Override protected SimpleDateFormat initialValue(){
+			SimpleDateFormat newSDF = new SimpleDateFormat("HH:mm:ss");
+			newSDF.setTimeZone(TimeZone.getTimeZone("UTC"));
+			final GregorianCalendar cal = new GregorianCalendar();
+			cal.setGregorianChange(new java.util.Date(Long.MIN_VALUE));
+			cal.setTimeZone(TimeZone.getTimeZone("UTC"));
+			newSDF.setCalendar(cal);
+			return newSDF;
+		}
+	};
+
 	public static Date from(final Instant instant)
 	{
 		final XGTime retval = new XGTime(instant.toEpochMilli());
@@ -266,13 +278,7 @@ public class XGTime extends Time
 	// Always returns //UTC string
 	@Override
 	public String toString()
-	{
-		final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-		final GregorianCalendar cal = new GregorianCalendar();
-		cal.setGregorianChange(new java.util.Date(Long.MIN_VALUE));
-		cal.setTimeZone(TimeZone.getTimeZone("UTC"));
-		sdf.setCalendar(cal);
-		return sdf.format(this) + "." + String.format("%09d", getNanos());
+	{	
+		return threadLocalSDF.get().format(this) + "." + String.format("%09d", getNanos());
 	}
 }
