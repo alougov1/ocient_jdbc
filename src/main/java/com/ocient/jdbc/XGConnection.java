@@ -3654,6 +3654,10 @@ public class XGConnection implements Connection
 
 		try
 		{
+			// This could have been generated as a "cached" connection, which means it wasn't connected.
+			if(out == null){
+				reconnect();
+			}						
 			sendSetSchema(schema);
 		}
 		catch (final Exception e)
