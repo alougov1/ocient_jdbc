@@ -272,10 +272,10 @@ public class JDBCDriver implements Driver
 					} else {
 						conn.setSchemaLocal(user);
 						conn.defaultSchema = user;
-					}
+					}			
 					synchronized (seenConnections)
 					{
-						if (!seenConnections.containsKey(conn))
+						if (!seenConnections.containsKey(conn) || conn.isDisabledConnCaching())
 						{
 							LOGGER.log(Level.INFO, "Driver returning a new connection");
 							doConnect = true;
@@ -291,9 +291,11 @@ public class JDBCDriver implements Driver
 						conn.connect();
 						LOGGER.log(Level.INFO, "Successfully connected");
 						connected = true;
-						synchronized (seenConnections)
-						{
-							seenConnections.put(conn, conn);
+						if(!conn.isDisabledConnCaching()){
+							synchronized (seenConnections)
+							{
+								seenConnections.put(conn, conn);
+							}
 						}
 					}
 					break;

@@ -606,7 +606,7 @@ public class XGStatement implements Statement
 			closed = true;
 
 			// Only return this statement to the pool if its connection is not closed.
-			if (poolable && !conn.isClosed())
+			if (poolable && !conn.isClosed() && !conn.isDisabledConnCaching())
 			{
 				// This sets the timer task as a daemon
 				timer = new Timer(true);

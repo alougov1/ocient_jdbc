@@ -11,6 +11,7 @@ Below is the release notes for every driver version that has customer implicatio
 New Features::
 
  * Data extract tool released.
+ * Deactive connection caching for calls to createConnection
 
 //tag::compact[]
 

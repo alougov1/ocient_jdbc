@@ -288,7 +288,7 @@ public class XGPreparedStatement extends XGStatement implements PreparedStatemen
 			result = null;
 			closed = true;
 
-			if (poolable)
+			if (poolable && !conn.isClosed() && !conn.isDisabledConnCaching())
 			{
 				// This sets the timer task as a daemon
 				timer = new Timer(true);
