@@ -1264,7 +1264,7 @@ public class CLI
 		else if (startsWithIgnoreCase(cmd, "CREATE") || startsWithIgnoreCase(cmd, "DROP") || startsWithIgnoreCase(cmd, "ALTER") || startsWithIgnoreCase(cmd, "TRUNCATE")
 			|| startsWithIgnoreCase(cmd, "SET PSO") || startsWithIgnoreCase(cmd, "SET MAXROWS") || startsWithIgnoreCase(cmd, "SET MAXTIME") || startsWithIgnoreCase(cmd, "SET MAXTEMPDISK")
 			|| startsWithIgnoreCase(cmd, "SET PARALLELISM") || startsWithIgnoreCase(cmd, "SET PRIORITY") || startsWithIgnoreCase(cmd, "GRANT") || startsWithIgnoreCase(cmd, "REVOKE")
-			|| startsWithIgnoreCase(cmd, "INVALIDATE STATS") || startsWithIgnoreCase(cmd, "QUARANTINE") || startsWithIgnoreCase(cmd, "SLEEP_IN_OPTIMIZER"))
+			|| startsWithIgnoreCase(cmd, "INVALIDATE STATS") || startsWithIgnoreCase(cmd, "QUARANTINE") || startsWithIgnoreCase(cmd, "INSERT") || startsWithIgnoreCase(cmd, "SLEEP_IN_OPTIMIZER"))
 		{
 			update(cmd);
 		}
