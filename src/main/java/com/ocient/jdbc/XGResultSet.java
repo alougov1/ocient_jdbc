@@ -110,8 +110,9 @@ public final class XGResultSet implements ResultSet
 		@Override
 		public void run()
 		{
+			LOGGER.log(Level.INFO, "Main result set thread started. Calling getMoreData()");
 			getMoreData();
-
+			LOGGER.log(Level.INFO, "Main result set thread returned from getMoreData()");
 			// Check for the special cache time limit hit.
 			if(cacheLimitBreak.get()){
 
@@ -296,6 +297,7 @@ public final class XGResultSet implements ResultSet
 	 */
 	private void attachToQuery(final XGConnection newConn, final String queryId) throws Exception
 	{
+		LOGGER.log(Level.INFO, String.format("Attempting to attach to query: %s", queryId));
 		stmt.passUpCancel(false);
 
 		final ClientWireProtocol.AttachToQuery.Builder builder = ClientWireProtocol.AttachToQuery.newBuilder();
@@ -310,6 +312,7 @@ public final class XGResultSet implements ResultSet
 		wrapper.writeTo(newConn.out);
 		newConn.out.flush();
 		getStandardResponse(newConn);
+		LOGGER.log(Level.INFO, String.format("Successfully attached to query: %s", queryId));
 	}
 
 	private int bcdLength(final int precision)

@@ -6,6 +6,14 @@ Below is the release notes for every driver version that has customer implicatio
 
 //tag::compact[]
 
+== 2.49 (2022-1-6)
+
+New Features::
+
+ * Add more logging to multithreaded result set fetch.
+
+//tag::compact[]
+
 == 2.48 (2022-1-3)
 
 New Features::
