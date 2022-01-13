@@ -323,7 +323,7 @@ public final class SQLStates implements Cloneable {
 			FAILED_CONNECTION_CODE);
 	public static final SQLStates FAILED_HANDSHAKE = new SQLStates("The handshake between client and server failed",
 			UNABLE_TO_CONNECT, FAILED_HANDSHAKE_CODE);
-	public static final SQLStates INVALID_ARGUMENT = new SQLStates("The argument to a client method call was invalid",
+	public static final SQLStates INVALID_ARGUMENT = new SQLStates("The argument is invalid",
 			CLIENT_ERROR, INVALID_ARGUMENT_CODE);
 	public static final SQLStates CALL_ON_CLOSED_OBJECT = new SQLStates("A client method was called on a closed object",
 			CLIENT_ERROR, CALL_ON_CLOSED_OBJECT_CODE);
@@ -349,9 +349,6 @@ public final class SQLStates implements Cloneable {
 			REJECTED_CONNECTION, BAD_USER_PWD_CODE);
 	public static final SQLStates OK = new SQLStates("The operation completed successfully", NORMAL_COMPLETION,
 			NORMAL_COMPLETION_CODE);
-	public static final SQLStates NETFLOW_DEMO_RESTRICTIONS_VIOLATED = new SQLStates(
-			"The SQL statement is not supported by the netflow demo", SQL_NOT_VALID_IN_CONTEXT,
-			SQL_NOT_VALID_IN_CONTEXT_CODE);
 	public static final SQLStates SYNTAX_ERROR = new SQLStates("There is a syntax error in your statement",
 			SYNTAX_ERROR_STATE, SYNTAX_ERROR_CODE);
 	public static final SQLStates INTERNAL_ERROR = new SQLStates("An internal error occurred", SYSTEM_ERROR,
