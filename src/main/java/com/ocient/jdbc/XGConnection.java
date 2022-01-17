@@ -81,7 +81,6 @@ import com.ocient.jdbc.proto.ClientWireProtocol.ClientConnectionSecurityToken;
 import com.ocient.jdbc.proto.ClientWireProtocol.CloseConnection;
 import com.ocient.jdbc.proto.ClientWireProtocol.ConfirmationResponse;
 import com.ocient.jdbc.proto.ClientWireProtocol.ConfirmationResponse.ResponseType;
-import com.ocient.jdbc.proto.ClientWireProtocol.ForceExternal;
 import com.ocient.jdbc.proto.ClientWireProtocol.GetSchema;
 import com.ocient.jdbc.proto.ClientWireProtocol.Request;
 import com.ocient.jdbc.proto.ClientWireProtocol.SessionInfo;
@@ -489,6 +488,7 @@ public class XGConnection implements Connection
 	private Integer maxTempDisk = null;
 	private Integer parallelism = null;
 	private Double priority = null;
+	private boolean forceExternal = false;
 	protected boolean force = false;
 	private volatile long timeoutMillis = 0L; // 0L means no timeout set	
 
@@ -1647,6 +1647,7 @@ public class XGConnection implements Connection
 			retval.setSchema = setSchema;
 			retval.defaultSchema = defaultSchema;
 			retval.setPso = setPso;
+			retval.forceExternal = forceExternal;
 			retval.timeoutMillis = timeoutMillis;
 			retval.networkTimeout = networkTimeout;
 			retval.cmdcomps = (ArrayList<String>) cmdcomps.clone();
@@ -1821,7 +1822,7 @@ public class XGConnection implements Connection
 		}
 	}
 
-	public void forceExternal(final boolean force) throws Exception
+	public void forceExternal(final boolean force) throws SQLException
 	{
 		LOGGER.log(Level.INFO, "Sending force external request to the server");
 		if (closed)
@@ -1831,26 +1832,14 @@ public class XGConnection implements Connection
 		}
 
 		// send request
-		final ClientWireProtocol.ForceExternal.Builder builder = ClientWireProtocol.ForceExternal.newBuilder();
-		builder.setForce(force);
-		final ForceExternal msg = builder.build();
-		final ClientWireProtocol.Request.Builder b2 = ClientWireProtocol.Request.newBuilder();
-		b2.setType(ClientWireProtocol.Request.RequestType.FORCE_EXTERNAL);
-		b2.setForceExternal(msg);
-		final Request wrapper = b2.build();
-
-		try
-		{
-			out.write(intToBytes(wrapper.getSerializedSize()));
-			wrapper.writeTo(out);
-			out.flush();
-			getStandardResponse();
-		}
-		catch (final IOException e)
-		{
-			// Doesn't matter...
-			LOGGER.log(Level.WARNING, String.format("Failed sending set schema request to the server with exception %s with message %s", e.toString(), e.getMessage()));
-		}
+		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
+		final ClientWireProtocol.SetParameter.ForceExternal.Builder innerBuilder = ClientWireProtocol.SetParameter.ForceExternal.newBuilder();
+		innerBuilder.setIsOn(force);
+		builder.setForceExternal(innerBuilder.build());
+		builder.setReset(false);
+		sendParameterMessage(builder.build());	
+		// Change this only if sendParameterMessage succeeded. It would have thrown otherwise.
+		forceExternal = force;
 	}
 
 	@Override
@@ -2211,6 +2200,7 @@ public class XGConnection implements Connection
 							Objects.equals(maxTempDisk, xGConnection.maxTempDisk) && 
 							Objects.equals(parallelism, xGConnection.parallelism) && 
 							Objects.equals(priority, xGConnection.priority) && 
+							forceExternal == xGConnection.forceExternal && 
 							force == xGConnection.force &&
 							Objects.equals(timeoutMillis, xGConnection.timeoutMillis);
 							
@@ -2221,7 +2211,7 @@ public class XGConnection implements Connection
 	 */ 
 	@Override
 	public int hashCode() {
-		return Objects.hash(originalIp, originalPort, user, database, networkTimeout, tls, pwd, properties, setSchema, setPso, maxRows, maxTime, maxTempDisk, parallelism, priority, force, timeoutMillis);
+		return Objects.hash(originalIp, originalPort, user, database, networkTimeout, tls, pwd, properties, setSchema, setPso, maxRows, maxTime, maxTempDisk, parallelism, priority, forceExternal, force, timeoutMillis);
 	}
 
 	@Override
@@ -3116,6 +3106,12 @@ public class XGConnection implements Connection
 				setPriority(priority, false);
 			} else {
 				setPriority(0.0, true);
+			}
+
+			if (forceExternal){
+				forceExternal(forceExternal);
+			} else{
+				//there shouldn't ever be a situation where resending params needs to turn this off again
 			}
 		} catch (SQLException e){
 			// This should never happen. We protect against bad arguments for these settings in the driver default. Also, we protect

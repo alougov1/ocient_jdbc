@@ -582,7 +582,7 @@ message Request
 		KillQuery kill_query = 23;
 		LocalKillQuery local_kill_query = 29;
     	ExecuteInlinePlan execute_inline_plan = 24;
-		ForceExternal force_external = 25;
+		ForceExternal force_external = 25 [deprecated=true];
 		ExecuteExport execute_export = 26;
 		SetPSO set_pso = 27;
 		// 28 is defined above
@@ -644,6 +644,7 @@ message ExplainPlan
 
 message ForceExternal
 {
+	option deprecated = true;
 	bool force = 1; //whether or not we are forcing plans to run externally, primarily for testing
 }
 
@@ -767,6 +768,9 @@ message SetParameter
 	message MaxTempDiskLimit{
 		int64 tempDiskLimit = 1;
 	}
+	message ResultSetColumnLimit{
+		int64 resultSetColumnLimit= 1;
+	}
 	message Priority {
 		double priority= 1;
 	}
@@ -776,6 +780,10 @@ message SetParameter
 	message PSOSeed {
 		uint64 seed = 1;
 	}
+	message ForceExternal {
+		bool is_on = 1;
+	}
+
 	bool reset = 1; //whether we should reset back to the default, overrides whatever threshold is
 	oneof Parameter {
 		PSO pso_threshold= 2;
@@ -785,5 +793,7 @@ message SetParameter
 		Priority priority = 6;
 		Concurrency concurrency = 7;
 		PSOSeed pso_seed = 8;
+		ResultSetColumnLimit result_set_column_limit= 9;
+		ForceExternal force_external = 10;
 	}
 }
