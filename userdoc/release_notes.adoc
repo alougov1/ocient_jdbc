@@ -6,6 +6,14 @@ Below is the release notes for every driver version that has customer implicatio
 
 //tag::compact[]
 
+== 2.52 (2022-1-18)
+
+New Features::
+
+ * Secondary result set threads will start fetching immediately after the first result set thread gets a ping.
+
+//tag::compact[]
+
 == 2.51 (2022-1-14)
 
 New Features::

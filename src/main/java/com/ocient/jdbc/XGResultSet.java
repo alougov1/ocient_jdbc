@@ -2916,10 +2916,8 @@ public final class XGResultSet implements ResultSet
 			}
 		}
 
-		if (didProcessRows)
-		{
-			didFirstFetch.set(true);
-		}
+		// After the main thread gets the first ping, set this boolean. Then the secondary fetch threads can start.
+		didFirstFetch.set(true);
 
 		// Need to not join threads here if we got the special break. The main thread cannot
 		// cannot return yet. It needs to finish the fetch.
