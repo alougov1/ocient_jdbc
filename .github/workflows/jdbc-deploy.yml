@@ -1,4 +1,4 @@
-name: "JDBC Deploy"
+name: "Deploy JDBC"
 
 on:
   push:
@@ -6,8 +6,8 @@ on:
   workflow_dispatch: # Allow manual dispatch
 
 jobs:
-  report:
-    name: "Run report"
+  deploy:
+    name: "Deploy"
     runs-on: [self-hosted, build]
     container:
       # Could be using github.repository_owner here, but ghcr is case-picky
@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
-      - name: "Run report script"
+      - name: "Run deploy script"
         run: python3 deploy.py
         env:
           PYTHONUNBUFFERED: "true"
