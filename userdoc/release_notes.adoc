@@ -6,6 +6,14 @@ Below is the release notes for every driver version that has customer implicatio
 
 //tag::compact[]
 
+== 2.53 (2022-2-8)
+
+New Features::
+
+ * Added redirect support for execute export, explain pipeline, check data
+
+//tag::compact[]
+
 == 2.52 (2022-1-18)
 
 New Features::

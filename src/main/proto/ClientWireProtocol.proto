@@ -718,34 +718,46 @@ message LocalKillQueryResponse
 message ExecuteExport
 {
 	string sql = 1;
+	bool force = 2;
 }
 
 message ExecuteExportResponse
 {
 	ConfirmationResponse response = 1;
 	string exportStatement = 2;
+	bool redirect = 3; //Redirect = true, means we are telling client to send the command elsewhere
+	string redirectHost = 4;
+	fixed32 redirectPort = 5;
 }
 
 message ExplainPipelineRequest
 {
 	string sql = 1;
+	bool force = 2;
 }
 
 message ExplainPipelineResponse
 {
 	ConfirmationResponse response = 1;
 	string pipelineStatement = 2;
+	bool redirect = 3; //Redirect = true, means we are telling client to send the command elsewhere
+	string redirectHost = 4;
+	fixed32 redirectPort = 5;
 }
 
 message CheckDataRequest
 {
 	string sql = 1;
+	bool force = 2;
 }
 
 message CheckDataResponse
 {
 	ConfirmationResponse response = 1;
 	string checkDataStatement = 2;
+	bool redirect = 3; //Redirect = true, means we are telling client to send the command elsewhere
+	string redirectHost = 4;
+	fixed32 redirectPort = 5;
 }
 
 message SetPSO

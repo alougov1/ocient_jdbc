@@ -2194,24 +2194,18 @@ public class XGStatement implements Statement
 					b1 = ExecuteExport.newBuilder();
 					br = ClientWireProtocol.ExecuteExportResponse.newBuilder();
 					setWrapped = b2.getClass().getMethod("setExecuteExport", c);
-					forceFlag = false;
-					redirectFlag = false;
 					break;
 				case EXPLAIN_PIPELINE:
 					c = ExplainPipelineRequest.class;
 					b1 = ExplainPipelineRequest.newBuilder();
 					br = ClientWireProtocol.ExplainPipelineResponse.newBuilder();
 					setWrapped = b2.getClass().getMethod("setExplainPipeline", c);
-					forceFlag = false;
-					redirectFlag = false;
 					break;
 				case CHECK_DATA:
 					c = CheckDataRequest.class;
 					b1 = CheckDataRequest.newBuilder();
 					br = ClientWireProtocol.CheckDataResponse.newBuilder();
 					setWrapped = b2.getClass().getMethod("setCheckData", c);
-					forceFlag = false;
-					redirectFlag = false;
 					break;
 				default:
 					LOGGER.log(Level.WARNING, "sendAndReceive() Internal Error");
