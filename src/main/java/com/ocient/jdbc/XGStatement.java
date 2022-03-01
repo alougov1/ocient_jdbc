@@ -2253,6 +2253,13 @@ public class XGStatement implements Statement
 				conn.out.write(intToBytes(wrapper.getSerializedSize()));
 				wrapper.writeTo(conn.out);
 				conn.out.flush();
+			} catch (IOException ex) {
+				LOGGER.log(Level.WARNING, String.format("sendAndReceive() Error writing into socket: %s. Reconnected then rerunning.", ex.getMessage()));
+				reconnect();
+				return sendAndReceive(sql, requestType, val, isInMb, additionalPropertySetter);
+			}
+			try
+			{
 				// get confirmation
 				final int length = getLength();
 				final byte[] data = new byte[length];
