@@ -352,7 +352,7 @@ public class JDBCDriver implements Driver
 	@Override
 	public DriverPropertyInfo[] getPropertyInfo(final String arg0, final Properties arg1) throws SQLException
 	{
-		final DriverPropertyInfo[] retval = new DriverPropertyInfo[15];
+		final DriverPropertyInfo[] retval = new DriverPropertyInfo[17];
 		final DriverPropertyInfo user = new DriverPropertyInfo("user", null);
 		user.description = "The userid to use for the connection";
 		user.required = false;
@@ -441,6 +441,16 @@ public class JDBCDriver implements Driver
 		tls.choices[2] = "SSO";
 		retval[14] = handshake;
 		
+		final DriverPropertyInfo priorityAdjustFactor = new DriverPropertyInfo("priorityAdjustFactor", "0.0");
+		priority.description = "Default Query Priority Adjustment Factor";
+		priority.required = false;
+		retval[15] = priorityAdjustFactor;
+
+		final DriverPropertyInfo priorityAdjustTime = new DriverPropertyInfo("priorityAdjustTime", "0");
+		priority.description = "Default Query Priority Adjustment Time";
+		priority.required = false;
+		retval[16] = priorityAdjustTime;
+
 		return retval;
 	}
 

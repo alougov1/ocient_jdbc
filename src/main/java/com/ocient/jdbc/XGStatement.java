@@ -1077,6 +1077,14 @@ public class XGStatement implements Statement
 		{
 			return setPrioritySQL(sql);
 		}
+		else if (sql.toUpperCase().startsWith("SET ADJUSTFACTOR "))
+		{
+			return setPriorityAdjustFactorSQL(sql);
+		}
+		else if (sql.toUpperCase().startsWith("SET ADJUSTTIME "))
+		{
+			return setPriorityAdjustTimeSQL(sql);
+		}
 		else if (sql.toUpperCase().startsWith("SET SCHEMA "))
 		{
 			return setSchema(sql);
@@ -2713,12 +2721,54 @@ public class XGStatement implements Statement
 		double priority = 0;
 		try
 		{
-			priority = Integer.parseInt(ending);
+			priority = Double.parseDouble(ending);
 		}
 		catch (final NumberFormatException e)
 		{
 		}
 		return conn.setPriority(priority, reset);
+	}
+
+	private int setPriorityAdjustFactorSQL(final String cmd) throws SQLException
+	{
+		LOGGER.log(Level.INFO, "Entered driver's setPriorityAdjustFactor()");
+		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("adjustfactor", cmd);
+		if (!m.matches())
+		{
+			throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper syntax: set adjustfactor <priorityAdjFactor>");
+		}
+		String ending = XGRegexUtils.getTk(m, "adjustfactor", "");		
+		final boolean reset = ending.toUpperCase().equals("RESET");
+		double priorityAdjustFactor = 0;
+		try
+		{
+			priorityAdjustFactor = Double.parseDouble(ending);
+		}
+		catch (final NumberFormatException e)
+		{
+		}
+		return conn.setPriorityAdjustFactor(priorityAdjustFactor, reset);
+	}
+
+	private int setPriorityAdjustTimeSQL(final String cmd) throws SQLException
+	{
+		LOGGER.log(Level.INFO, "Entered driver's setPriorityAdjustTime()");
+		final Matcher m = XGRegexUtils.genericSetSyntaxMatch("adjusttime", cmd);
+		if (!m.matches())
+		{
+            throw SQLStates.SYNTAX_ERROR.cloneAndSpecify("Syntax error. Proper syntax: set adjusttime <priorityAdjTime>");
+		}
+		String ending = XGRegexUtils.getTk(m, "adjusttime", "");		
+		final boolean reset = ending.toUpperCase().equals("RESET");
+		int priorityAdjustTime = 0;
+		try
+		{
+			priorityAdjustTime = Integer.parseInt(ending);
+		}
+		catch (final NumberFormatException e)
+		{
+		}
+		return conn.setPriorityAdjustTime(priorityAdjustTime, reset);
 	}
 
 	public void setQueryCancelled(final boolean b)
