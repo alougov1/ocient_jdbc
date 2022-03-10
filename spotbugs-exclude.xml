@@ -14,6 +14,12 @@
         <Method name="redirect" />
         <Bug pattern="OBL_UNSATISFIED_OBLIGATION" />
     </Match>
+    <!--False positive, we do throw general exception.-->
+    <Match>
+        <Class name="com.ocient.jdbc.XGStatement" />
+        <Method name="sendAndReceive" />
+        <Bug pattern="REC_CATCH_EXCEPTION" />
+    </Match>
     <!--False positive, we do mean to call run()-->
     <Match>
         <Class name="com.ocient.jdbc.XGConnection$TestConnectionThread" />

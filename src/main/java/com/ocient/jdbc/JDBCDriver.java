@@ -9,6 +9,7 @@ import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
@@ -282,6 +283,8 @@ public class JDBCDriver implements Driver
 						} else {
 							LOGGER.log(Level.INFO, "Driver returning a cached connection");
 							conn.setServerVersion(seenConnections.get(conn).getServerVersion());
+							conn.secondaryInterfaces = (ArrayList<ArrayList<String>>) seenConnections.get(conn).secondaryInterfaces.clone();
+							conn.secondaryIndex = seenConnections.get(conn).secondaryIndex;
 						}
 					}
 
