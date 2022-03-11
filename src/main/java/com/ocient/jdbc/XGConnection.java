@@ -490,6 +490,8 @@ public class XGConnection implements Connection
 	private Double priority = null;
 	private boolean forceExternal = false;
 	protected boolean force = false;
+	private Double priorityAdjustFactor = null;
+	private Integer priorityAdjustTime = null;
 	private volatile long timeoutMillis = 0L; // 0L means no timeout set	
 
 	private XGConnection(final String user, final String pwd, final int portNum, final String url, final String database, final String protocolVersion, String clientVersion, final boolean force, final Tls tls,
@@ -2243,8 +2245,9 @@ public class XGConnection implements Connection
 							Objects.equals(priority, xGConnection.priority) && 
 							forceExternal == xGConnection.forceExternal && 
 							force == xGConnection.force &&
-							Objects.equals(timeoutMillis, xGConnection.timeoutMillis);
-							
+							Objects.equals(timeoutMillis, xGConnection.timeoutMillis) &&
+							Objects.equals(priorityAdjustFactor, xGConnection.priorityAdjustFactor) && 
+							Objects.equals(priorityAdjustTime, xGConnection.priorityAdjustTime);
 	}
 
 	/*!
@@ -2252,7 +2255,7 @@ public class XGConnection implements Connection
 	 */ 
 	@Override
 	public int hashCode() {
-		return Objects.hash(originalIp, originalPort, user, database, networkTimeout, tls, pwd, properties, setSchema, setPso, maxRows, maxTime, maxTempDisk, parallelism, priority, forceExternal, force, timeoutMillis);
+		return Objects.hash(originalIp, originalPort, user, database, networkTimeout, tls, pwd, properties, setSchema, setPso, maxRows, maxTime, maxTempDisk, parallelism, priority, forceExternal, force, timeoutMillis, priorityAdjustFactor, priorityAdjustTime);
 	}
 
 	@Override
@@ -3079,7 +3082,7 @@ public class XGConnection implements Connection
 		{
 			double proposedPriority = Double.parseDouble((String) properties.get("priority"));
 			if(proposedPriority <= 0.0){
-				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("scheduling priority must be greater than 0.0, specified: %d", proposedPriority));
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("scheduling priority must be greater than 0.0, specified: %f, proposedPriority"));
 			}
 		}
 		// Not sent to server. Only used driver side.
@@ -3104,7 +3107,16 @@ public class XGConnection implements Connection
 			if(proposedTimeoutMillis < 0){
 				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("timeoutMillis must be greater than or equal to 0. 0 means no timeout specified: %d", proposedTimeoutMillis));
 			}
-		}		
+		}
+
+		if (properties.containsKey("priorityAdjustTime") && properties.get("priorityAdjustTime") != null)
+		{
+			int proposedPriorityAdjustTime = Integer.parseInt((String) properties.get("priorityAdjustTime"));
+			if(proposedPriorityAdjustTime < 0){
+				throw SQLStates.INVALID_ARGUMENT.cloneAndSpecify(String.format("priority_adjustment_time must be >= 0, specified: %d", proposedPriorityAdjustTime));
+			}
+		}
+
 		LOGGER.log(Level.INFO, "Passed validateDefaultProperties()");
 	}		
 
@@ -3152,6 +3164,20 @@ public class XGConnection implements Connection
 				forceExternal(forceExternal);
 			} else{
 				//there shouldn't ever be a situation where resending params needs to turn this off again
+			}
+
+			if (priorityAdjustFactor != null)
+			{
+				setPriorityAdjustFactor(priorityAdjustFactor, false);
+			} else {
+				setPriorityAdjustFactor(0.0, true);
+			}
+
+			if (priorityAdjustTime != null)
+			{
+				setPriorityAdjustTime(priorityAdjustTime, false);
+			} else {
+				setPriorityAdjustTime(0, true);
 			}
 		} catch (SQLException e){
 			// This should never happen. We protect against bad arguments for these settings in the driver default. Also, we protect
@@ -3284,6 +3310,24 @@ public class XGConnection implements Connection
 		else
 		{
 			timeoutMillis = 0;
+		}
+
+		if (properties.containsKey("priorityAdjustFactor") && properties.get("priorityAdjustFactor") != null)
+		{
+			priorityAdjustFactor = Double.parseDouble((String) properties.get("priorityAdjustFactor"));
+		}
+		else
+		{
+			priorityAdjustFactor = null;
+		}
+
+		if (properties.containsKey("priorityAdjustTime") && properties.get("priorityAdjustTime") != null)
+		{
+			priorityAdjustTime = Integer.parseInt((String) properties.get("priorityAdjustTime"));
+		}
+		else
+		{
+			priorityAdjustTime = null;
 		}
 	}
 
@@ -3660,6 +3704,44 @@ public class XGConnection implements Connection
 			// Doesn't matter...
 			LOGGER.log(Level.WARNING, String.format("Failed sending set pso request to the server with exception %s with message %s", e, e.getMessage()));
 		}
+	}
+
+	public int setPriorityAdjustFactor(final Double priorityAdjustFactor, final boolean reset) throws SQLException
+	{
+		LOGGER.log(Level.INFO, String.format("Setting priority_adjustment_factor to: %f", priority));
+		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
+		builder.setReset(reset);
+		final ClientWireProtocol.SetParameter.PriorityAdjustFactor.Builder innerBuilder = ClientWireProtocol.SetParameter.PriorityAdjustFactor.newBuilder();
+		innerBuilder.setPriorityAdjustFactor(priorityAdjustFactor != null ? priorityAdjustFactor : 0.0);
+		builder.setPriorityAdjustFactor(innerBuilder.build());
+
+		int rowsModified = sendParameterMessage(builder.build());
+		// Change this only if sendParameterMessage succeeded. It would have thrown otherwise.	
+		if(reset){
+			this.priorityAdjustFactor = null;
+		} else {
+			this.priorityAdjustFactor = priorityAdjustFactor;
+		}
+		return rowsModified;
+	}
+
+	public int setPriorityAdjustTime(final Integer priorityAdjustTime, final boolean reset) throws SQLException
+	{
+		LOGGER.log(Level.INFO, String.format("Setting priority_adjustment_time to: %d", priorityAdjustTime));
+		final ClientWireProtocol.SetParameter.Builder builder = ClientWireProtocol.SetParameter.newBuilder();
+		builder.setReset(reset);
+		final ClientWireProtocol.SetParameter.PriorityAdjustTime.Builder innerBuilder = ClientWireProtocol.SetParameter.PriorityAdjustTime.newBuilder();
+		innerBuilder.setPriorityAdjustTime(priorityAdjustTime != null ? priorityAdjustTime : 0);
+		builder.setPriorityAdjustTime(innerBuilder.build());
+
+		int rowsModified = sendParameterMessage(builder.build());
+		// Change this only if sendParameterMessage succeeded. It would have thrown otherwise.	
+		if(reset){
+			this.priorityAdjustTime = null;
+		} else {
+			this.priorityAdjustTime = priorityAdjustTime;
+		}
+		return rowsModified;
 	}
 
 	@Override

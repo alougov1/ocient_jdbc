@@ -795,6 +795,12 @@ message SetParameter
 	message ForceExternal {
 		bool is_on = 1;
 	}
+	message PriorityAdjustFactor {
+		double priority_adjust_factor = 1;
+	}
+	message PriorityAdjustTime {
+		uint32 priority_adjust_time = 1;
+	}
 
 	bool reset = 1; //whether we should reset back to the default, overrides whatever threshold is
 	oneof Parameter {
@@ -807,5 +813,7 @@ message SetParameter
 		PSOSeed pso_seed = 8;
 		ResultSetColumnLimit result_set_column_limit= 9;
 		ForceExternal force_external = 10;
+		PriorityAdjustFactor priority_adjust_factor = 11;
+		PriorityAdjustTime priority_adjust_time = 12;
 	}
 }

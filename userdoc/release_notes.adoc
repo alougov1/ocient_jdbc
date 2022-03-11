@@ -4,6 +4,14 @@
 All our jdbc drivers are located {drivers_repo}[here]. 
 Below is the release notes for every driver version that has customer implication.
 
+// tag::compact[]
+
+== 2.54 (2022-3-9)
+
+New Features::
+
+  * Added CLI support for SET ADJUSTFACTOR, ADJUSTTIME
+
 //tag::compact[]
 
 == 2.53 (2022-2-8)
@@ -1021,4 +1029,5 @@ New Features::
   * https://jira.ocient.com:8443/browse/DB-10137[DB-10137] - Implement JDBC cancel query. Now it is possible to kill query in dbeaver.
   * https://jira.ocient.com:8443/browse/DB-10120[DB-10120] - JDBC driver support list of sql nodes to connect to
   * https://jira.ocient.com:8443/browse/DB-10119[DB-10119] - Support for multiple IPs under the same DNS address
+
 
