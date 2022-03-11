@@ -1444,7 +1444,7 @@ public class XGStatement implements Statement
 
 				// get confirmation
 				final int length = getLength();
-				if (length == 0) {
+				if (length == -1) {
 					LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 					throw new IOException("Handshake was rejected due to quiesce");
 				}
@@ -2268,7 +2268,7 @@ public class XGStatement implements Statement
 			{
 				// get confirmation
 				final int length = getLength();
-				if (length == 0) {
+				if (length == -1) {
 					LOGGER.log(Level.SEVERE, "Saw forced connection close from remote. Reconnected then rerunning.");
 					reconnect();
 					return sendAndReceive(sql, requestType, val, isInMb, additionalPropertySetter);

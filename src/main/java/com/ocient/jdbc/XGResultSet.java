@@ -1519,7 +1519,7 @@ public final class XGResultSet implements ResultSet
 					// get confirmation and data (fetchSize rows or zero size result set or
 					// terminated early with a DataEndMarker)
 					final int length = getLength(newConn);
-					if (length == 0) {
+					if (length == -1) {
 						LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 						throw new IOException("Handshake was rejected due to quiesce");
 					}
@@ -2000,7 +2000,7 @@ public final class XGResultSet implements ResultSet
 	private void getStandardResponse(final XGConnection newConn) throws Exception
 	{
 		final int length = getLength(newConn);
-		if (length == 0) {
+		if (length == -1) {
 			LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 			throw new IOException("Handshake was rejected due to quiesce");
 		}
@@ -3125,7 +3125,7 @@ public final class XGResultSet implements ResultSet
 			// receive response
 			final ClientWireProtocol.FetchMetadataResponse.Builder fmdr = ClientWireProtocol.FetchMetadataResponse.newBuilder();
 			final int length = getLength();
-			if (length == 0) {
+			if (length == -1) {
 				LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 				throw new IOException("Handshake was rejected due to quiesce");
 			}
@@ -3906,7 +3906,7 @@ public final class XGResultSet implements ResultSet
 					// get confirmation and data (fetchSize rows or zero size result set or
 					// terminated early with a DataEndMarker)
 					final int length = getLength(newConn);
-					if (length == 0) {
+					if (length == -1) {
 						LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 						throw new IOException("Handshake was rejected due to quiesce");
 					}

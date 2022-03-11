@@ -713,7 +713,7 @@ public class XGConnection implements Connection
 			// get response
 			final ClientWireProtocol.ClientConnectionGCMResponse.Builder ccr = ClientWireProtocol.ClientConnectionGCMResponse.newBuilder();
 			int length = getLength();
-			if (length == 0) {
+			if (length == -1) {
 				LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 				throw new IOException("Handshake was rejected due to quiesce");
 			}
@@ -836,7 +836,7 @@ public class XGConnection implements Connection
 			// getResponse
 			final ClientWireProtocol.ClientConnectionGCM2Response.Builder ccr2 = ClientWireProtocol.ClientConnectionGCM2Response.newBuilder();
 			length = getLength();
-			if (length == 0) {
+			if (length == -1) {
 				LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 				throw new IOException("Handshake was rejected due to quiesce");
 			}
@@ -945,7 +945,7 @@ public class XGConnection implements Connection
 			// get response
 			final ClientWireProtocol.ClientConnectionResponse.Builder ccr = ClientWireProtocol.ClientConnectionResponse.newBuilder();
 			int length = getLength();
-			if (length == 0) {
+			if (length == -1) {
 				LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 				throw new IOException("Handshake was rejected due to quiesce");
 			}
@@ -1065,7 +1065,7 @@ public class XGConnection implements Connection
 			// getResponse
 			final ClientWireProtocol.ClientConnection2Response.Builder ccr2 = ClientWireProtocol.ClientConnection2Response.newBuilder();
 			length = getLength();
-			if (length == 0) {
+			if (length == -1) {
 				LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 				throw new IOException("Handshake was rejected due to quiesce");
 			}
@@ -1178,7 +1178,7 @@ public class XGConnection implements Connection
 			// get response
 			final ClientWireProtocol.ClientConnectionSecurityTokenResponse.Builder tokenHandshakeResp = ClientWireProtocol.ClientConnectionSecurityTokenResponse.newBuilder();
 			int length = getLength();
-			if (length == 0) {
+			if (length == -1) {
 				LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 				throw new IOException("Handshake was rejected due to quiesce");
 			}
@@ -1277,7 +1277,7 @@ public class XGConnection implements Connection
 			// get response
 			final ClientWireProtocol.ClientConnectionSSOResponse.Builder ccr = ClientWireProtocol.ClientConnectionSSOResponse.newBuilder();
 			int length = getLength();
-			if (length == 0) {
+			if (length == -1) {
 				LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 				throw new IOException("Handshake was rejected due to quiesce");
 			}
@@ -1383,7 +1383,7 @@ public class XGConnection implements Connection
 			// Receive response.
 			sso2ResponseBuilder = ClientWireProtocol.ClientConnectionSSO2Response.newBuilder();
 			int length = getLength();
-			if (length == 0) {
+			if (length == -1) {
 				LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 				throw new IOException("Handshake was rejected due to quiesce");
 			}
@@ -2074,7 +2074,7 @@ public class XGConnection implements Connection
 		try
 		{
 			final int length = getLength();
-			if (length == 0) {
+			if (length == -1) {
 				LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 				throw new IOException("Handshake was rejected due to quiesce");
 			}
@@ -2127,7 +2127,7 @@ public class XGConnection implements Connection
 	private void getStandardResponse() throws Exception
 	{
 		final int length = getLength();
-		if (length == 0) {
+		if (length == -1) {
 			LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 			throw new IOException("Handshake was rejected due to quiesce");
 		}
@@ -3818,7 +3818,7 @@ public class XGConnection implements Connection
 			out.flush();
 			// Receive response.
 			int length = getLength();
-			if (length == 0) {
+			if (length == -1) {
 				LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 				throw new IOException("Handshake was rejected due to quiesce");
 			}
@@ -3882,7 +3882,7 @@ public class XGConnection implements Connection
 			out.flush();
 			// Receive response.
 			int length = getLength();
-			if (length == 0) {
+			if (length == -1) {
 				LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
 				throw new IOException("Handshake was rejected due to quiesce");
 			}
