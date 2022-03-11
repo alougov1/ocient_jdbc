@@ -2271,7 +2271,6 @@ public class XGStatement implements Statement
 				reconnect();
 				return sendAndReceive(sql, requestType, val, isInMb, additionalPropertySetter);
 			}
-			LOGGER.log(Level.INFO, String.format("sendAndReceive() wrote to socket"));
 			try
 			{
 				// get confirmation
