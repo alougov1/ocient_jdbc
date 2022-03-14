@@ -408,7 +408,7 @@ message LocalQueriesResponse
 message SysQueriesRow
 {
 	string query_id = 1;
-	float importance = 2;
+	float effective_priority = 2;
 	int32 estimated_time_sec = 3;
 	string userid = 4;
 	string sql_text = 5;
@@ -421,7 +421,11 @@ message SysQueriesRow
 	int64 estimated_result_rows = 12;
 	int64 estimated_result_size = 13;
 	int64 sent_rows = 14;
-	int64 sent_bytes = 15;	
+	int64 sent_bytes = 15;
+	float initial_priority = 16;
+	float initial_effective_priority = 17;	
+	float priority_adjust_factor = 18;
+	uint32 priority_adjust_time = 19;
 }
 
 message SystemWideCompletedQueries
@@ -451,7 +455,7 @@ message CompletedQueriesRow
 	uint64 timestamp_exec_start = 13;               // ms since epoch representation of the time the query began execution
 	string time_exec_start = 14;                    // the string representation of the time the query began execution	    
 	string uuid = 15;                               // the query plan uuid
-	double plan_priority = 16;                      // the priority assigned to this plan
+	double final_effective_priority = 16;           // the final effective dynamically adjusted priority
 	double cost_estimate = 17;                      // the plan cost estimate		    
 	uint32 plan_parallelism = 18;                   // the plan parallelism
 	double heuristic_cost = 19;                     // the plan heuristic cost
@@ -460,6 +464,10 @@ message CompletedQueriesRow
 	uint64 bytes_returned = 22;                     // the number of bytes returned by the query
 	uint64 runtime = 23;                            // the number of seconds take to complete the query    
 	uint64 temp_disk_space_consumed = 24;           // the total amount of temp disk space consumed in bytes
+	float initial_priority = 25;					// initial plan priority based on wlm limits
+	float initial_effective_priority = 26;			// initial effective priority adjusted for query cost and mem usage
+	float priority_adjust_factor = 27;				// priority adjustment factor
+	uint32 priority_adjust_time = 28;				// priority adjustment time
 }
 
 message LoadBroadcast

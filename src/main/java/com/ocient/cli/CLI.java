@@ -1066,17 +1066,6 @@ public class CLI
 		}
 	}
 
-	private static void printAllQueries(final ArrayList<SysQueriesRow> queries)
-	{
-		System.out.format("%-40s%-15s%-15s%-20s%-20s%-15s%-20s%-15s%s%n", "query id", "user", "importance", "estimated time", "elapsed time", "status", "server", "database", "sql");
-		System.out.println(new String(new char[170]).replace("\0", "-"));
-		for (final SysQueriesRow row : queries)
-		{
-			System.out.format("%-40s%-15s%-15s%-20s%-20s%-15s%-20s%-15s%s%n", row.getQueryId(), row.getUserid(), row.getImportance(), row.getEstimatedTimeSec(), row.getElapsedTimeSec(),
-				row.getStatus(), row.getQueryServer(), row.getDatabase(), row.getSqlText());
-		}
-	}
-
 	private static void printResultSet(final ResultSet rs, final ResultSetMetaData meta) throws Exception
 	{
 		if (!performance)

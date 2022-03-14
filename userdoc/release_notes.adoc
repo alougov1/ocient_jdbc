@@ -11,6 +11,9 @@ Below is the release notes for every driver version that has customer implicatio
 New Features::
 
   * Added CLI support for SET ADJUSTFACTOR, ADJUSTTIME
+  * Added new columns in system queries:
+    sys.queries: initial_priority, initial_effective_priority, effective_priority, priority_adjust_factor, priority_adjust_time
+    sys.completed_queries: initial_priority, initial_effective_priority, final_effective_priority, priority_adjust_factor, priority_adjust_time
 
 //tag::compact[]
 
