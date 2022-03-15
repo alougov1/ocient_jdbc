@@ -6,6 +6,12 @@ Below is the release notes for every driver version that has customer implicatio
 
 // tag::compact[]
 
+== 2.56 (2022-3-15)
+
+New Features::
+
+  * Added SQL states for EXECUTE_PLAN_AUTH_FAILURE and EXECUTE_INLINE_PLAN_AUTH_FAILURE
+
 == 2.55 (2022-3-11)
 
 New Features::

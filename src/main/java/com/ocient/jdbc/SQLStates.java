@@ -222,6 +222,8 @@ public final class SQLStates implements Cloneable {
 	private static int DROP_CONNECTION_AUTH_FAILURE = -718;
 	private static int NOT_AUTHORIZED_CODE = -719;
 	private static int MODIFY_GROUP_AUTH_FAILURE = -720;
+	private static int EXECUTE_PLAN_AUTH_FAILURE = -721;
+	private static int EXECUTE_INLINE_PLAN_AUTH_FAILURE = -722;
 	private static int SESSION_EXPIRED_CODE = -733;
 
 	// MLMODEL related issues
@@ -425,6 +427,10 @@ public final class SQLStates implements Cloneable {
 			OBJECT_NOT_FOUND_STATE, GROUP_NOT_FOUND_CODE);
 	public static final SQLStates USER_NOT_IN_GROUP = new SQLStates("The user is not in the specified group",
 			OBJECT_NOT_FOUND_STATE, USER_NOT_IN_GROUP_CODE);
+	public static final SQLStates NO_EXECUTE_PLAN_AUTH = new SQLStates(
+		"The user does not have the authority to execute a plan", AUTH_FAILURE, EXECUTE_PLAN_AUTH_FAILURE);
+	public static final SQLStates NO_EXECUTE_INLINE_PLAN_AUTH = new SQLStates(
+		"The user does not have the authority to execute an inline plan", AUTH_FAILURE, EXECUTE_INLINE_PLAN_AUTH_FAILURE);
 
 	public static final SQLStates INVALID_ORDER_BY = new SQLStates("Invalid ORDER BY clause", INVALID_ORDER_BY_STATE,
 			INVALID_ORDER_BY_CODE);
@@ -453,6 +459,10 @@ public final class SQLStates implements Cloneable {
 		"The user does not have the authority to create a user", AUTH_FAILURE, CREATE_USER_AUTH_FAILURE);
 	public static final SQLStates NO_CREATE_GROUP_AUTH = new SQLStates(
 		"The user does not have the authority to create a group", AUTH_FAILURE, CREATE_GROUP_AUTH_FAILURE);
+	public static final SQLStates NO_EXECUTE_PLAN_AUTH = new SQLStates(
+		"The user does not have the authority to execute a plan", AUTH_FAILURE, EXECUTE_PLAN_AUTH_FAILURE);
+	public static final SQLStates NO_EXECUTE_INLINE_PLAN_AUTH = new SQLStates(
+		"The user does not have the authority to execute an inline plan", AUTH_FAILURE, EXECUTE_INLINE_PLAN_AUTH_FAILURE);
 
 	public static final SQLStates SECURITY_INTEGRATION_DISABLED = new SQLStates("The security integration is disabled", UNABLE_TO_CONNECT, SECURITY_INTEGRATION_DISABLED_CODE);
 	public static final SQLStates SECURITY_INTEGRATION_NOT_FOUND = new SQLStates("The security integration does not exist", OBJECT_NOT_FOUND_STATE, SECURITY_INTEGRATION_NOT_FOUND_CODE);
