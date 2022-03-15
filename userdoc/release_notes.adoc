@@ -6,6 +6,17 @@ Below is the release notes for every driver version that has customer implicatio
 
 // tag::compact[]
 
+== 2.55 (2022-3-11)
+
+New Features::
+
+  * Reconnect and rerun if writing into socket fails when sending request
+  * Reconnect and rerun if when sending request, we see -1 length
+  * Added checks for -1 length on response for server signalling a quiescing connection close
+  * Copy secondary interfaces and secondary index when returning a cached connection
+
+// tag::compact[]
+
 == 2.54 (2022-3-9)
 
 New Features::

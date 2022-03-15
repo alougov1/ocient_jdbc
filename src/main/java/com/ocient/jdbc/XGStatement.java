@@ -1452,6 +1452,11 @@ public class XGStatement implements Statement
 
 				// get confirmation
 				final int length = getLength();
+				if (length == -1) {
+					LOGGER.log(Level.SEVERE, "Saw forced connection close from remote");
+					throw new IOException("Handshake was rejected due to quiesce");
+				}
+
 				final byte[] data = new byte[length];
 				readBytes(data);
 				br.mergeFrom(data);
@@ -2261,8 +2266,20 @@ public class XGStatement implements Statement
 				conn.out.write(intToBytes(wrapper.getSerializedSize()));
 				wrapper.writeTo(conn.out);
 				conn.out.flush();
+			} catch (Exception ex) {
+				LOGGER.log(Level.WARNING, String.format("sendAndReceive() Error writing into socket: %s. Reconnected then rerunning.", ex.getMessage()));
+				reconnect();
+				return sendAndReceive(sql, requestType, val, isInMb, additionalPropertySetter);
+			}
+			try
+			{
 				// get confirmation
 				final int length = getLength();
+				if (length == -1) {
+					LOGGER.log(Level.SEVERE, "Saw forced connection close from remote. Reconnected then rerunning.");
+					reconnect();
+					return sendAndReceive(sql, requestType, val, isInMb, additionalPropertySetter);
+				}
 				final byte[] data = new byte[length];
 				readBytes(data);
 				br.getClass().getMethod("mergeFrom", byte[].class).invoke(br, data);
@@ -2341,10 +2358,10 @@ public class XGStatement implements Statement
 		{
 			if (e instanceof SQLException)
 			{
-				LOGGER.log(Level.WARNING, "sendAndReceive() failed.");
+				LOGGER.log(Level.WARNING, String.format("sendAndReceive() failed with a SQLException: %s", e.toString()));
 				throw (SQLException) e;
 			}
-			LOGGER.log(Level.WARNING, "sendAndReceive() failed.");
+			LOGGER.log(Level.WARNING, String.format("sendAndReceive() failed with a generic exception: %s", e.toString()));
 			throw SQLStates.newGenericException(e);
 		}
 	}
