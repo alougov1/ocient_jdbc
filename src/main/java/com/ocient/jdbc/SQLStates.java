@@ -459,10 +459,6 @@ public final class SQLStates implements Cloneable {
 		"The user does not have the authority to create a user", AUTH_FAILURE, CREATE_USER_AUTH_FAILURE);
 	public static final SQLStates NO_CREATE_GROUP_AUTH = new SQLStates(
 		"The user does not have the authority to create a group", AUTH_FAILURE, CREATE_GROUP_AUTH_FAILURE);
-	public static final SQLStates NO_EXECUTE_PLAN_AUTH = new SQLStates(
-		"The user does not have the authority to execute a plan", AUTH_FAILURE, EXECUTE_PLAN_AUTH_FAILURE);
-	public static final SQLStates NO_EXECUTE_INLINE_PLAN_AUTH = new SQLStates(
-		"The user does not have the authority to execute an inline plan", AUTH_FAILURE, EXECUTE_INLINE_PLAN_AUTH_FAILURE);
 
 	public static final SQLStates SECURITY_INTEGRATION_DISABLED = new SQLStates("The security integration is disabled", UNABLE_TO_CONNECT, SECURITY_INTEGRATION_DISABLED_CODE);
 	public static final SQLStates SECURITY_INTEGRATION_NOT_FOUND = new SQLStates("The security integration does not exist", OBJECT_NOT_FOUND_STATE, SECURITY_INTEGRATION_NOT_FOUND_CODE);
